@@ -1,0 +1,409 @@
+================================================================================
+  INTEGRATION GUIDE
+  Dense-Retrieval Long-Term Memory (LTM) Module for Gemma 3 4B
+  Edge / Local Deployment — Research Configuration
+================================================================================
+
+Document Type : Technical Integration Reference
+Module File   : ltm_module.py  (class: VectorEmbeddedMemory)
+Target SLM    : google/gemma-3-4b-it
+Embedding     : google/embedding-gemma-300m (768-d)
+Vector Index  : FAISS IndexFlatL2
+
+--------------------------------------------------------------------------------
+SECTION 1 — ENVIRONMENT SETUP
+--------------------------------------------------------------------------------
+
+1.1  Hardware Requirements (Minimum for Edge Deployment)
+---------------------------------------------------------
+  GPU Mode (Recommended)
+    - VRAM  : ≥ 6 GB  (4-bit quantization)  |  ≥ 12 GB (8-bit)  |  ≥ 16 GB (fp16)
+    - CUDA  : ≥ 11.8
+    - RAM   : ≥ 8 GB system RAM
+
+  CPU-Only Mode (Development / Very Low-Resource Edge)
+    - RAM   : ≥ 16 GB  (inference will be slow ~30-120 s/response)
+    - Set   : quantization="none"  in VectorEmbeddedMemory()
+
+1.2  Python Environment
+-----------------------
+  Recommended: Python 3.10 or 3.11
+
+  Create and activate a virtual environment:
+
+    python -m venv ltm_env
+    source ltm_env/bin/activate          # Linux / macOS
+    ltm_env\Scripts\activate             # Windows
+
+1.3  Required Libraries
+-----------------------
+  Install all dependencies in this exact order to avoid version conflicts:
+
+    # 1. PyTorch (match your CUDA version — see https://pytorch.org)
+    pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+    # 2. FAISS (CPU build — sufficient for IndexFlatL2 on edge devices)
+    pip install faiss-cpu
+
+    # 3. HuggingFace ecosystem
+    pip install transformers>=4.40.0 accelerate>=0.29.0 tokenizers
+
+    # 4. Quantization support (required for 4-bit / 8-bit modes)
+    pip install bitsandbytes>=0.43.0
+
+    # 5. Numerical libraries
+    pip install numpy
+
+  Optional (for thesis experiment scripts):
+    pip install tqdm matplotlib pandas
+
+1.4  Model Download — Offline / Air-Gapped Deployment
+------------------------------------------------------
+  Pre-download models to a local cache before moving to an air-gapped machine:
+
+    python -c "
+    from transformers import AutoModel, AutoTokenizer, AutoModelForCausalLM
+    AutoTokenizer.from_pretrained('google/embedding-gemma-300m')
+    AutoModel.from_pretrained('google/embedding-gemma-300m')
+    AutoTokenizer.from_pretrained('google/gemma-3-4b-it')
+    AutoModelForCausalLM.from_pretrained('google/gemma-3-4b-it')
+    print('All models cached.')
+    "
+
+  The Gemma 3 4B model requires accepting Googles license on HuggingFace Hub.
+  Authenticate with:
+    huggingface-cli login
+
+  Default cache location:
+    Linux/macOS : ~/.cache/huggingface/hub/
+    Windows     : C:\Users\<user>\.cache\huggingface\hub\
+
+  To override (e.g., external SSD on edge device):
+    export HF_HOME=/mnt/ssd/hf_cache               # Linux
+    set HF_HOME=D:\hf_cache                         # Windows
+
+
+--------------------------------------------------------------------------------
+SECTION 2 — INITIALIZATION GUIDE
+--------------------------------------------------------------------------------
+
+2.1  Recommended Initialization (4-bit, GPU)
+--------------------------------------------
+  This configuration is optimised for edge devices with 6-8 GB VRAM:
+
+    from ltm_module import VectorEmbeddedMemory
+
+    ltm = VectorEmbeddedMemory(
+        embedding_model_id = "google/embedding-gemma-300m",
+        slm_model_id       = "google/gemma-3-4b-it",
+        quantization       = "4bit",     # NF4 — ~60-70% VRAM reduction vs fp16
+        device             = "auto",     # auto-selects CUDA if available
+        verbose            = True,
+    )
+
+  Memory footprint (approximate):
+    embedding-gemma-300m  fp16  :  ~0.6  GB VRAM
+    gemma-3-4b            4-bit :  ~2.5  GB VRAM
+    FAISS index (100K vecs)     :  ~0.3  GB RAM
+    Total                       :  ~3.4  GB VRAM + ~1 GB RAM
+
+2.2  CPU-Only Initialization (Development / No GPU)
+----------------------------------------------------
+    ltm = VectorEmbeddedMemory(
+        embedding_model_id = "google/embedding-gemma-300m",
+        slm_model_id       = "google/gemma-3-4b-it",
+        quantization       = "none",     # fp32 on CPU — no bitsandbytes needed
+        device             = "cpu",
+        verbose            = True,
+    )
+
+  NOTE: Generation latency on CPU will be 30-120 seconds per response.
+  Use this mode only for correctness verification, not latency benchmarking.
+
+2.3  8-bit Initialization (Balanced — 8-12 GB VRAM)
+----------------------------------------------------
+    ltm = VectorEmbeddedMemory(
+        quantization = "8bit",           # LLM.int8() quantization
+    )
+
+  Memory footprint (approximate):
+    gemma-3-4b  8-bit :  ~4.5 GB VRAM
+
+2.4  Loading from a Persisted LTM Store
+---------------------------------------
+  To restore a previously saved LTM (e.g., between sessions):
+
+    ltm = VectorEmbeddedMemory(...)     # initialise models as above
+    ltm.load_ltm("./ltm_store")         # restores FAISS index + sidecar JSON
+    print(f"Loaded {ltm.memory_count()} memories.")
+
+
+--------------------------------------------------------------------------------
+SECTION 3 — USAGE EXAMPLE (Full Interaction Round)
+--------------------------------------------------------------------------------
+
+  The following snippet demonstrates one complete interaction cycle:
+    Ingest → Dense Retrieve → Context Inject → Generate
+
+--------------------------------------------------------------------------------
+  from ltm_module import VectorEmbeddedMemory
+
+  # Step 0 — Initialise
+  ltm = VectorEmbeddedMemory(
+      embedding_model_id = "google/embedding-gemma-300m",
+      slm_model_id       = "google/gemma-3-4b-it",
+      quantization       = "4bit",
+  )
+
+  # ── A. INGEST — Store summaries or facts into LTM ───────────────────────
+  id_0 = ltm.ingest_memory(
+      text     = "User completed Module 2 of the Python course on 2025-06-01.",
+      metadata = {"session": "s01", "topic": "education"},
+  )
+  id_1 = ltm.ingest_memory(
+      text     = "User expressed difficulty understanding list comprehensions.",
+      metadata = {"session": "s01", "topic": "python_basics"},
+  )
+  id_2 = ltm.ingest_memory(
+      text     = "User prefers examples with real-world analogies over abstract code.",
+      metadata = {"session": "s01", "topic": "learning_style"},
+  )
+  print(f"LTM now holds {ltm.memory_count()} memories.")
+
+  # ── B. DENSE RETRIEVE — Find relevant memories for a query ──────────────
+  query = "Can you help me understand list comprehensions better?"
+
+  retrieved = ltm.dense_retrieve(query, top_k=3)
+  for mem in retrieved:
+      print(f"  [{mem['rank']}] ID={mem['memory_id']}  L2={mem['l2_distance']:.4f}")
+      print(f"       {mem['text']}")
+
+  # ── C. CONTEXT INJECT — Build the augmented prompt ──────────────────────
+  prompt = ltm.build_augmented_prompt(
+      query          = query,
+      retrieved_mems = retrieved,
+      include_scores = False,   # set True to embed L2 distances in the prompt
+  )
+  print("\n--- Augmented Prompt Preview ---")
+  print(prompt[:500], "...")
+
+  # ── D. GENERATE — Full pipeline (retrieve + inject + generate) ──────────
+  result = ltm.generate_response(
+      query          = query,
+      top_k          = 3,
+      max_new_tokens = 300,
+      temperature    = 0.7,
+  )
+
+  print("\n=== RESULT ===")
+  print(f"Memory IDs Used : {result['memory_ids_used']}")
+  print(f"Retrieval Time  : {result['latency']['dense_retrieval_s']:.4f} s")
+  print(f"Generation Time : {result['latency']['slm_generation_s']:.4f} s")
+  print(f"Total Pipeline  : {result['latency']['total_pipeline_s']:.4f} s")
+  print(f"\nResponse:\n{result['response']}")
+
+  # ── E. SAVE — Persist LTM for next session ──────────────────────────────
+  ltm.save_ltm("./ltm_store")   # creates faiss_index.bin + ltm_store.json
+--------------------------------------------------------------------------------
+
+
+--------------------------------------------------------------------------------
+SECTION 4 — THESIS METRIC POINTS (Latency Instrumentation)
+--------------------------------------------------------------------------------
+
+The generate_response() method already returns a "latency" dictionary with the
+following pre-measured fields (in seconds):
+
+  result["latency"]["dense_retrieval_s"]   # FAISS embedding + k-NN search
+  result["latency"]["context_injection_s"] # Prompt construction time
+  result["latency"]["slm_generation_s"]    # Gemma 3 4B token generation
+  result["latency"]["total_pipeline_s"]    # Sum of all three stages
+
+4.1  Recommended Benchmark Script Pattern
+-----------------------------------------
+
+  import time, statistics
+  from ltm_module import VectorEmbeddedMemory
+
+  ltm = VectorEmbeddedMemory(quantization="4bit")
+
+  # Pre-populate LTM with N memories for controlled experiments
+  N_MEMORIES = [10, 50, 100, 500, 1000]
+  TOP_K_VALUES = [1, 3, 5, 10]
+
+  retrieval_times = []
+  generation_times = []
+
+  for trial in range(30):            # 30 trials per condition
+      result = ltm.generate_response(
+          query          = test_queries[trial % len(test_queries)],
+          top_k          = 5,
+          max_new_tokens = 128,
+      )
+      retrieval_times.append(result["latency"]["dense_retrieval_s"])
+      generation_times.append(result["latency"]["slm_generation_s"])
+
+  print(f"Retrieval  μ={statistics.mean(retrieval_times)*1000:.2f} ms  "
+        f"σ={statistics.stdev(retrieval_times)*1000:.2f} ms")
+  print(f"Generation μ={statistics.mean(generation_times):.3f} s  "
+        f"σ={statistics.stdev(generation_times):.3f} s")
+
+4.2  Key Variables to Sweep (Controlled Experiments)
+-----------------------------------------------------
+
+  Variable              | Range Suggested          | Metric to Report
+  ----------------------|--------------------------|---------------------------
+  LTM size (N memories) | 10, 50, 100, 500, 1000   | Retrieval latency (ms)
+  Top-K                 | 1, 3, 5, 10, 20          | Retrieval latency (ms)
+  Quantization mode     | 4bit, 8bit, none         | Generation latency (s)
+  max_new_tokens        | 64, 128, 256, 512        | Generation latency (s)
+  Query complexity      | short / medium / long    | End-to-end latency (s)
+
+4.3  Additional Instrumentation Points
+---------------------------------------
+
+  A. Embedding-only latency (isolate the encoder cost):
+
+    import time
+    t0 = time.perf_counter()
+    vec = ltm._embed_text("test query")
+    embed_latency = time.perf_counter() - t0
+    print(f"Embedding latency: {embed_latency*1000:.2f} ms")
+
+  B. FAISS search-only latency (isolate vector search from embedding):
+
+    import time, numpy as np
+    dummy_vec = np.random.rand(1, 768).astype("float32")
+    t0 = time.perf_counter()
+    D, I = ltm.faiss_index.search(dummy_vec, 5)
+    faiss_latency = time.perf_counter() - t0
+    print(f"FAISS search latency: {faiss_latency*1000:.4f} ms")
+
+  C. First-token latency vs. full generation latency:
+     (Requires modifying generate() to use model.generate with streamer=...)
+
+    from transformers import TextIteratorStreamer
+    import threading
+
+    streamer = TextIteratorStreamer(ltm.slm_tokenizer, skip_prompt=True)
+    t_start = time.perf_counter()
+    thread = threading.Thread(
+        target=ltm.slm_model.generate,
+        kwargs={**inputs, "streamer": streamer, "max_new_tokens": 256}
+    )
+    thread.start()
+    first_token_time = None
+    for token in streamer:
+        if first_token_time is None:
+            first_token_time = time.perf_counter() - t_start
+        print(token, end="", flush=True)
+    thread.join()
+    print(f"\nFirst-token latency: {first_token_time:.3f} s")
+
+4.4  Suggested Thesis Metrics Table
+-------------------------------------
+
+  Condition             | Retrieval (ms) | Generation (s) | Total (s) | Memory (GB)
+  ----------------------|---------------|----------------|-----------|------------
+  Baseline (no LTM)     | —             | X.XX           | X.XX      | Y.YY
+  LTM, N=100, K=3, 4bit | X.XX          | X.XX           | X.XX      | Y.YY
+  LTM, N=100, K=5, 4bit | X.XX          | X.XX           | X.XX      | Y.YY
+  LTM, N=1000, K=5,4bit | X.XX          | X.XX           | X.XX      | Y.YY
+  LTM, N=100, K=5, 8bit | X.XX          | X.XX           | X.XX      | Y.YY
+
+  Measure VRAM usage using:
+    nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits
+
+4.5  Qualitative / Retrieval Quality Metrics
+---------------------------------------------
+
+  Beyond latency, consider reporting retrieval quality metrics for the thesis:
+
+  - Mean Reciprocal Rank (MRR)    : was the most relevant memory ranked 1st?
+  - Recall@K                      : fraction of truly relevant memories in top-K
+  - Faithfulness Score            : does the response use the retrieved context?
+                                    (can be measured using an LLM-as-judge approach)
+  - Context Relevance             : semantic similarity of retrieved mems to query
+
+
+--------------------------------------------------------------------------------
+SECTION 5 — FILE STRUCTURE
+--------------------------------------------------------------------------------
+
+  project_root/
+  │
+  ├── ltm_module.py              # Core LTM class (VectorEmbeddedMemory)
+  ├── integration_guide.txt      # This document
+  │
+  ├── ltm_store/                 # Auto-created by save_ltm()
+  │   ├── faiss_index.bin        # Serialised FAISS IndexFlatL2
+  │   └── ltm_store.json         # Sidecar text/metadata dictionary
+  │
+  ├── experiments/               # (Recommended) Thesis experiment scripts
+  │   ├── bench_retrieval.py     # Sweep N_memories × top_k latency
+  │   ├── bench_generation.py    # Sweep quantization × token count
+  │   └── eval_quality.py        # MRR / Recall@K evaluation
+  │
+  └── requirements.txt           # Pin your exact dependency versions
+
+
+--------------------------------------------------------------------------------
+SECTION 6 — TROUBLESHOOTING
+--------------------------------------------------------------------------------
+
+  Issue                          | Likely Cause            | Fix
+  -------------------------------|-------------------------|-------------------------
+  CUDA out of memory             | VRAM too small          | Use quantization="4bit"
+                                 |                         | or reduce max_new_tokens
+  bitsandbytes import error      | Old version / CPU-only  | pip install bitsandbytes
+                                 |                         | or use quantization="none"
+  "Gated model" 401 error        | License not accepted    | huggingface-cli login
+  FAISS assertion error          | Wrong embedding dim     | Verify embedding_dim=768
+  Slow embeddings on CPU         | No GPU                  | Expected; use GPU if possible
+  ltm_store.json not found       | save_ltm() not called   | Call ltm.save_ltm() first
+  Tokenizer padding side warning | Gemma tokenizer default | Add:
+                                 |                         |   ltm.slm_tokenizer
+                                 |                         |     .padding_side = "left"
+
+
+--------------------------------------------------------------------------------
+SECTION 7 — DESIGN NOTES FOR THESIS DISCUSSION
+--------------------------------------------------------------------------------
+
+7.1  Why FAISS IndexFlatL2 (not HNSW or IVF)?
+  - IndexFlatL2 performs exact brute-force search: 100% recall by design.
+  - For LTM sizes typical in an SLM context (< 100,000 vectors), brute-force
+    is highly competitive with approximate methods in both latency and accuracy.
+  - Approximate indexes (HNSW, IVF) introduce recall trade-offs that complicate
+    reproducibility in a thesis setting. IndexFlatL2 is the correct baseline.
+  - Thesis argument: the retrieval bottleneck for edge LTM is the embedding
+    step (~20-50 ms), not the FAISS search step (<1 ms for N<10,000).
+
+7.2  Why Mean-Pooling + L2 Normalisation for Embeddings?
+  - google/embedding-gemma-300m is an encoder-style model; it produces a hidden
+    state per token, not a single sentence vector.
+  - Mean-pooling (weighted by the attention mask) aggregates token representations
+    into a single 768-d sentence vector — the standard approach for bi-encoder
+    retrieval (Reimers & Gurevych, 2019, Sentence-BERT).
+  - L2 normalisation ensures that inner-product similarity and L2 distance are
+    monotonically related, making IndexFlatL2 equivalent to cosine similarity.
+
+7.3  Why Sidecar JSON and Not a Relational Database?
+  - SQLite or PostgreSQL add dependencies and are overkill for edge devices.
+  - JSON is human-readable, trivially portable, and loadable with zero extra
+    libraries — ideal for a research module where inspectability matters.
+  - The sidecar pattern (FAISS handles vectors, JSON handles text) mirrors
+    production RAG architectures (e.g., Pinecone metadata store, Weaviate).
+
+7.4  4-bit Quantization (NF4) Justification
+  - Dettmers et al. (2023) "QLoRA" demonstrated that NF4 quantization achieves
+    near-lossless performance on instruction-following tasks at ~25% the memory
+    footprint of fp16.
+  - For a 4B-parameter model: fp16 ≈ 8 GB  →  NF4 ≈ 2.5 GB, enabling
+    deployment on consumer-grade GPUs (e.g., RTX 3060 6 GB, Jetson Orin 8 GB).
+  - Double quantization further reduces the quantization constant overhead by
+    ~0.4 bits/parameter with negligible accuracy loss.
+
+================================================================================
+END OF INTEGRATION GUIDE
+================================================================================
