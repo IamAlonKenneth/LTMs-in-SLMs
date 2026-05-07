@@ -1,5 +1,5 @@
 """
-ltm_module.py
+vector_embed_module.py
 =============
 Dense-Retrieval Long-Term Memory (LTM) Module
 for Gemma 3 4B Small Language Model (SLM)
@@ -9,7 +9,7 @@ Embedding Model: google/embedding-gemma-300m (768-d vectors)
 Vector Index   : FAISS IndexFlatL2  (brute-force L2, 100% recall)
 Persistence    : Sidecar JSON dictionary (FAISS int-ID → text + metadata)
 
-Author  : [Your Name / Lab]
+Author  : [John Kenneth Alon]
 Thesis  : Dense-Retrieval LTM for Edge-Deployed SLMs
 """
 
@@ -36,7 +36,7 @@ from transformers import (              # pip install transformers
 # ---------------------------------------------------------------------------
 # Constants — keep aligned with thesis terminology
 # ---------------------------------------------------------------------------
-EMBEDDING_DIM          = 768           # google/embedding-gemma-300m output dim
+EMBEDDING_DIM          = 128           # google/embedding-gemma-300m output dim
 DEFAULT_TOP_K          = 5             # default number of memories to retrieve
 DEFAULT_MAX_NEW_TOKENS = 512           # max generation tokens for Gemma 3 4B
 CONTEXT_HEADER         = "[RETRIEVED CONTEXT]"
@@ -81,7 +81,7 @@ class VectorEmbeddedMemory:
         self,
         embedding_model_id : str  = "google/embedding-gemma-300m",
         slm_model_id        : str  = "google/gemma-3-4b-it",
-        quantization        : str  = "4bit",          # "4bit" | "8bit" | "none"
+        quantization        : str  = "8bit",          # currently using 8-bit for demo; switch to "4bit" for edge deployment
         device              : str  = "auto",
         embedding_dim       : int  = EMBEDDING_DIM,
         verbose             : bool = True,
