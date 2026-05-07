@@ -1,5 +1,5 @@
 """
-vector_embed_module.py
+ltm_module.py
 =============
 Dense-Retrieval Long-Term Memory (LTM) Module
 for Gemma 3 4B Small Language Model (SLM)
@@ -9,7 +9,7 @@ Embedding Model: google/embedding-gemma-300m (768-d vectors)
 Vector Index   : FAISS IndexFlatL2  (brute-force L2, 100% recall)
 Persistence    : Sidecar JSON dictionary (FAISS int-ID → text + metadata)
 
-Author  : [John Kenneth Alon]
+Author  : [Your Name / Lab]
 Thesis  : Dense-Retrieval LTM for Edge-Deployed SLMs
 """
 
@@ -81,7 +81,7 @@ class VectorEmbeddedMemory:
         self,
         embedding_model_id : str  = "google/embedding-gemma-300m",
         slm_model_id        : str  = "google/gemma-3-4b-it",
-        quantization        : str  = "none",          # currently using 8-bit for demo; switch to "4bit" for edge deployment
+        quantization        : str  = "4bit",          # "4bit" | "8bit" | "none"
         device              : str  = "auto",
         embedding_dim       : int  = EMBEDDING_DIM,
         verbose             : bool = True,
@@ -138,7 +138,7 @@ class VectorEmbeddedMemory:
             slm_model_id,
             quantization_config  = bnb_config,          # None if quantization="none"
             device_map           = "auto",
-            torch_dtype          = torch.bfloat16,
+            torch_dtype          = torch.float16,
             low_cpu_mem_usage    = True,
             attn_implementation  = "eager",             # compatible with all HW
         )
@@ -623,9 +623,9 @@ if __name__ == "__main__":
     # Initialise the LTM module
     # NOTE: For first run, set quantization="none" on CPU-only machines.
     ltm = VectorEmbeddedMemory(
-        embedding_model_id = "google/embeddinggemma-300m",
+        embedding_model_id = "google/embedding-gemma-300m",
         slm_model_id       = "google/gemma-3-4b-it",
-        quantization       = "none",
+        quantization       = "4bit",
         verbose            = True,
     )
 

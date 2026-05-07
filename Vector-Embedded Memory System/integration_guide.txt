@@ -5,7 +5,7 @@
 ================================================================================
 
 Document Type : Technical Integration Reference
-Module File   : vector_embed_module.py  (class: VectorEmbeddedMemory)
+Module File   : ltm_module.py  (class: VectorEmbeddedMemory)
 Target SLM    : google/gemma-3-4b-it
 Embedding     : google/embedding-gemma-300m (768-d)
 Vector Index  : FAISS IndexFlatL2
@@ -31,9 +31,9 @@ SECTION 1 — ENVIRONMENT SETUP
 
   Create and activate a virtual environment:
 
-    python -m venv vector_env
-    source vector_env/bin/activate          # Linux / macOS
-    vector_env\Scripts\activate             # Windows
+    python -m venv ltm_env
+    source ltm_env/bin/activate          # Linux / macOS
+    ltm_env\Scripts\activate             # Windows
 
 1.3  Required Libraries
 -----------------------
