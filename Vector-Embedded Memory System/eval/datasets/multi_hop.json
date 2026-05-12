@@ -1,0 +1,2860 @@
+[
+    {
+        "id": "conv-26",
+        "question": "What did Caroline research?",
+        "ground_truth": "Adoption agencies",
+        "context_evidence": [
+            "D2:8"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What is Caroline's identity?",
+        "ground_truth": "Transgender woman",
+        "context_evidence": [
+            "D1:5"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What is Caroline's relationship status?",
+        "ground_truth": "Single",
+        "context_evidence": [
+            "D3:13",
+            "D2:14"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "Where did Caroline move from 4 years ago?",
+        "ground_truth": "Sweden",
+        "context_evidence": [
+            "D3:13",
+            "D4:3"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What career path has Caroline decided to persue?",
+        "ground_truth": "counseling or mental health for Transgender people",
+        "context_evidence": [
+            "D4:13",
+            "D1:11"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What activities does Melanie partake in?",
+        "ground_truth": "pottery, camping, painting, swimming",
+        "context_evidence": [
+            "D5:4",
+            "D9:1",
+            "D1:12",
+            "D1:18"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "Where has Melanie camped?",
+        "ground_truth": "beach, mountains, forest",
+        "context_evidence": [
+            "D6:16",
+            "D4:6",
+            "D8:32"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What do Melanie's kids like?",
+        "ground_truth": "dinosaurs, nature",
+        "context_evidence": [
+            "D6:6",
+            "D4:8"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What books has Melanie read?",
+        "ground_truth": "\"Nothing is Impossible\", \"Charlotte's Web\"",
+        "context_evidence": [
+            "D7:8",
+            "D6:10"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What does Melanie do to destress?",
+        "ground_truth": "Running, pottery",
+        "context_evidence": [
+            "D7:22",
+            "D5:4"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What LGBTQ+ events has Caroline participated in?",
+        "ground_truth": "Pride parade, school speech, support group",
+        "context_evidence": [
+            "D5:1",
+            "D8:17",
+            "D3:1",
+            "D1:3"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What events has Caroline participated in to help children?",
+        "ground_truth": "Mentoring program, school speech",
+        "context_evidence": [
+            "D9:2",
+            "D3:3"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What did Melanie paint recently?",
+        "ground_truth": "sunset",
+        "context_evidence": [
+            "D8:6; D9:17"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What activities has Melanie done with her family?",
+        "ground_truth": "Pottery, painting, camping, museum, swimming, hiking",
+        "context_evidence": [
+            "D8:4",
+            "D8:6",
+            "D9:1",
+            "D6:4",
+            "D1:18",
+            "D3:14"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "In what ways is Caroline participating in the LGBTQ community?",
+        "ground_truth": "Joining activist group, going to pride parades, participating in an art show, mentoring program",
+        "context_evidence": [
+            "D10:3",
+            "D5:1",
+            "D9:12",
+            "D9:2"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "How many times has Melanie gone to the beach in 2023?",
+        "ground_truth": 2,
+        "context_evidence": [
+            "D10:8",
+            "D6:16"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What kind of art does Caroline make?",
+        "ground_truth": "abstract art",
+        "context_evidence": [
+            "D11:12",
+            "D11:8",
+            "D9:14"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "Who supports Caroline when she has a negative experience?",
+        "ground_truth": "Her mentors, family, and friends",
+        "context_evidence": [
+            "D12:1",
+            "D3:11"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What types of pottery have Melanie and her kids made?",
+        "ground_truth": "bowls, cup",
+        "context_evidence": [
+            "D12:14",
+            "D8:4",
+            "D5:6"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What has Melanie painted?",
+        "ground_truth": "Horse, sunset, sunrise",
+        "context_evidence": [
+            "D13:8",
+            "D8:6",
+            "D1:12"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What are Melanie's pets' names?",
+        "ground_truth": "Oliver, Luna, Bailey",
+        "context_evidence": [
+            "D13:4",
+            "D7:18"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What subject have Caroline and Melanie both painted?",
+        "ground_truth": "Sunsets",
+        "context_evidence": [
+            "D14:5",
+            "D8:6"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What symbols are important to Caroline?",
+        "ground_truth": "Rainbow flag, transgender symbol",
+        "context_evidence": [
+            "D14:15",
+            "D4:1"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What instruments does Melanie play?",
+        "ground_truth": "clarinet and violin",
+        "context_evidence": [
+            "D15:26",
+            "D2:5"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What musical artists/bands has Melanie seen?",
+        "ground_truth": "Summer Sounds, Matt Patterson",
+        "context_evidence": [
+            "D15:16",
+            "D11:3"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What are some changes Caroline has faced during her transition journey?",
+        "ground_truth": "Changes to her body, losing unsupportive friends",
+        "context_evidence": [
+            "D16:15",
+            "D11:14"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What does Melanie do with her family on hikes?",
+        "ground_truth": "Roast marshmallows, tell stories",
+        "context_evidence": [
+            "D16:4",
+            "D10:12"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What transgender-specific events has Caroline attended?",
+        "ground_truth": "Poetry reading, conference",
+        "context_evidence": [
+            "D17:19",
+            "D15:13"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What book did Melanie read from Caroline's suggestion?",
+        "ground_truth": "\"Becoming Nicole\"",
+        "context_evidence": [
+            "D7:11",
+            "D17:10"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "How many children does Melanie have?",
+        "ground_truth": 3,
+        "context_evidence": [
+            "D18:1",
+            "D18:7"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "When did Melanie go on a hike after the roadtrip?",
+        "ground_truth": "19 October 2023",
+        "context_evidence": [
+            "D18:17"
+        ]
+    },
+    {
+        "id": "conv-26",
+        "question": "What items has Melanie bought?",
+        "ground_truth": "Figurines, shoes",
+        "context_evidence": [
+            "D19:2",
+            "D7:18"
+        ]
+    },
+    {
+        "id": "conv-30",
+        "question": "What do Jon and Gina both have in common?",
+        "ground_truth": "They lost their jobs and decided to start their own businesses.",
+        "context_evidence": [
+            "D1:2",
+            "D1:3",
+            "D1:4",
+            "D2:1"
+        ]
+    },
+    {
+        "id": "conv-30",
+        "question": "What Jon thinks the ideal dance studio should look like?",
+        "ground_truth": "By the water, with natural light and Marley flooring",
+        "context_evidence": [
+            "D1:20",
+            "D2:4",
+            "D2:8"
+        ]
+    },
+    {
+        "id": "conv-30",
+        "question": "Which city have both Jean and John visited?",
+        "ground_truth": "Rome",
+        "context_evidence": [
+            "D2:5",
+            "D15:1"
+        ]
+    },
+    {
+        "id": "conv-30",
+        "question": "Why did Gina decide to start her own clothing store?",
+        "ground_truth": "She always loved fashion trends and finding unique pieces and she lost her job so decided it was time to start her own business.",
+        "context_evidence": [
+            "D6:8",
+            "D1:3"
+        ]
+    },
+    {
+        "id": "conv-30",
+        "question": "Do Jon and Gina start businesses out of what they love?",
+        "ground_truth": "Yes",
+        "context_evidence": [
+            "D1:4",
+            "D6:8"
+        ]
+    },
+    {
+        "id": "conv-30",
+        "question": "How did Gina promote her clothes store?",
+        "ground_truth": "worked with an artist to make unique fashion pieces, made limited-edition sweatshirts, got some new offers and promotions for online store, developed a video presentation showing how to style her pieces",
+        "context_evidence": [
+            "D5:5",
+            "D16:3",
+            "D8:4",
+            "D13:4"
+        ]
+    },
+    {
+        "id": "conv-30",
+        "question": "Which events has Jon participated in to promote his business venture?",
+        "ground_truth": "fair, networking events, dance competition",
+        "context_evidence": [
+            "D10:1",
+            "D16:6",
+            "D8:4"
+        ]
+    },
+    {
+        "id": "conv-30",
+        "question": "What does Jon's dance studio offer?",
+        "ground_truth": "one-on-one metoring and training to dancers,  workshops and classes to local schools and centers",
+        "context_evidence": [
+            "D13:7",
+            "D8:13"
+        ]
+    },
+    {
+        "id": "conv-30",
+        "question": "Did Jon and Gina both participate in dance competitions?",
+        "ground_truth": "Yes",
+        "context_evidence": [
+            "D1:14",
+            "D14:14",
+            "D1:16",
+            "D1:17",
+            "D9:10"
+        ]
+    },
+    {
+        "id": "conv-30",
+        "question": "Which cities has Jon visited?",
+        "ground_truth": "Paris, Rome",
+        "context_evidence": [
+            "D2:4",
+            "D15:1"
+        ]
+    },
+    {
+        "id": "conv-30",
+        "question": "How long did it take for Jon to open his studio?",
+        "ground_truth": "six months",
+        "context_evidence": [
+            "D1:2",
+            "D15:13"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What martial arts has John done?",
+        "ground_truth": "Kickboxing, Taekwondo",
+        "context_evidence": [
+            "D2:28",
+            "D1:4"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What type of volunteering have John and Maria both done?",
+        "ground_truth": "Volunteering at a homeless shelter",
+        "context_evidence": [
+            "D3:5",
+            "D2:1"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "Where has Maria made friends?",
+        "ground_truth": "homeless shelter, gym, church",
+        "context_evidence": [
+            "D4:1",
+            "D2:1",
+            "D19:1",
+            "D14:10"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What items des John mention having as a child?",
+        "ground_truth": "A doll, a film camera",
+        "context_evidence": [
+            "D5:13",
+            "D3:15"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "Who gave Maria's family money when she was younger and her family was going through tough times?",
+        "ground_truth": "Her aunt",
+        "context_evidence": [
+            "D6:9",
+            "D5:8"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What people has Maria met and helped while volunteering?",
+        "ground_truth": "David, Jean, Cindy, Laura",
+        "context_evidence": [
+            "D7:5",
+            "D6:5",
+            "D27:8",
+            "D21:19"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What test has John taken multiple times?",
+        "ground_truth": "The military aptitude test",
+        "context_evidence": [
+            "D8:18",
+            "D3:11"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What writing classes has Maria taken?",
+        "ground_truth": "Poetry, creative writing",
+        "context_evidence": [
+            "D9:1",
+            "D7:1"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "Who did John go to yoga with?",
+        "ground_truth": "Rob",
+        "context_evidence": [
+            "D7:16",
+            "D10:1"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What damages have happened to John's car?",
+        "ground_truth": "Broken windshield, Car broke down",
+        "context_evidence": [
+            "D11:1",
+            "D4:2"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What areas of the U.S. has John been to or is planning to go to?",
+        "ground_truth": "Pacific northwest, east coast",
+        "context_evidence": [
+            "D11:5",
+            "D12:17"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What desserts has Maria made?",
+        "ground_truth": "Banana split sundae, Peach cobbler",
+        "context_evidence": [
+            "D2:25",
+            "D13:18"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What European countries has Maria been to?",
+        "ground_truth": "Spain, England",
+        "context_evidence": [
+            "D13:24",
+            "D8:15"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What has Maria done to feel closer to her faith?",
+        "ground_truth": "Join a local church, buy a cross necklace",
+        "context_evidence": [
+            "D14:10",
+            "D11:10"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What causes does John feel passionate about supporting?",
+        "ground_truth": "Veterans, schools, infrastructure",
+        "context_evidence": [
+            "D15:3",
+            "D12:5",
+            "D9:8",
+            "D1:8"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What events is Maria planning for the homeless shelter funraiser?",
+        "ground_truth": "Chili cook-off, ring-toss tournament",
+        "context_evidence": [
+            "D16:4",
+            "D15:18"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What shelters does Maria volunteer at?",
+        "ground_truth": "The homeless shelter, the dog shelter",
+        "context_evidence": [
+            "D2:1",
+            "D11:10",
+            "D17:12"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What outdoor activities has John done with his colleagues?",
+        "ground_truth": "Hiking, mountaineering",
+        "context_evidence": [
+            "D18:2",
+            "D16:2"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What types of yoga has Maria practiced?",
+        "ground_truth": "Aerial, kundalini",
+        "context_evidence": [
+            "D1:3",
+            "D18:15",
+            "D19:3"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What states has Maria vacationed at?",
+        "ground_truth": "Oregon, Florida",
+        "context_evidence": [
+            "D19:23",
+            "D18:3"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What music events has John attended?",
+        "ground_truth": "Live music event, violin concert",
+        "context_evidence": [
+            "D20:4",
+            "D8:12"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What events for veterans has John participated in?",
+        "ground_truth": "Petition, march, party, visiting veterans hospital, 5K charity run",
+        "context_evidence": [
+            "D15:1",
+            "D15:11",
+            "D21:22",
+            "D24:1",
+            "D29:4"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What are the names of John's children?",
+        "ground_truth": "Kyle, Sara",
+        "context_evidence": [
+            "D8:4",
+            "D22:7"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What area was hit by a flood?",
+        "ground_truth": "West County",
+        "context_evidence": [
+            "D14:21",
+            "D23:1"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What activities has Maria done with her church friends?",
+        "ground_truth": "Hiking, picnic, volunteer work",
+        "context_evidence": [
+            "D25:2",
+            "D24:6",
+            "D28:5"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What exercises has John done?",
+        "ground_truth": "Weight training, Circuit training, Kickboxing, yoga",
+        "context_evidence": [
+            "D25:17",
+            "D25:13",
+            "D10:1",
+            "D1:4"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What food item did Maria drop off at the homeless shelter?",
+        "ground_truth": "Cakes",
+        "context_evidence": [
+            "D26:1",
+            "D25:19"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "Who have written notes of gratitude to Maria?",
+        "ground_truth": "Cindy, Laura",
+        "context_evidence": [
+            "D27:8",
+            "D21:19"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What causes has John done events for?",
+        "ground_truth": "Toy drive, Community food drive, veterans, domestic violence",
+        "context_evidence": [
+            "D3:5",
+            "D6:12",
+            "D29:4",
+            "D29:10"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "What are Maria's dogs' names?",
+        "ground_truth": "Coco, Shadow",
+        "context_evidence": [
+            "D30:1",
+            "D31:4"
+        ]
+    },
+    {
+        "id": "conv-41",
+        "question": "How many dogs has Maria adopted from the dog shelter she volunteers at?",
+        "ground_truth": "two",
+        "context_evidence": [
+            "D30:1",
+            "D31:2"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What kind of interests do Joanna and Nate share?",
+        "ground_truth": "Watching movies, making desserts",
+        "context_evidence": [
+            "D1:10",
+            "D1:11",
+            "D1:12",
+            "D3:4",
+            "D4:9",
+            "D10:9",
+            "D20:2"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What are Joanna's hobbies?",
+        "ground_truth": "Writing, watchingmovies, exploringnature, hanging withfriends.",
+        "context_evidence": [
+            "D1:10",
+            "D2:25"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What emotions is Joanna feeling about  the screenplay she submitted?",
+        "ground_truth": "Relief, excitement,worry, hope,anxiety.",
+        "context_evidence": [
+            "D2:7",
+            "D3:1"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What is Joanna allergic to?",
+        "ground_truth": "Most reptiles,animals with fur,cockroaches, dairy",
+        "context_evidence": [
+            "D4:4",
+            "D5:11",
+            "D2:23"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "How many times has Joanna found new hiking trails?",
+        "ground_truth": "twice",
+        "context_evidence": [
+            "D8:4",
+            "D11:3"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "Which of Joanna's screenplay were rejected from production companies?",
+        "ground_truth": "first screenplay on drama and romance, third screenplay on loss identity and connection",
+        "context_evidence": [
+            "D14:1",
+            "D3:1",
+            "D2:7",
+            "D24:12",
+            "D24:13"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What places has Joanna submitted her work to?",
+        "ground_truth": "film contest, film festival.",
+        "context_evidence": [
+            "D2:7",
+            "D16:1"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What kind of writings does Joanna do?",
+        "ground_truth": "Screenplays,books, online blog posts, journal",
+        "context_evidence": [
+            "D2:3",
+            "D17:14",
+            "D18:1",
+            "D18:5"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What book recommendations has Joanna given to Nate?",
+        "ground_truth": "\"Little Women\",'A Court of Thorns andRoses'.",
+        "context_evidence": [
+            "D3:17",
+            "D19:14",
+            "D19:16"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What movies have both Joanna and Nate seen?",
+        "ground_truth": "\"Little Women\", \"Lord of the Rings\"",
+        "context_evidence": [
+            "D3:17",
+            "D10:1",
+            "D22:8"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What board games has Nate played?",
+        "ground_truth": "Chess, Catan.",
+        "context_evidence": [
+            "D16:2",
+            "D23:7"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What places has Nate met new people?",
+        "ground_truth": "A tournament and agaming convention.",
+        "context_evidence": [
+            "D14:8",
+            "D23:1"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "How many times has Joanna's scripts been rejected?",
+        "ground_truth": "Twice",
+        "context_evidence": [
+            "D14:1",
+            "D24:12"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What is something Nate gave to Joanna that brings her a lot of joy?",
+        "ground_truth": "stuffed toy pup",
+        "context_evidence": [
+            "D13:9",
+            "D24:2"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "When did Nate get Tilly for Joanna?",
+        "ground_truth": "25 May, 2022",
+        "context_evidence": [
+            "D13:9",
+            "D24:2"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "How many of Joanna's writing have made it to the big screen?",
+        "ground_truth": "two",
+        "context_evidence": [
+            "D15:1",
+            "D25:2"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "How many times has Nate taken his turtles on a walk?",
+        "ground_truth": "Twice.",
+        "context_evidence": [
+            "D5:4",
+            "D25:15"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What is Joanna inspired by?",
+        "ground_truth": "Personal experiences,her own journey ofself discovery, Nate,nature, validation,stories about findingcourage and takingrisks, people she knows, stuff she sees, imagination",
+        "context_evidence": [
+            "D4:6",
+            "D7:6",
+            "D11:11",
+            "D26:3",
+            "D26:7",
+            "D25:10"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What animal do both Nate and Joanna like?",
+        "ground_truth": "Turtles.",
+        "context_evidence": [
+            "D5:6",
+            "D26:9"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What things has Nate reccomended to Joanna?",
+        "ground_truth": "A pet,\"The Lord of the Rings\" movies,a dragon book series,coconut flavoring,\"Project Hail Mary\" book,Xenoblade Chronicles, dairy-free margarine, coconut oil",
+        "context_evidence": [
+            "D2:14",
+            "D9:12",
+            "D9:14",
+            "D10:11",
+            "D19:17",
+            "D27:23",
+            "D10:19"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What does Joanna do to remember happy memories?",
+        "ground_truth": "Hangs them on a corkboard, writes themin a notebook.",
+        "context_evidence": [
+            "D15:9",
+            "D27:34"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What mediums does Nate use to play games?",
+        "ground_truth": "Gamecube, PC,Playstation.",
+        "context_evidence": [
+            "D22:2",
+            "D27:21",
+            "D27:15"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "How many letters has Joanna recieved?",
+        "ground_truth": "Two",
+        "context_evidence": [
+            "D14:1",
+            "D18:5"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What video games does Nate play?",
+        "ground_truth": "Valorant, Counter Strike:Global Offensive,Xenoblade Chronicles, StreetFighter, Cyberpunk 2077",
+        "context_evidence": [
+            "D10:6",
+            "D27:1",
+            "D27:23",
+            "D1:7",
+            "D23:17"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What pets does Nate have?",
+        "ground_truth": "A dog and threeturtles.",
+        "context_evidence": [
+            "D8:3",
+            "D12:3",
+            "D28:23"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "How many turtles does Nate have?",
+        "ground_truth": "Three",
+        "context_evidence": [
+            "D8:3",
+            "D28:23"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What activities does Nate do with his turtles?",
+        "ground_truth": "takes them onwalks, holds them,feeds themstrawberries, givesthem baths.",
+        "context_evidence": [
+            "D25:21",
+            "D25:23",
+            "D28:31"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What do both Joanna and Nate appreciate the beauty of?",
+        "ground_truth": "Nature",
+        "context_evidence": [
+            "D11:9",
+            "D28:23"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What recommendations has Nate received from Joanna?",
+        "ground_truth": "\"Eternal Sunshine of the Spotless Mind\" movie, \"A Court of Thorns and Roses\" book, pointers for making living room comfy, starting a cork board for memories, \"Little Women\" movie",
+        "context_evidence": [
+            "D1:16",
+            "D3:17",
+            "D15:14",
+            "D15:15",
+            "D19:15",
+            "D19:16",
+            "D23:26"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What are Nate's favorite desserts?",
+        "ground_truth": "coconut milk icecream, dairy-free chocolate cake with berries, chocolate and mixed-berry icecream, dairy-free chocolate mousse",
+        "context_evidence": [
+            "D3:4",
+            "D3:10",
+            "D21:10",
+            "D3:12"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "How has Nate tried to disburse his vegan ice-cream recipes?",
+        "ground_truth": "teaching others, cooking show",
+        "context_evidence": [
+            "D18:8",
+            "D21:4"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "How many video game tournaments has Nate participated in?",
+        "ground_truth": "nine",
+        "context_evidence": [
+            "D1:3",
+            "D6:7",
+            "D10:4",
+            "D14:8",
+            "D17:1",
+            "D19:1",
+            "D20:1",
+            "D22:2",
+            "D27:1"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "How many screenplays has Joanna written?",
+        "ground_truth": "three",
+        "context_evidence": [
+            "D2:3",
+            "D4:10",
+            "D5:1",
+            "D12:13",
+            "D12:14"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "How many tournaments has Nate won?",
+        "ground_truth": "seven",
+        "context_evidence": [
+            "D1:3",
+            "D10:4",
+            "D14:8",
+            "D17:1",
+            "D19:1",
+            "D22:2",
+            "D27:1"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What recipes has Joanna made?",
+        "ground_truth": "dairy free vanilla cake with strawberry filling and coconut cream frosting, parfait, strawberry chocolate cake, chocolate coconut cupcakes, chocolate raspberry tart, chocolate cake with raspberries, blueberry cheesecake bars",
+        "context_evidence": [
+            "D10:9",
+            "D10:11",
+            "D19:8",
+            "D20:2",
+            "D20:10",
+            "D21:11",
+            "D22:1",
+            "D21:3",
+            "D21:17"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What recipes has Nate made?",
+        "ground_truth": "coconut milk icecream, chocolate and vanilla swirl",
+        "context_evidence": [
+            "D3:4",
+            "D4:3"
+        ]
+    },
+    {
+        "id": "conv-42",
+        "question": "What are the skills that Nate has helped others learn?",
+        "ground_truth": "coconut milk ice cream recipe, reset high scores, tips to improve gaming skills",
+        "context_evidence": [
+            "D18:8",
+            "D26:12",
+            "D14:16"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "what are John's goals with regards to his basketball career?",
+        "ground_truth": "improve shooting percentage, win a championship",
+        "context_evidence": [
+            "D1:9",
+            "D6:15",
+            "D11:17"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "What are John's goals for his career that are not related to his basketball skills?",
+        "ground_truth": "get endorsements, build his brand, do charity work",
+        "context_evidence": [
+            "D6:15",
+            "D11:17"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "What items does John collect?",
+        "ground_truth": "sneakers, fantasy movie DVDs, jerseys",
+        "context_evidence": [
+            "D1:15",
+            "D12:18",
+            "D27:20"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "What books has Tim read?",
+        "ground_truth": "Harry Potter, Game of Thrones, the Name of the Wind, The Alchemist, The Hobbit, A Dance with Dragons, and the Wheel of Time.",
+        "context_evidence": [
+            "D1:14",
+            "D2:7",
+            "D6:8",
+            "D11:26",
+            "D20:21",
+            "D26:36",
+            "D22:13"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "Which geographical locations has Tim been to?",
+        "ground_truth": "California, London, the Smoky Mountains",
+        "context_evidence": [
+            "D1:18",
+            "D3:2",
+            "D14:16"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "Which endorsement deals has John been offered?",
+        "ground_truth": "basketball shoes and gear deal with Nike, potential sponsorship with Gatorade, Moxie a popular beverage company, outdoor gear company",
+        "context_evidence": [
+            "D3:13",
+            "D3:15",
+            "D25:2",
+            "D29:4"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "What sports does John like besides basketball?",
+        "ground_truth": "surfing",
+        "context_evidence": [
+            "D1:7",
+            "D2:14",
+            "D3:1",
+            "D3:25"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "What does Tim do to escape reality?",
+        "ground_truth": "Read fantasy books.",
+        "context_evidence": [
+            "D2:11",
+            "D3:30"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "What kind of writing does Tim do?",
+        "ground_truth": "comments on favorite books in a fantasy literature forum, articles on fantasy novels, studying characters, themes, and making book recommendations, writing a fantasy novel",
+        "context_evidence": [
+            "D2:1",
+            "D4:3",
+            "D4:5",
+            "D15:3"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "How many games has John mentioned winning?",
+        "ground_truth": "6",
+        "context_evidence": [
+            "D3:3",
+            "D5:2",
+            "D22:4",
+            "D23:7",
+            "D24:2"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "What authors has Tim read books from?",
+        "ground_truth": "J.K. Rowling, R.R. Martin, Patrick Rothfuss, Paulo Coelho, and J. R. R. Tolkien.",
+        "context_evidence": [
+            "D1:14",
+            "D2:7",
+            "D4:7",
+            "D5:15",
+            "D:11:26",
+            "D20:21",
+            "D26:36"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "Which US cities does John mention visiting to Tim?",
+        "ground_truth": "Seattle, Chicago, New York",
+        "context_evidence": [
+            "D3:19",
+            "D6:3",
+            "D9:6"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "What similar sports collectible do Tim and John own?",
+        "ground_truth": "signed basketball",
+        "context_evidence": [
+            "D7:7",
+            "D7:9",
+            "D16:7",
+            "D16:9"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "Which TV series does Tim mention watching?",
+        "ground_truth": "That, Wheel of Time",
+        "context_evidence": [
+            "D17:1",
+            "D17:11",
+            "D26:36"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "What schools did John play basketball in and how many years was he with his team during high school?",
+        "ground_truth": "Middle school, high school, and college and he was with his high school team for 4 years.",
+        "context_evidence": [
+            "D6:13",
+            "D9:4"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "Which cities has John been to?",
+        "ground_truth": "Seattle, Chicago, New York, and Paris.",
+        "context_evidence": [
+            "D3:19",
+            "D6:3",
+            "D9:6",
+            "D27:36"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "What outdoor activities does John enjoy?",
+        "ground_truth": "Hiking, surfing",
+        "context_evidence": [
+            "D3:27",
+            "D12:6"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "Who is Tim and John's favorite basketball player?",
+        "ground_truth": "LeBron James",
+        "context_evidence": [
+            "D12:20",
+            "D12:22",
+            "D16:9"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "which country has Tim visited most frequently in his travels?",
+        "ground_truth": "UK",
+        "context_evidence": [
+            "D1:18",
+            "D13:1",
+            "D18:1"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "What kind of fiction stories does Tim write?",
+        "ground_truth": "Fantasy stories with plot twists",
+        "context_evidence": [
+            "D15:3",
+            "D16:1"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "What has John cooked?",
+        "ground_truth": "Soup, a slow cooker meal, and honey garlic chicken with roasted veg.",
+        "context_evidence": [
+            "D10:4",
+            "D15:30",
+            "D15:31",
+            "D15:32"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "What does John like about Lebron James?",
+        "ground_truth": "His heart, determination, skills, and leadership.",
+        "context_evidence": [
+            "D12:20",
+            "D16:12"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "When did John get an ankle injury in 2023?",
+        "ground_truth": "around November 16, 2023",
+        "context_evidence": [
+            "D18:2"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "How many times has John injured his ankle?",
+        "ground_truth": "two times",
+        "context_evidence": [
+            "D18:2",
+            "D19:6"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "Which book was John reading during his recovery from an ankle injury?",
+        "ground_truth": "The Alchemist",
+        "context_evidence": [
+            "D19:20",
+            "D18:2"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "What does John do to supplement his basketball training?",
+        "ground_truth": "Yoga, strength training",
+        "context_evidence": [
+            "D8:5",
+            "D20:2"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "What instruments does Tim play?",
+        "ground_truth": "piano, violin",
+        "context_evidence": [
+            "D8:12",
+            "D21:11"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "Which career-high performances did John achieve in 2023?",
+        "ground_truth": "highest point score, highest assist",
+        "context_evidence": [
+            "D3:1",
+            "D23:2"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "What books has John read?",
+        "ground_truth": "inpsiring book on dreaming big, The Alchemist, fantasy series, non-fiction books on personal development, Dune",
+        "context_evidence": [
+            "D4:10",
+            "D11:26",
+            "D17:9",
+            "D19:16",
+            "D19:20",
+            "D22:12"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "What does John do to share his knowledge?",
+        "ground_truth": "gives seminars, mentors younger players.",
+        "context_evidence": [
+            "D14:3",
+            "D26:1"
+        ]
+    },
+    {
+        "id": "conv-43",
+        "question": "What fantasy movies does Tim like?",
+        "ground_truth": "Lord of the Rings, Harry Potter, and Star Wars.",
+        "context_evidence": [
+            "D8:16",
+            "D8:18",
+            "D26:28",
+            "D26:32",
+            "D27:21"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What kind of indoor activities has Andrew pursued with his girlfriend?",
+        "ground_truth": "boardgames, volunteering at pet shelter, wine tasting, growing flowers",
+        "context_evidence": [
+            "D13:1",
+            "D23:1",
+            "D25:1",
+            "D19:15"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What kind of places have Andrew and his girlfriend checked out around the city?",
+        "ground_truth": "cafes, new places to eat, open space for hikes, pet shelter, wine tasting event, park",
+        "context_evidence": [
+            "D3:1",
+            "D3:11",
+            "D4:2",
+            "D6:1",
+            "D13:1",
+            "D23:3",
+            "D25:1",
+            "D27:1"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What kind of classes or groups has Audrey joined to take better care of her dogs?",
+        "ground_truth": "positive reinforcement training workshop to bond with pets, dog training course, agility training course, grooming course, dog-owners group",
+        "context_evidence": [
+            "D6:2",
+            "D10:1",
+            "D14:2",
+            "D16:6",
+            "D27:2"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What outdoor activities has Andrew done other than hiking in nature?",
+        "ground_truth": "rock climbing, fishing, camping",
+        "context_evidence": [
+            "D8:1",
+            "D17:1",
+            "D14:1"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What is something that Andrew really misses while working in the city?",
+        "ground_truth": "being in nature",
+        "context_evidence": [
+            "D3:7",
+            "D9:20"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What is a shared frustration regarding dog ownership for Audrey and Andrew?",
+        "ground_truth": "Not being able to find pet friendly spots.",
+        "context_evidence": [
+            "D7:8",
+            "D10:5"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "How many times did Audrey and Andew plan to hike together?",
+        "ground_truth": "three times",
+        "context_evidence": [
+            "D11:7",
+            "D24:13",
+            "D26:20"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "Where did Audrey get Pixie from?",
+        "ground_truth": "breeder",
+        "context_evidence": [
+            "D11:4",
+            "D2:1"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What are the classes that Audrey took for her dogs to?",
+        "ground_truth": "Positive reinforcement training class for bonding, dog training course, agility class",
+        "context_evidence": [
+            "D6:4",
+            "D10:1",
+            "D14:2"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What are some problems that Andrew faces before he adopted Toby?",
+        "ground_truth": "Finding the right dog and pet-friendly apartments close to open spaces",
+        "context_evidence": [
+            "D2:12",
+            "D5:3",
+            "D5:5",
+            "D5:7"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "Did Audrey and Andrew grow up with a pet dog?",
+        "ground_truth": "Yes",
+        "context_evidence": [
+            "D2:16",
+            "D13:10"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What is the biggest stressor in Andrew's life besides not being able to hike frequently?",
+        "ground_truth": "work",
+        "context_evidence": [
+            "D12:3",
+            "D16:1",
+            "D18:1",
+            "D10:16"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "How does Andrew feel about his current work?",
+        "ground_truth": "Stressful",
+        "context_evidence": [
+            "D12:3",
+            "D16:1",
+            "D18:1",
+            "D10:16"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What is something that Audrey often dresses up her dogs with?",
+        "ground_truth": "Hats",
+        "context_evidence": [
+            "D4:23",
+            "D4:25",
+            "D19:6"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What are the names of Audrey's dogs?",
+        "ground_truth": "Pepper, Precious, Panda, and Pixie",
+        "context_evidence": [
+            "D1:7",
+            "D2:1",
+            "D19:12"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What has Andrew done with his dogs?",
+        "ground_truth": "Taking walks and hiking",
+        "context_evidence": [
+            "D14:27",
+            "D24:8"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What kind of tattoo does Audrey have on her arm?",
+        "ground_truth": "Tattoos of her four dogs.",
+        "context_evidence": [
+            "D3:26",
+            "D15:1",
+            "D23:20"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What are the names of Andrew's dogs?",
+        "ground_truth": "Toby, Scout, Buddy",
+        "context_evidence": [
+            "D12:1",
+            "D24:6",
+            "D28:8"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What are some foods that Audrey likes eating?",
+        "ground_truth": "chicken pot pie, chicken roast, blueberry muffins, sushi",
+        "context_evidence": [
+            "D3:18",
+            "D10:13",
+            "D10:23",
+            "D25:6"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What did Audrey get wtih having so many dogs?",
+        "ground_truth": "Companionship",
+        "context_evidence": [
+            "D2:15",
+            "D23:18"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What is a good place for dogs to run around freely and meet new friends?",
+        "ground_truth": "The dog park",
+        "context_evidence": [
+            "D4:25",
+            "D14:2",
+            "D23:10"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What are the breeds of Audrey's dogs?",
+        "ground_truth": "Mongrel mixed with Lab for Pepper and Panda. Mongrel mixed with Chihuahua for Precious and Pixie.",
+        "context_evidence": [
+            "D19:12",
+            "D26:13"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What technique is Audrey using to discipline her dogs?",
+        "ground_truth": "Positive reinforcement",
+        "context_evidence": [
+            "D6:4",
+            "D26:5"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What does Andrew view his pets as?",
+        "ground_truth": "Family",
+        "context_evidence": [
+            "D15:14",
+            "D28:18"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What does Audrey view her pets as?",
+        "ground_truth": "Family",
+        "context_evidence": [
+            "D15:15",
+            "D23:18"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What is a skill that Audrey learned to take care of her dogs?",
+        "ground_truth": "Grooming",
+        "context_evidence": [
+            "D16:2",
+            "D17:4"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What items has Audrey bought or made for her dogs?",
+        "ground_truth": "dog tags, toys, dog beds, collars",
+        "context_evidence": [
+            "D1:2",
+            "D9:5",
+            "D18:10",
+            "D24:1"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "What activity do Audrey's dogs like to do in the dog park?",
+        "ground_truth": "Play fetch with ball and frisbee, run around and meet other dogs",
+        "context_evidence": [
+            "D4:21",
+            "D10:7",
+            "D13:8",
+            "D23:14",
+            "D27:12"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "Has Andrew moved into a new apartment for his dogs?",
+        "ground_truth": "No",
+        "context_evidence": [
+            "D5:5",
+            "D28:12"
+        ]
+    },
+    {
+        "id": "conv-44",
+        "question": "How many dogs does Andrew have?",
+        "ground_truth": "3",
+        "context_evidence": [
+            "D12:1",
+            "D24:2",
+            "D28:6"
+        ]
+    },
+    {
+        "id": "conv-47",
+        "question": "Which places or events have John and James planned to meet at?",
+        "ground_truth": "VR Club, McGee's, baseball game",
+        "context_evidence": [
+            "D1:36",
+            "D21:15",
+            "D23:5",
+            "D23:6"
+        ]
+    },
+    {
+        "id": "conv-47",
+        "question": "Do both James and John have pets?",
+        "ground_truth": "No",
+        "context_evidence": [
+            "D1:12",
+            "D2:18"
+        ]
+    },
+    {
+        "id": "conv-47",
+        "question": "What are John and James' favorite games?",
+        "ground_truth": "John's favorite game is CS:GO, and James's is Apex Legends.",
+        "context_evidence": [
+            "D3:11",
+            "D4:16"
+        ]
+    },
+    {
+        "id": "conv-47",
+        "question": "How many pets does James have?",
+        "ground_truth": "Three dogs.",
+        "context_evidence": [
+            "D1:12",
+            "D1:14",
+            "D5:1"
+        ]
+    },
+    {
+        "id": "conv-47",
+        "question": "What are the names of James's dogs?",
+        "ground_truth": "Ned, Daisy, Max",
+        "context_evidence": [
+            "D1:14",
+            "D5:1"
+        ]
+    },
+    {
+        "id": "conv-47",
+        "question": "Which books has John recommended to James?",
+        "ground_truth": "The Name of the Wind, Stormlight Archive, Kingkiller Chronicles, Expanse",
+        "context_evidence": [
+            "D8:14",
+            "D14:10"
+        ]
+    },
+    {
+        "id": "conv-47",
+        "question": "How many charity tournaments has John organized till date?",
+        "ground_truth": "two",
+        "context_evidence": [
+            "D10:2",
+            "D29:1"
+        ]
+    },
+    {
+        "id": "conv-47",
+        "question": "Who or which organizations have been the beneficiaries of John's charity tournaments?",
+        "ground_truth": "animal shelter, homeless, children's hospital",
+        "context_evidence": [
+            "D10:10",
+            "D10:12",
+            "D29:1"
+        ]
+    },
+    {
+        "id": "conv-47",
+        "question": "What kind of games has James tried to develop?",
+        "ground_truth": "football simulator, virtual world inspired by Witcher 3",
+        "context_evidence": [
+            "D13:7",
+            "D1:4",
+            "D27:2"
+        ]
+    },
+    {
+        "id": "conv-47",
+        "question": "Which countries has James visited?",
+        "ground_truth": "Italy, Mexico, Turkey, Canada, Greenland",
+        "context_evidence": [
+            "D6:12",
+            "D6:14",
+            "D16:9",
+            "D17:22"
+        ]
+    },
+    {
+        "id": "conv-47",
+        "question": "What kind of classes has James joined?",
+        "ground_truth": "game design course, cooking classes",
+        "context_evidence": [
+            "D13:6",
+            "D23:13"
+        ]
+    },
+    {
+        "id": "conv-47",
+        "question": "Which countries did James visit in July 2022?",
+        "ground_truth": "Canada, Greenland",
+        "context_evidence": [
+            "D16:9",
+            "D17:22"
+        ]
+    },
+    {
+        "id": "conv-47",
+        "question": "What happened to John's job situation in 2022?",
+        "ground_truth": "quit his IT Job, secured his dream job, aspires to become an eSports competition organizer",
+        "context_evidence": [
+            "D4:36",
+            "D18:1",
+            "D18:7"
+        ]
+    },
+    {
+        "id": "conv-47",
+        "question": "What kind of tricks do James's pets know?",
+        "ground_truth": "swimming, catching frisbees, balancing on a skateboard, sit, stay, paw, and rollover",
+        "context_evidence": [
+            "D2:17",
+            "D14:17",
+            "D14:23",
+            "D17:16"
+        ]
+    },
+    {
+        "id": "conv-47",
+        "question": "What kind of beer does McGee's bar serve?",
+        "ground_truth": "Stout, lager",
+        "context_evidence": [
+            "D21:15",
+            "D21:17",
+            "D23:3"
+        ]
+    },
+    {
+        "id": "conv-47",
+        "question": "What gaming equipments did John buy or refurbish?",
+        "ground_truth": "Sennheiser headphones, Logitech mouse, gaming desk",
+        "context_evidence": [
+            "D23:8",
+            "D23:10",
+            "D20:9"
+        ]
+    },
+    {
+        "id": "conv-47",
+        "question": "Which new games did John start play during the course of the conversation with James?",
+        "ground_truth": "AC Valhalla, Witcher 3, FIFA 23, Dungeons of the Dragons, futuristic dystopian game",
+        "context_evidence": [
+            "D5:4",
+            "D19:7",
+            "D30:14",
+            "D24:1",
+            "D24:3",
+            "D8:20"
+        ]
+    },
+    {
+        "id": "conv-47",
+        "question": "What kind of programming-related events has John hosted?",
+        "ground_truth": "online programming competition, programming seminar",
+        "context_evidence": [
+            "D27:1",
+            "D28:6"
+        ]
+    },
+    {
+        "id": "conv-47",
+        "question": "Which of James's family members have visited him in the last year?",
+        "ground_truth": "mother, sister",
+        "context_evidence": [
+            "D17:28",
+            "D28:19"
+        ]
+    },
+    {
+        "id": "conv-47",
+        "question": "What games has John played with his friends at charity tournaments?",
+        "ground_truth": "CS:GO, Fortnite, Overwatch and Apex Legends",
+        "context_evidence": [
+            "D10:4",
+            "D29:1",
+            "D29:3"
+        ]
+    },
+    {
+        "id": "conv-48",
+        "question": "Which of Deborah`s family and friends have passed away?",
+        "ground_truth": "mother, father, her friend Karlie",
+        "context_evidence": [
+            "D1:5",
+            "D2:1",
+            "D6:4"
+        ]
+    },
+    {
+        "id": "conv-48",
+        "question": "What symbolic gifts do Deborah and Jolene have from their mothers?",
+        "ground_truth": "pendants",
+        "context_evidence": [
+            "D1:8",
+            "D1:9"
+        ]
+    },
+    {
+        "id": "conv-48",
+        "question": "What helped Deborah find peace when grieving deaths of her loved ones?",
+        "ground_truth": "yoga, old photos, the roses and dahlias in a flower garden, nature",
+        "context_evidence": [
+            "D1:15",
+            "D2:3",
+            "D6:4",
+            "D15:29"
+        ]
+    },
+    {
+        "id": "conv-48",
+        "question": "What places give Deborah peace?",
+        "ground_truth": "sitting in a spot by the window in her Mom's house, sitting by the beach, Bali, forest trail in a nearby park",
+        "context_evidence": [
+            "D2:13",
+            "D4:34",
+            "D6:10",
+            "D19:17"
+        ]
+    },
+    {
+        "id": "conv-48",
+        "question": "What were Deborah's mother's hobbies?",
+        "ground_truth": "reading, traveling, art, cooking",
+        "context_evidence": [
+            "D2:17",
+            "D2:19",
+            "D12:3",
+            "D29:7"
+        ]
+    },
+    {
+        "id": "conv-48",
+        "question": "How many times has Jolene been to France?",
+        "ground_truth": "two times",
+        "context_evidence": [
+            "D2:24",
+            "D1:8"
+        ]
+    },
+    {
+        "id": "conv-48",
+        "question": "Which games have Jolene and her partner played together?",
+        "ground_truth": "Detroit, Walking Dead, Battlefield 1, It Takes Two, Overcooked 2",
+        "context_evidence": [
+            "D2:26",
+            "D2:30",
+            "D20:1",
+            "D15:10",
+            "D19:10"
+        ]
+    },
+    {
+        "id": "conv-48",
+        "question": "What new yoga poses did Deborah try?",
+        "ground_truth": "Warrior II, Dancer Pose (Natarajasana), Tree pose",
+        "context_evidence": [
+            "D4:14",
+            "D14:3",
+            "D14:15"
+        ]
+    },
+    {
+        "id": "conv-48",
+        "question": "What time management techniques do Deborah and Jolene use?",
+        "ground_truth": "the Pomodoro Technique - 25 minutes work and 5-minute break, scheduler or to-do list, The Eisenhower Matrix, bullet journal",
+        "context_evidence": [
+            "D10:4",
+            "D10:5",
+            "D10:6",
+            "D10:13",
+            "D18:3"
+        ]
+    },
+    {
+        "id": "conv-48",
+        "question": "What ways do Deborah and Jolene use to enhance their yoga practice?",
+        "ground_truth": "candles, music, essential oils",
+        "context_evidence": [
+            "D11:4",
+            "D11:7",
+            "D28:16",
+            "D28:18"
+        ]
+    },
+    {
+        "id": "conv-48",
+        "question": "Did Jolene teach herself how to play the console?",
+        "ground_truth": "yes",
+        "context_evidence": [
+            "D2:28",
+            "D24:8"
+        ]
+    },
+    {
+        "id": "conv-48",
+        "question": "Where did Jolene and her partner find a cool diving spot?",
+        "ground_truth": "Phuket",
+        "context_evidence": [
+            "D27:1",
+            "D29:4"
+        ]
+    },
+    {
+        "id": "conv-48",
+        "question": "Has Deborah tried surfing?",
+        "ground_truth": "yes",
+        "context_evidence": [
+            "D28:11",
+            "D29:25"
+        ]
+    },
+    {
+        "id": "conv-48",
+        "question": "Has Jolene tried surfing?",
+        "ground_truth": "no",
+        "context_evidence": [
+            "D10:20",
+            "D29:26",
+            "D29:30"
+        ]
+    },
+    {
+        "id": "conv-48",
+        "question": "Which locations does Deborah practice her yoga at?",
+        "ground_truth": "at her mother's old home, park, yoga studio, beach",
+        "context_evidence": [
+            "D2:11",
+            "D2:13",
+            "D3:6",
+            "D4:12",
+            "D6:10"
+        ]
+    },
+    {
+        "id": "conv-48",
+        "question": "What kind of professional activities does Jolene participate in to gain more experience in her field?",
+        "ground_truth": "present work at virtual conference, attend workshops  and intern at firms",
+        "context_evidence": [
+            "D21:6",
+            "D13:5"
+        ]
+    },
+    {
+        "id": "conv-48",
+        "question": "What kind of engineering projects has Jolene worked on?",
+        "ground_truth": "electrical engineering, robotics, sustainable water purifier, productive and affordable aerial surveillance system",
+        "context_evidence": [
+            "D1:2",
+            "D3:1",
+            "D4:5",
+            "D17:10",
+            "D17:12"
+        ]
+    },
+    {
+        "id": "conv-48",
+        "question": "Which community activities have Deborah and Anna participated in?",
+        "ground_truth": "yoga, running",
+        "context_evidence": [
+            "D4:12",
+            "D4:16",
+            "D15:1"
+        ]
+    },
+    {
+        "id": "conv-48",
+        "question": "What gifts has Deborah received?",
+        "ground_truth": "an appreciate letter from her community, a flower bouqet from her friend, a motivational quote from a friend",
+        "context_evidence": [
+            "D2:7",
+            "D2:9",
+            "D4:26",
+            "D23:20",
+            "D23:22"
+        ]
+    },
+    {
+        "id": "conv-48",
+        "question": "Which countries has Deborah traveled to?",
+        "ground_truth": "Thailand, Brazil",
+        "context_evidence": [
+            "D6:10",
+            "D23:18"
+        ]
+    },
+    {
+        "id": "conv-48",
+        "question": "What activities does Deborah pursue besides practicing and teaching yoga?",
+        "ground_truth": "biking, going to art shows, running, organizing workshops to practice mindfulness and self-care, surfing, gardening",
+        "context_evidence": [
+            "D12:1",
+            "D15:1",
+            "D15:11",
+            "D28:11",
+            "D29:1"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What kind of car does Evan drive?",
+        "ground_truth": "Prius",
+        "context_evidence": [
+            "D1:2",
+            "D1:4",
+            "D18:1",
+            "D18:3",
+            "D22:2"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What kinds of things did Evan have broken?",
+        "ground_truth": "His old Prius and his new Prius.",
+        "context_evidence": [
+            "D18:1",
+            "D18:2",
+            "D18:3",
+            "D1:2",
+            "D1:4"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "Where has Evan been on roadtrips with his family?",
+        "ground_truth": "Rockies, Jasper",
+        "context_evidence": [
+            "D1:2",
+            "D1:4",
+            "D2:1"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "How many Prius has Evan owned?",
+        "ground_truth": "two",
+        "context_evidence": [
+            "D1:2",
+            "D1:4"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "How many roadtrips did Evan take in May 2023?",
+        "ground_truth": "two",
+        "context_evidence": [
+            "D1:4",
+            "D2:1"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What new hobbies did Sam consider trying?",
+        "ground_truth": "Painting, kayaking, hiking, cooking, running",
+        "context_evidence": [
+            "D1:11",
+            "D2:10",
+            "D10:8",
+            "D13:6",
+            "D13:8",
+            "D20:6",
+            "D7:2",
+            "D7:4",
+            "D7:6",
+            "D21:19"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What hobby did Evan start practicing a few years ago that he enjoys?",
+        "ground_truth": "Watercolor painting",
+        "context_evidence": [
+            "D1:14",
+            "D1:16",
+            "D8:13",
+            "D8:14"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What health issue did Sam face that motivated him to change his lifestyle?",
+        "ground_truth": "Weight problem",
+        "context_evidence": [
+            "D2:6",
+            "D3:4",
+            "D24:12",
+            "D24:14",
+            "D5:5",
+            "D6:2",
+            "D7:2",
+            "D7:12",
+            "D8:1",
+            "D10:6",
+            "D12:1",
+            "D13:2",
+            "D14:1",
+            "D15:1",
+            "D16:3",
+            "D17:3",
+            "D24:20",
+            "D25:1",
+            "D25:3"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What is Evan's favorite food?",
+        "ground_truth": "Ginger snaps",
+        "context_evidence": [
+            "D3:3",
+            "D5:5",
+            "D23:15",
+            "D22:12"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What kind of unhealthy snacks does Sam enjoy eating?",
+        "ground_truth": "soda, candy",
+        "context_evidence": [
+            "D3:4"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What recurring issue frustrates Sam at the grocery store?",
+        "ground_truth": "Malfunctioning self-checkout machines.",
+        "context_evidence": [
+            "D3:16",
+            "D22:19"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What kind of healthy food suggestions has Evan given to Sam?",
+        "ground_truth": "flavored seltzer water, dark chocolate with high cocoa content, air-popped popcorn and fruit, veggies, healthy sandwich snacks, energy balls, grilled chicken salad with avocado",
+        "context_evidence": [
+            "D3:5",
+            "D4:10",
+            "D22:10",
+            "D22:14",
+            "D24:15"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "How does Evan describe the woman and his feelings for her that he met in Canada?",
+        "ground_truth": "He says she's cool, incredible, like something out of a movie, and that he feels alive around her. Every moment with her is fun and energetic, also Evan feels really lucky to have someone who gets him.",
+        "context_evidence": [
+            "D5:1",
+            "D5:3",
+            "D23:3"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What motivates Evan to take care of his health?",
+        "ground_truth": "family, fitness tracker, thirst for adventure on interesting hikes",
+        "context_evidence": [
+            "D5:9",
+            "D5:11",
+            "D5:13"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What kind of writing does Sam do to relax and cope with his health issues?",
+        "ground_truth": "journalling, creative writing",
+        "context_evidence": [
+            "D6:4",
+            "D11:7"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "Who did Evan meet on his trip to Canada, and who did he come back from Canada with?",
+        "ground_truth": "Evan met the woman he fell in love with and returned with her.",
+        "context_evidence": [
+            "D5:1",
+            "D6:1"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What recurring frustration does Evan experience?",
+        "ground_truth": "Evan consistently misplaces his keys every week.",
+        "context_evidence": [
+            "D6:13",
+            "D21:20"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What is the recurring dream that Sam keeps having?",
+        "ground_truth": "he's flying over a cityscape.",
+        "context_evidence": [
+            "D6:14",
+            "D24:22"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What accidents has Evan's son faced lately?",
+        "ground_truth": "injured at a soccer game, fell off his bike",
+        "context_evidence": [
+            "D7:1",
+            "D20:3"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What kind of foods or recipes has Sam recommended to Evan?",
+        "ground_truth": "grilled vegetables, grilled chicken and veggie stir-fry, poutine",
+        "context_evidence": [
+            "D7:8",
+            "D8:7",
+            "D23:26"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What kind of healthy meals did Sam start eating after getting a health scare?",
+        "ground_truth": "salad, grilled salmon and vegetables, grilled chicken and veggie stir-fry, Beef Merlot, fruit bowl, smoothie bowl",
+        "context_evidence": [
+            "D3:2",
+            "D8:1",
+            "D7:4",
+            "D8:7",
+            "D10:2",
+            "D11:1",
+            "D18:6"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "How did Evan get into painting?",
+        "ground_truth": "His friend got him into it by gifting him a painting and giving him some advice. The painting inspired Evan.",
+        "context_evidence": [
+            "D1:14",
+            "D1:15",
+            "D1:16",
+            "D8:14"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What kind of subjects does Evan enjoy painting?",
+        "ground_truth": "nature landscapes, portraits, abstract minimalism",
+        "context_evidence": [
+            "D8:20",
+            "D20:13",
+            "D20:15",
+            "D21:10",
+            "D21:14"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What new diet and lifestyle change did Sam adopt over time?",
+        "ground_truth": "Healthy eating, exercise routine, running, hiking",
+        "context_evidence": [
+            "D8:1",
+            "D9:1",
+            "D21:9",
+            "D22:1"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "Who was injured in Evan's family?",
+        "ground_truth": "Evan's son and Evan himself",
+        "context_evidence": [
+            "D7:1",
+            "D7:9",
+            "D7:10",
+            "D9:2",
+            "D11:2",
+            "D11:3"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What kind of hobbies does Evan pursue?",
+        "ground_truth": "painting, hiking, reading books, biking, skiing, snowboarding, ice skating, swimming, camping, kayaking",
+        "context_evidence": [
+            "D1:14",
+            "D1:6",
+            "D4:8",
+            "D6:1",
+            "D8:30",
+            "D9:6",
+            "D25:8",
+            "D25:10"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What personal health incidents does Evan face in 2023?",
+        "ground_truth": "heart palpitations, twisted ankle, twisted ankle",
+        "context_evidence": [
+            "D3:1",
+            "D9:2",
+            "D11:2"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What recurring adventure does Evan have with strangers?",
+        "ground_truth": "Helping lost tourists and experiencing unexpected adventures in the city.",
+        "context_evidence": [
+            "D11:6",
+            "D14:2"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What is Sam's persistent problem with his phone?",
+        "ground_truth": "His new phone malfunctioning, particularly with the navigation app.",
+        "context_evidence": [
+            "D11:15",
+            "D14:1"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What health scares did Sam and Evan experience?",
+        "ground_truth": "Sam faced a health scare with stomach pains that turned out to be gastritis, prompting him to rethink his health habits. Evan, on the other hand, experienced two separate incidents: a sudden heart palpitation incident and a different event involving a misunderstanding during a medical check-up. These experiences have significantly influenced their perspectives on health and well-being.",
+        "context_evidence": [
+            "D3:1",
+            "D14:1",
+            "D14:2",
+            "D17:2"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "Which ailment does Sam have to face due to his weight?",
+        "ground_truth": "gastritis",
+        "context_evidence": [
+            "D2:6",
+            "D7:2",
+            "D12:1",
+            "D14:1"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "Which two significant life events occur in Evan's life in December 2023 with his partner?",
+        "ground_truth": "his partner gets pregnant and they get married",
+        "context_evidence": [
+            "D19:1",
+            "D21:2"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "Which activity did Sam resume in December 2023 after a long time?",
+        "ground_truth": "hiking",
+        "context_evidence": [
+            "D20:6",
+            "D22:1"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "How does Evan spend his time with his bride after the wedding?",
+        "ground_truth": "family get-together, honeymoon in Canada to see snowy landscapes, ski, taste local cuisine and do some snowshoeing",
+        "context_evidence": [
+            "D23:15",
+            "D23:23",
+            "D23:25",
+            "D24:9"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "Who did Evan tell about his marriage?",
+        "ground_truth": "To Sam, to his friends from work, and to his and his wife's families.",
+        "context_evidence": [
+            "D21:2",
+            "D22:4",
+            "D22:5",
+            "D23:1",
+            "D23:5"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What is a stress reliever for Evan?",
+        "ground_truth": "Drawing, traveling, places with a beautiful view, yoga, sunsets or something comfortable for Evan",
+        "context_evidence": [
+            "D1:14",
+            "D2:10",
+            "D2:11",
+            "D2:14",
+            "D8:18",
+            "D10:8",
+            "D11:8",
+            "D16:23",
+            "D18:7",
+            "D24:19",
+            "D24:21"
+        ]
+    },
+    {
+        "id": "conv-49",
+        "question": "What is a stress reliever for Sam?",
+        "ground_truth": "Unhealthy snacks, sweets, yoga, places with beautiful views",
+        "context_evidence": [
+            "D10:6",
+            "D13:2",
+            "D13:4",
+            "D16:17",
+            "D16:23",
+            "D18:8"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "What items did Calvin buy in March 2023?",
+        "ground_truth": "mansion in Japan, luxury car Ferrari 488 GTB",
+        "context_evidence": [
+            "D1:3",
+            "D2:1"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "Which bands has Dave enjoyed listening to?",
+        "ground_truth": "Aerosmith, The Fireworks",
+        "context_evidence": [
+            "D2:10",
+            "D23:9"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "What are Dave's dreams?",
+        "ground_truth": "open a car maintenance shop, work on classic cars, build a custom car from scratch",
+        "context_evidence": [
+            "D4:5",
+            "D4:5",
+            "D5:5"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "Which types of cars does Dave like the most?",
+        "ground_truth": "classic vintage cars",
+        "context_evidence": [
+            "D4:5",
+            "D1:2",
+            "D3:12",
+            "D4:7"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "What mishaps has Calvin run into?",
+        "ground_truth": "flooding of his mansion, car accident",
+        "context_evidence": [
+            "D6:1",
+            "D9:1"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "Why does Dave regularly visit parks?",
+        "ground_truth": "because it relaxes and calms him",
+        "context_evidence": [
+            "D8:4",
+            "D1:16"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "How many times has Calvin had to deal with insurance paperwork?",
+        "ground_truth": "two times",
+        "context_evidence": [
+            "D6:5",
+            "D9:1"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "Which places or events has Calvin visited in Tokyo?",
+        "ground_truth": "music festival, car museum, Shibuya crossing, Shinjuku",
+        "context_evidence": [
+            "D3:1",
+            "D12:7",
+            "D24:19"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "Who inspired Dave's passion for car engineering?",
+        "ground_truth": "His Dad",
+        "context_evidence": [
+            "D12:2",
+            "D12:4",
+            "D26:6"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "Does Calvin want to expand his brand?",
+        "ground_truth": "yes",
+        "context_evidence": [
+            "D12:11",
+            "D18:7"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "What is Dave's main passion?",
+        "ground_truth": "auto engineering",
+        "context_evidence": [
+            "D13:3",
+            "D5:5",
+            "D4:5",
+            "D3:12"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "Can Dave work with engines?",
+        "ground_truth": "yes",
+        "context_evidence": [
+            "D13:7",
+            "D22:5",
+            "D20:1"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "What does Calvin do to relax?",
+        "ground_truth": "take long drives in his car, embrace nature, fixing cars",
+        "context_evidence": [
+            "D5:8",
+            "D5:10",
+            "D7:5"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "What are Dave's hobbies other than fixing cars?",
+        "ground_truth": "take a walk, go hiking, listen to favorite albums, live concerts, photography",
+        "context_evidence": [
+            "D5:9",
+            "D5:11",
+            "D8:8",
+            "D27:2"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "What kind of music does Dave listen to?",
+        "ground_truth": "classic rock, Japanese music",
+        "context_evidence": [
+            "D2:10",
+            "D28:40",
+            "D10:11"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "Where did Dave return from with new knowledge of different techniques of car restoration?",
+        "ground_truth": "San Francisco",
+        "context_evidence": [
+            "D17:1",
+            "D14:1"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "What was Dave doing in San Francisco?",
+        "ground_truth": "attending a car modification workshop",
+        "context_evidence": [
+            "D17:1",
+            "D14:1"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "What was the artists Calvin used to listen to when he was a kid?",
+        "ground_truth": "Tupac and Dr. Dre",
+        "context_evidence": [
+            "D20:8",
+            "D20:6"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "Which of their family member do Calvin and Dave have nostalgic memories about?",
+        "ground_truth": "Dad",
+        "context_evidence": [
+            "D12:2",
+            "D20:6"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "What shared activities do Dave and Calvin have?",
+        "ground_truth": "Working on cars",
+        "context_evidence": [
+            "D21:3",
+            "D21:4"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "What is Dave's favorite activity?",
+        "ground_truth": "Restoring cars",
+        "context_evidence": [
+            "D21:4",
+            "D22:7",
+            "D19:7"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "How many car shows has Dave attended?",
+        "ground_truth": "two",
+        "context_evidence": [
+            "D3:12",
+            "D22:1"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "When Dave was a child, what did he and his father do in the garage?",
+        "ground_truth": "tinkering with car engines, restoration and refurbishing cars",
+        "context_evidence": [
+            "D12:2",
+            "D12:4",
+            "D22:5"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "Who supports Calvin in tough times?",
+        "ground_truth": "friends and team",
+        "context_evidence": [
+            "D25:6",
+            "D29:7"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "What does help Calvin stay connected to the creative process?",
+        "ground_truth": "Calvin stays connected to the creative process by always staying up-to-date on world events and watching documentaries about artists.",
+        "context_evidence": [
+            "D25:8",
+            "D28:31"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "Which cities did Dave travel to in 2023?",
+        "ground_truth": "San Francsico, Detroit",
+        "context_evidence": [
+            "D14:1",
+            "D26:2"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "Which events in Dave's life inspired him to take up auto engineering?",
+        "ground_truth": "attending a car show with Dad, working on an old car in a neighbor's garage when he was young, spent a summer restoring an old car with Dad",
+        "context_evidence": [
+            "D26:6",
+            "D25:12",
+            "D12:2",
+            "D12:4"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "How many Ferraris does Calvin own?",
+        "ground_truth": "two",
+        "context_evidence": [
+            "D2:1",
+            "D23:16"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "What gifts has Calvin received from his artist friends?",
+        "ground_truth": "gold chain, custom-made guitar with an octopus on it",
+        "context_evidence": [
+            "D4:24",
+            "D4:26",
+            "D16:14"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "What style of guitars does Calvin own?",
+        "ground_truth": "custom-made yellow guitar with an octopus on it, shiny purple guitar",
+        "context_evidence": [
+            "D16:13",
+            "D16:4",
+            "D16:18",
+            "D16:19"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "What activities has Dave participated in with his friends?",
+        "ground_truth": "weekly visits to local parks, countryside roadtrip, celebration of the opening of his car maintenance shop, card-playing nights",
+        "context_evidence": [
+            "D10:3",
+            "D11:1",
+            "D6:8",
+            "D15:1"
+        ]
+    },
+    {
+        "id": "conv-50",
+        "question": "Do all of Dave's car restoration projects go smoothly?",
+        "ground_truth": "No",
+        "context_evidence": [
+            "D27:10",
+            "D13:7",
+            "D25:17",
+            "D20:1"
+        ]
+    }
+]
