@@ -125,7 +125,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="HuggingFace ID for the Gemma 3 4B SLM.",
     )
     ltm_group.add_argument(
-        "--quantization", type=str, default="none",
+        "--quantization", type=str, default="4bit",
         choices=["4bit", "8bit", "none"],
         help="SLM quantization mode (4bit recommended for edge deployment).",
     )

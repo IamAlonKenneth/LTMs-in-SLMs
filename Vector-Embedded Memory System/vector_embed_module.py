@@ -158,7 +158,7 @@ class VectorEmbeddedMemory:
         Steps
         -----
         1. Embed the text using the EmbeddingGemma model.
-        2. Add the 768-d vector to the FAISS IndexFlatL2.
+        2. Add the 128-d vector to the FAISS IndexFlatL2.
         3. Store { text, timestamp, metadata } in the sidecar JSON map
            keyed by the assigned FAISS integer ID.
 
@@ -623,7 +623,7 @@ if __name__ == "__main__":
     # Initialise the LTM module
     # NOTE: For first run, set quantization="none" on CPU-only machines.
     ltm = VectorEmbeddedMemory(
-        embedding_model_id = "google/embedding-gemma-300m",
+        embedding_model_id = "google/embeddinggemma-300m",
         slm_model_id       = "google/gemma-3-4b-it",
         quantization       = "4bit",
         verbose            = True,
