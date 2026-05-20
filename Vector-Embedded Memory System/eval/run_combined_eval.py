@@ -62,7 +62,7 @@ _PROJECT_ROOT = _FILE_DIR.parent
 sys.path.insert(0, str(_PROJECT_ROOT))
 sys.path.insert(0, str(_FILE_DIR))
 
-from ltm_module        import VectorEmbeddedMemory
+from vector_embed_module        import VectorEmbeddedMemory
 from ltm_eval_adapter  import (
     LongMemEvalAdapter,
     LoCoMoAdapter,
@@ -116,7 +116,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     ltm_group = p.add_argument_group("LTM Module Configuration")
     ltm_group.add_argument(
         "--embedding-model", type=str,
-        default="google/embedding-gemma-300m",
+        default="google/embeddinggemma-300m",
         help="HuggingFace ID for the embedding model.",
     )
     ltm_group.add_argument(

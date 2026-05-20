@@ -12,7 +12,7 @@ and the evaluation pipelines defined in:
 Design Principles
 -----------------
   1. ZERO dataset modification — raw JSON files are read-only.
-  2. The ltm_module is the *only* memory backend; no reference models are used.
+  2. The vector_embed_module is the *only* memory backend; no reference models are used.
   3. Knowledge Updates are handled via Temporal Context Injection (Virtual Update),
      a zero-modification strategy that feeds update text into the LTM input stream
      before the query is executed.
@@ -24,7 +24,7 @@ Terminology (aligned with thesis)
   Dense Retrieval  : FAISS k-NN lookup of relevant memories by vector similarity
   LTM Store        : Persisted FAISS index + sidecar JSON (memory bank)
   Virtual Update   : Injected knowledge-update memory (not in dataset file)
-  Session Ingestion: Converting raw dialogue turns into ltm_module memories
+  Session Ingestion: Converting raw dialogue turns into vector_embed_module memories
 """
 
 from __future__ import annotations
@@ -39,11 +39,11 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any, Optional
 
-# ── Resolve project root so ltm_module is always importable ──────────────────
+# ── Resolve project root so vector_embed_module is always importable ──────────────────
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from ltm_module import VectorEmbeddedMemory          # noqa: E402
+from vector_embed_module import VectorEmbeddedMemory          # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -100,7 +100,7 @@ class TemporalContextInjector:
     over an older fact already stored in LTM, this handler:
 
       1. Detects the update information from the dataset entry (no modification).
-      2. Injects the update as a fresh memory via ltm_module.ingest_memory(),
+      2. Injects the update as a fresh memory via vector_embed_module.ingest_memory(),
          timestamped *after* all session memories.
       3. Returns the FAISS ID of the injected memory for transparency logging.
 
@@ -193,7 +193,7 @@ class LongMemEvalAdapter:
       1. Reset the LTM (fresh FAISS index per question for isolation).
       2. Ingest all session messages chronologically as individual memories.
       3. For knowledge_update items: call TemporalContextInjector.inject().
-      4. Run ltm_module.generate_response() with the question as query.
+      4. Run vector_embed_module.generate_response() with the question as query.
       5. Map output → EvalResult.
     """
 
