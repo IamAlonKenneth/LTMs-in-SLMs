@@ -676,7 +676,7 @@ class LoCoMoAdapter:
         # LoCoMo evidence is a list of dia_id integers pointing to specific turns.
         gt_faiss_ids: list[int] = []
         for dia_id in evidence:
-            faiss_id = diaid_to_faiss_id.get(int(dia_id))
+            faiss_id = diaid_to_faiss_id.get(str(dia_id))
             if faiss_id is not None:
                 gt_faiss_ids.append(faiss_id)
 
@@ -772,7 +772,7 @@ class LoCoMoAdapter:
                 )
                 ids.append(fid)
                 if dia_id is not None:
-                    diaid_to_faiss[int(dia_id)] = fid
+                    diaid_to_faiss[str(dia_id)] = fid
 
             session_to_ids[sess_key] = ids
 
