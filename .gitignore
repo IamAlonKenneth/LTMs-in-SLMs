@@ -1,3 +1,4 @@
+.gitignore
 vector_env/
 _pycache_/
 
@@ -6,3 +7,4 @@ results/
 *.bin
 
 ltm_store/
+
