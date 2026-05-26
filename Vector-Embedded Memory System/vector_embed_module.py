@@ -36,7 +36,7 @@ from transformers import (              # pip install transformers
 # ---------------------------------------------------------------------------
 # Constants — keep aligned with thesis terminology
 # ---------------------------------------------------------------------------
-EMBEDDING_DIM          = 128           # google/embedding-gemma-300m output dim
+EMBEDDING_DIM          = 768           # google/embedding-gemma-300m output dim
 DEFAULT_TOP_K          = 5             # default number of memories to retrieve
 DEFAULT_MAX_NEW_TOKENS = 512           # max generation tokens for Gemma 3 4B
 CONTEXT_HEADER         = "[RETRIEVED CONTEXT]"
@@ -81,7 +81,7 @@ class VectorEmbeddedMemory:
         self,
         embedding_model_id : str  = "google/embedding-gemma-300m",
         slm_model_id        : str  = "google/gemma-3-4b-it",
-        quantization        : str  = "8bit",          # currently using 8-bit for demo; switch to "4bit" for edge deployment
+        quantization        : str  = "none",          # currently using 8-bit for demo; switch to "4bit" for edge deployment
         device              : str  = "auto",
         embedding_dim       : int  = EMBEDDING_DIM,
         verbose             : bool = True,
@@ -138,7 +138,7 @@ class VectorEmbeddedMemory:
             slm_model_id,
             quantization_config  = bnb_config,          # None if quantization="none"
             device_map           = "auto",
-            torch_dtype          = torch.float16,
+            torch_dtype          = torch.bfloat16,
             low_cpu_mem_usage    = True,
             attn_implementation  = "eager",             # compatible with all HW
         )
@@ -158,7 +158,7 @@ class VectorEmbeddedMemory:
         Steps
         -----
         1. Embed the text using the EmbeddingGemma model.
-        2. Add the 128-d vector to the FAISS IndexFlatL2.
+        2. Add the 768-d vector to the FAISS IndexFlatL2.
         3. Store { text, timestamp, metadata } in the sidecar JSON map
            keyed by the assigned FAISS integer ID.
 
@@ -176,6 +176,9 @@ class VectorEmbeddedMemory:
 
         # Step 1 — Dense embedding
         vector = self._embed_text(text)                         # shape: (1, 768)
+
+        print(f"DEBUG: Index expects dimension: {self.faiss_index.d}")
+        print(f"DEBUG: Input vector shape: {vector.shape}")
 
         # Step 2 — Add to FAISS index
         self.faiss_index.add(vector)
@@ -625,7 +628,7 @@ if __name__ == "__main__":
     ltm = VectorEmbeddedMemory(
         embedding_model_id = "google/embeddinggemma-300m",
         slm_model_id       = "google/gemma-3-4b-it",
-        quantization       = "4bit",
+        quantization       = "none",
         verbose            = True,
     )
 
