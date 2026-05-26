@@ -1,0 +1,396 @@
+================================================================
+  SPARSE RAG PIPELINE  –  Technical Notes & Setup Guide
+================================================================
+File: NOTES_AND_SETUP.txt
+Companion to: sparse_rag_pipeline.py
+================================================================
+
+
+────────────────────────────────────────────────────────────────
+SECTION 1 – PREREQUISITES & INSTALLATION
+────────────────────────────────────────────────────────────────
+
+Python version required: 3.10 or higher
+
+1.1  Install Python dependencies
+─────────────────────────────────
+Only ONE third-party package is needed for the pipeline itself:
+
+    pip install requests
+
+For optional development / testing helpers:
+    pip install rich          # pretty terminal output (optional)
+
+There are NO heavy ML dependencies (no PyTorch, no transformers,
+no sentence-transformers) because all model inference is delegated
+to Ollama running as a local HTTP server.
+
+
+1.2  Install and start Ollama
+──────────────────────────────
+Ollama ( https://ollama.com ) manages local model serving.
+
+  Linux / macOS:
+    curl -fsSL https://ollama.com/install.sh | sh
+
+  Windows:
+    Download the installer from https://ollama.com/download
+
+  Start the server (it runs in the background):
+    ollama serve
+
+  Pull the Gemma 3 4B model (~3 GB download):
+    ollama pull gemma3:4b
+
+  Verify the model is available:
+    ollama list
+
+
+1.3  Run the pipeline
+──────────────────────
+With Ollama running and the model pulled:
+
+    python sparse_rag_pipeline.py
+
+The script will:
+  ① Initialise (or reopen) the SQLite database  sparse_rag.db
+  ② Ingest 8 mock documents with varied timestamps
+  ③ Call Gemma 3 4B to expand the sample query
+  ④ Run FTS5 search with the expanded query
+  ⑤ Apply BM25 × time-decay re-ranking
+  ⑥ Call Gemma 3 4B to generate a final answer
+  ⑦ Print the answer to stdout
+
+
+1.4  Running against a remote Ollama instance
+──────────────────────────────────────────────
+Change OLLAMA_BASE_URL at the top of the script:
+
+    OLLAMA_BASE_URL = "http://192.168.1.50:11434"
+
+
+────────────────────────────────────────────────────────────────
+SECTION 2 – ARCHITECTURE OVERVIEW
+────────────────────────────────────────────────────────────────
+
+┌─────────────────────────────────────────────────────────────┐
+│                    SparseRAGPipeline                        │
+│                                                             │
+│  user_query                                                 │
+│       │                                                     │
+│       ▼                                                     │
+│  ┌──────────────────────────────────┐                       │
+│  │  QueryExpander                   │                       │
+│  │  ─ Prompt → Gemma 3 4B (Ollama) │                       │
+│  │  ─ Returns 4 related keywords   │                       │
+│  │  ─ Builds FTS5 OR query         │                       │
+│  └──────────────────┬───────────────┘                       │
+│                     │  expanded FTS5 query                  │
+│                     ▼                                       │
+│  ┌──────────────────────────────────┐                       │
+│  │  FTS5Store (SQLite FTS5)         │                       │
+│  │  ─ MATCH query on inverted index │                       │
+│  │  ─ Returns top-20 candidates     │                       │
+│  │    with raw bm25() scores        │                       │
+│  └──────────────────┬───────────────┘                       │
+│                     │  raw rows                             │
+│                     ▼                                       │
+│  ┌──────────────────────────────────┐                       │
+│  │  TimeDecayReranker               │                       │
+│  │  ─ Computes Δt per document      │                       │
+│  │  ─ Applies e^(-λ·Δt) factor      │                       │
+│  │  ─ Returns top-4 re-ranked       │                       │
+│  └──────────────────┬───────────────┘                       │
+│                     │  ScoredChunk list                     │
+│                     ▼                                       │
+│  ┌──────────────────────────────────┐                       │
+│  │  SparseRAGGenerator              │                       │
+│  │  ─ Builds numbered context block │                       │
+│  │  ─ Prompt → Gemma 3 4B (Ollama) │                       │
+│  │  ─ Returns grounded answer       │                       │
+│  └──────────────────┬───────────────┘                       │
+│                     │  final answer (str)                   │
+│                     ▼                                       │
+│            printed to stdout                                │
+└─────────────────────────────────────────────────────────────┘
+
+
+────────────────────────────────────────────────────────────────
+SECTION 3 – SQLite FTS5 SYNTAX EXPLAINED
+────────────────────────────────────────────────────────────────
+
+3.1  Creating the virtual table
+────────────────────────────────
+    CREATE VIRTUAL TABLE docs
+    USING fts5(
+        content,               -- full-text indexed column
+        timestamp UNINDEXED,   -- stored, NOT tokenised
+        metadata  UNINDEXED    -- stored, NOT tokenised
+    );
+
+  • "VIRTUAL TABLE … USING fts5" tells SQLite to delegate storage
+    and querying to the FTS5 module rather than a normal B-tree.
+  • FTS5 builds an inverted index (term → list of rowids) over
+    every column NOT marked UNINDEXED.
+  • UNINDEXED columns are physically stored in the shadow table
+    fts5_data but their tokens are never added to the index.
+    This saves index space and prevents metadata noise from
+    polluting keyword rankings.
+  • Every FTS5 table has an implicit integer rowid (primary key).
+    Access it as  docs.rowid  in standard SELECT statements.
+
+3.2  FTS5 MATCH operator
+─────────────────────────
+    SELECT … FROM docs WHERE docs MATCH 'python sqlite';
+
+  • Tokens separated by spaces are implicitly ANDed:
+      'python sqlite'  →  rows containing BOTH "python" AND "sqlite"
+  • Explicit OR:
+      'python OR sqlite'
+  • Phrase search (tokens must appear adjacent in order):
+      '"full text search"'
+  • Column filter (search only the content column):
+      'content: machine learning'
+  • Prefix search:
+      'pyth*'   (matches "python", "pythonic", etc.)
+  • NOT operator:
+      'python NOT snake'
+
+3.3  bm25() scoring function
+──────────────────────────────
+    SELECT bm25(docs) FROM docs WHERE docs MATCH ?;
+
+  • bm25() is a built-in FTS5 auxiliary function that implements
+    the BM25 probabilistic ranking formula.
+  • SQLite FTS5 returns a NEGATIVE float.  A score of -3.5 is
+    BETTER than -1.2 (lower = more relevant in the raw output).
+  • To convert to "higher is better" semantics, negate the value:
+      bm25_positive = -bm25_raw
+  • Ordering candidates:
+      ORDER BY bm25(docs) ASC    -- ASC because values are negative
+                                 -- equivalently: most relevant first
+
+3.4  Shadow tables (informational)
+────────────────────────────────────
+  FTS5 automatically creates several shadow tables named:
+    docs_data, docs_idx, docs_content, docs_docsize, docs_config
+  Do NOT modify these manually; FTS5 manages them internally.
+
+
+────────────────────────────────────────────────────────────────
+SECTION 4 – MATHEMATICS: BM25 × TIME-DECAY SCORING
+────────────────────────────────────────────────────────────────
+
+4.1  BM25 formula (reference)
+──────────────────────────────
+For a query Q with terms t₁, t₂, …, tₙ and a document D:
+
+                     N - df(t) + 0.5
+  IDF(t) = log₁₀( ─────────────────── + 1 )
+                       df(t) + 0.5
+
+                           tf(t,D) · (k₁ + 1)
+  BM25(D, Q) = Σ IDF(t) · ──────────────────────────────────
+                           tf(t,D) + k₁ · (1 - b + b · |D|/avgdl)
+
+  Where:
+    N      = total number of documents in the corpus
+    df(t)  = number of documents containing term t
+    tf(t,D)= frequency of term t in document D
+    |D|    = length of document D (token count)
+    avgdl  = average document length across the corpus
+    k₁     = term frequency saturation (FTS5 default ≈ 1.2)
+    b      = length normalisation factor (FTS5 default ≈ 0.75)
+
+  SQLite FTS5 computes this internally; we only read its output
+  via the bm25() auxiliary function.
+
+
+4.2  Time-decay function
+─────────────────────────
+  Score_final = Score_BM25 × e^(-λ · Δt)
+
+  Variables:
+    Score_BM25 = -bm25_raw        (positive; higher = more relevant)
+    Δt         = (now - doc_ts) in decimal days  (non-negative)
+    λ (lambda) = decay constant; default 0.1 day⁻¹
+    e          = Euler's number ≈ 2.71828
+
+  Worked example (λ = 0.1):
+
+    Document A: BM25 = 4.0, published 0 days ago
+      Recency = e^(-0.1 × 0)  = e^0       = 1.000
+      Final   = 4.0 × 1.000               = 4.000   ★ wins
+
+    Document B: BM25 = 5.0, published 7 days ago
+      Recency = e^(-0.1 × 7)  = e^(-0.7) ≈ 0.497
+      Final   = 5.0 × 0.497               = 2.485
+
+    Document C: BM25 = 3.0, published 30 days ago
+      Recency = e^(-0.1 × 30) = e^(-3.0) ≈ 0.050
+      Final   = 3.0 × 0.050               = 0.150
+
+  Even though B has the highest BM25 score, Document A is ranked
+  first because its recency advantage more than compensates.
+
+4.3  Tuning λ
+──────────────
+  λ = 0.0   → Pure BM25, no recency weighting (time-decay disabled)
+  λ = 0.05  → Gentle decay; 14-day-old docs retain ~50 % of score
+  λ = 0.1   → Moderate decay (default); 7-day-old docs ≈ 50 %
+  λ = 0.3   → Aggressive decay; news-like freshness preference
+  λ = 1.0   → Extreme decay; anything older than 2-3 days is buried
+
+  Change DECAY_LAMBDA at the top of sparse_rag_pipeline.py.
+
+
+4.4  Python implementation (core lines)
+─────────────────────────────────────────
+  import math
+
+  delta_t       = max(0.0, elapsed_seconds / 86_400)  # days ≥ 0
+  recency_factor = math.exp(-lam * delta_t)             # e^(-λ·Δt)
+  final_score    = bm25_positive * recency_factor       # composite
+
+
+────────────────────────────────────────────────────────────────
+SECTION 5 – QUERY EXPANSION EXPLAINED
+────────────────────────────────────────────────────────────────
+
+5.1  The vocabulary mismatch problem
+──────────────────────────────────────
+  BM25 / FTS5 work on exact token overlap.  If a user asks about
+  "automobiles" but documents contain "cars", the score is zero
+  despite identical meaning.  This is the vocabulary mismatch problem.
+
+5.2  LLM-based expansion
+─────────────────────────
+  We prompt Gemma 3 4B to generate 4 related terms:
+
+  Prompt:
+    "Given query: {query}
+     Generate exactly 4 relevant keywords or phrases.
+     Output ONLY a JSON array of strings."
+
+  Example:
+    Query: "How does BM25 ranking work?"
+    Expanded: ["ranking algorithm", "term frequency", "inverted index",
+               "information retrieval score"]
+
+5.3  FTS5 OR query construction
+─────────────────────────────────
+  The original query and expanded terms are combined with OR:
+
+    "BM25 ranking work" OR "ranking algorithm" OR "term frequency"
+    OR "inverted index" OR "information retrieval score"
+
+  Multi-word terms are wrapped in double quotes for FTS5 phrase
+  matching:  "term frequency"  matches "term frequency" as a phrase.
+
+  This broadens recall without sacrificing the precision of BM25
+  scoring (exact matches still outrank partial ones).
+
+
+────────────────────────────────────────────────────────────────
+SECTION 6 – OLLAMA API INTEGRATION
+────────────────────────────────────────────────────────────────
+
+Endpoint used:  POST http://localhost:11434/api/generate
+
+Request payload (JSON):
+    {
+      "model":   "gemma3:4b",
+      "prompt":  "...",
+      "stream":  false,
+      "options": {
+        "temperature": 0.2    // lower = more deterministic
+      }
+    }
+
+Response (JSON):
+    {
+      "response": "The generated text ...",
+      "done":     true,
+      ...
+    }
+
+The pipeline uses temperature=0.4 for query expansion
+(some creative variation is beneficial) and temperature=0.1
+for the final answer generation (determinism preferred).
+
+
+────────────────────────────────────────────────────────────────
+SECTION 7 – CONFIGURATION REFERENCE
+────────────────────────────────────────────────────────────────
+
+Constant          Default             Description
+─────────────────────────────────────────────────────────────────
+OLLAMA_BASE_URL   http://localhost    Ollama server address
+                  :11434
+OLLAMA_MODEL      gemma3:4b           Model name (must be pulled)
+DB_PATH           sparse_rag.db       SQLite database file path
+DECAY_LAMBDA      0.1                 Time-decay constant (λ)
+FTS5_CANDIDATE_K  20                  Docs fetched from FTS5
+GENERATOR_TOP_K   4                   Docs passed to generator
+
+
+────────────────────────────────────────────────────────────────
+SECTION 8 – TROUBLESHOOTING
+────────────────────────────────────────────────────────────────
+
+Q: "Cannot connect to Ollama"
+A: Run  ollama serve  in a separate terminal.
+   Verify with:  curl http://localhost:11434/api/tags
+
+Q: "model not found" error from Ollama
+A: Pull the model first:  ollama pull gemma3:4b
+
+Q: FTS5 not available / "no such module: fts5"
+A: Your SQLite build does not include FTS5.  This is rare on
+   modern systems.  Reinstall Python from python.org (Windows)
+   or use:  apt install python3-dev libsqlite3-dev  (Linux)
+   then recompile Python.
+
+Q: Query returns 0 results
+A: FTS5 is case-insensitive but requires at least one indexed
+   token to match.  Check that:
+   ① Documents were actually ingested (check DB_PATH exists).
+   ② The FTS5 query syntax is valid (no stray quotes/operators).
+
+Q: Empty expanded terms list
+A: The model output could not be parsed as JSON.  This can happen
+   with very short queries.  The pipeline falls back to the
+   original query gracefully.
+
+Q: Slow first response
+A: Gemma 3 4B needs a few seconds to warm up on first call.
+   Subsequent calls are faster once the model is loaded in RAM.
+
+
+────────────────────────────────────────────────────────────────
+SECTION 9 – EXTENDING THE PIPELINE
+────────────────────────────────────────────────────────────────
+
+① Chunking long documents
+  Split large documents into ~512-token chunks before ingestion.
+  Store the parent document ID in metadata for attribution.
+
+② Re-ingestion / updating documents
+  FTS5 supports UPDATE and DELETE with standard SQL.
+  Use  DELETE FROM docs WHERE rowid = ?  followed by a fresh INSERT.
+
+③ Hybrid retrieval (sparse + dense)
+  Add a dense vector store (e.g. Chroma, Qdrant) alongside FTS5.
+  Merge both ranked lists using Reciprocal Rank Fusion (RRF):
+    RRF_score = Σ  1 / (k + rank_i)    (k = 60 is a common default)
+
+④ Persistent conversation / multi-turn
+  Append previous Q&A pairs to the generation prompt as
+  "Chat History" to enable follow-up questions.
+
+⑤ Alternative SLMs
+  Replace OLLAMA_MODEL with any model available in Ollama:
+    ollama pull mistral         → OLLAMA_MODEL = "mistral"
+    ollama pull llama3.2:3b    → OLLAMA_MODEL = "llama3.2:3b"
+    ollama pull phi4-mini      → OLLAMA_MODEL = "phi4-mini"
+================================================================
