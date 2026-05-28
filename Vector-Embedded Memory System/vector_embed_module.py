@@ -177,9 +177,6 @@ class VectorEmbeddedMemory:
         # Step 1 — Dense embedding
         vector = self._embed_text(text)                         # shape: (1, 768)
 
-        print(f"DEBUG: Index expects dimension: {self.faiss_index.d}")
-        print(f"DEBUG: Input vector shape: {vector.shape}")
-
         # Step 2 — Add to FAISS index
         self.faiss_index.add(vector)
         faiss_id = self._next_faiss_id
