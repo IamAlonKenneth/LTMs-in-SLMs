@@ -286,7 +286,7 @@ class SparseEmbeddedMemory:
           final_score   : float — bm25_score × recency_score          [extra]
         """
         if not self.ltm_store:
-            self._log("[dense_retrieve] LTM index is empty — no memories returned.")
+            self._log("[sparse_retrieve] LTM index is empty — no memories returned.")
             return []
 
         # Step 1 — Query expansion
@@ -294,7 +294,7 @@ class SparseEmbeddedMemory:
         expanded  = self._expand_query(query)
         fts_query = self._build_fts5_query(query, expanded)
         self._log(
-            f"[dense_retrieve] expansion: {time.perf_counter()-t_exp:.2f}s  "
+            f"[sparse_retrieve] expansion: {time.perf_counter()-t_exp:.2f}s  "
             f"FTS5 query: {fts_query!r}"
         )
 
@@ -405,7 +405,7 @@ class SparseEmbeddedMemory:
           memory_ids_used   : list — rowids of injected memories
           retrieved_mems    : list — full dense_retrieve() output
           latency           : dict — wall-time breakdown in seconds:
-              dense_retrieval_s    — total retrieval phase (compat key)
+              sparse_retrieval_s    — total retrieval phase (compat key)
               context_injection_s  — prompt construction
               slm_generation_s     — model forward pass + decode
               total_pipeline_s     — end-to-end wall time
@@ -435,8 +435,8 @@ class SparseEmbeddedMemory:
         retrieved_mems = self._fts_search_and_rerank(fts_query, top_k)
         latency["bm25_rerank_s"] = time.perf_counter() - t_bm25
 
-        # dense_retrieval_s is the compatibility key the eval harness expects.
-        latency["dense_retrieval_s"] = time.perf_counter() - t_ret
+        # sparse_retrieval_s is the compatibility key the eval harness expects.
+        latency["sparse_retrieval_s"] = time.perf_counter() - t_ret
 
         # ── Step 4 : Context Injection ────────────────────────────────────
         t_ctx = time.perf_counter()
@@ -483,7 +483,7 @@ class SparseEmbeddedMemory:
 
         latency["slm_generation_s"] = time.perf_counter() - t_gen
         latency["total_pipeline_s"] = (
-            latency["dense_retrieval_s"]
+            latency["sparse_retrieval_s"]
             + latency["context_injection_s"]
             + latency["slm_generation_s"]
         )
@@ -491,7 +491,7 @@ class SparseEmbeddedMemory:
         memory_ids_used = [m["memory_id"] for m in retrieved_mems]
 
         self._log(
-            f"[Pipeline] Retrieval={latency['dense_retrieval_s']:.3f}s | "
+            f"[Pipeline] Retrieval={latency['sparse_retrieval_s']:.3f}s | "
             f"Generation={latency['slm_generation_s']:.3f}s | "
             f"Memory IDs={memory_ids_used}"
         )
@@ -1022,11 +1022,13 @@ class SparseEmbeddedMemory:
             JSON array:""")
 
         messages  = [{"role": "user", "content": prompt}]
-        input_ids = self.slm_tokenizer.apply_chat_template(
+        model_inputs = self.slm_tokenizer.apply_chat_template(
             messages,
             return_tensors        = "pt",
             add_generation_prompt = True,
-        ).to(self._slm_device)
+        )
+
+        input_ids = model_inputs["input_ids"].to(self._slm_device)
 
         prompt_len = input_ids.shape[-1]
 
@@ -1038,9 +1040,11 @@ class SparseEmbeddedMemory:
                 temperature    = 0.35,
                 pad_token_id   = self.slm_tokenizer.eos_token_id,
             )
+        
+        new_ids = out_ids[0, prompt_len:]
 
         raw = self.slm_tokenizer.decode(
-            out_ids[0, prompt_len:], skip_special_tokens=True
+            new_ids, skip_special_tokens=True
         ).strip()
 
         # Strip any residual markdown fences the model may still emit.
@@ -1234,8 +1238,8 @@ if __name__ == "__main__":
     )
     print(f"\nTotal memories in LTM: {ltm.memory_count()}")
 
-    # ── Sparse Retrieval via the dense_retrieve compatibility name ────────
-    print("\n--- Sparse Retrieval (dense_retrieve API) ---")
+    # ── Sparse Retrieval via the sparse_retrieve compatibility name ────────
+    print("\n--- Sparse Retrieval (sparse_retrieve API) ---")
     query   = "What is the user's research topic?"
     results = ltm.dense_retrieve(query, top_k=2)
     for r in results:
@@ -1284,7 +1288,7 @@ if __name__ == "__main__":
     )
     print(f"\nMemory IDs Used   : {output['memory_ids_used']}")
     print(f"Query Expansion   : {output['latency']['query_expansion_s']:.3f} s")
-    print(f"Retrieval Time    : {output['latency']['dense_retrieval_s']:.3f} s")
+    print(f"Retrieval Time    : {output['latency']['sparse_retrieval_s']:.3f} s")
     print(f"Context Injection : {output['latency']['context_injection_s']:.3f} s")
     print(f"Generation Time   : {output['latency']['slm_generation_s']:.3f} s")
     print(f"Total Pipeline    : {output['latency']['total_pipeline_s']:.3f} s")
