@@ -1,2 +1,119 @@
-vector_env/
-_pycache__/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+.env.local
+.env.*.local
+
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.sublime-project
+*.sublime-workspace
+
+# Jupyter
+.ipynb_checkpoints
+*.ipynb
+
+# Large model files and caches
+*.bin
+*.pt
+*.pth
+*.safetensors
+.cache/
+huggingface/
+transformers_cache/
+
+# FAISS indices
+*.faiss
+*.index
+faiss_index.bin
+
+# Databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Evaluation outputs and results
+results/
+results_*/
+eval_results/
+*.json.bak
+*.log
+
+# Data and benchmarks (keep structure, ignore outputs)
+Benchmarks/*/results/
+Benchmarks/*/__pycache__/
+LongMemEval/data/processed/
+locomo/data/processed/
+
+# Temporary/generated files
+*.tmp
+*.temp
+*.bak
+*.swp
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Environment-specific
+.env
+.env.local
+.env.*.local
+
+# Project-specific
+ltm_store/
+sparse_rag.db
+*.pickle
+*.pkl
+
+# Benchmark datasets (too large for GitHub — redownload via download_longmemeval.py)
+Benchmarks/longmemeval_cache/
+Benchmarks/longmemeval_oracle.json
+
+# Temp helper scripts
+_del_cred.*
+
+# Node (if using any frontend tools)
+node_modules/
+npm-debug.log
+yarn-error.log

@@ -1,13 +1,13 @@
 """
 run_combined_eval.py
 ====================
-Master Evaluation Runner — Dense-Retrieval LTM Thesis Evaluation Suite
+Master Evaluation Runner - Dense-Retrieval LTM Thesis Evaluation Suite
 
 Sequentially executes:
   1. LongMemEval evaluation  (all 4 cognitive categories)
   2. LoCoMo evaluation       (all question types)
   3. Stage 1 metric computation (Recall@K, NDCG@K, MAP@K)
-  4. Stage 2 metric computation (Faithfulness, Answer Relevance — LLM Judge)
+  4. Stage 2 metric computation (Faithfulness, Answer Relevance - LLM Judge)
   5. Efficiency profiling    (latency, token economy, storage)
 
 Usage
@@ -20,7 +20,7 @@ Usage
       --top-k             5 \
       --quantization      4bit
 
-  # Stage 1 only (no OpenAI key needed):
+  # Stage 1 only (no Gemini key needed):
   python run_combined_eval.py \
       --longmemeval-data ../LongMemEval/data/longmemeval_s.json \
       --skip-judge \
@@ -43,7 +43,8 @@ Repository Setup (run once before evaluation)
 ----------------------------------------------
   git clone https://github.com/xiaowu0162/LongMemEval
   git clone https://github.com/snap-research/locomo
-  export OPENAI_API_KEY="sk-..."   # required for Stage 2 only
+  export GOOGLE_API_KEY="your-gemini-api-key"   # required for Stage 2 only
+  # Get free API key from: https://ai.google.dev/
 """
 
 from __future__ import annotations
@@ -56,7 +57,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-# ── Path resolution — allow running from project root or eval/ subdirectory ──
+# -- Path resolution - allow running from project root or eval/ subdirectory --
 _FILE_DIR    = Path(__file__).resolve().parent
 _PROJECT_ROOT = _FILE_DIR.parent
 sys.path.insert(0, str(_PROJECT_ROOT))
@@ -88,12 +89,12 @@ from eval_metrics import (
 
 def build_arg_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        description="Dense-Retrieval LTM — Combined Thesis Evaluation Runner",
+        description="Dense-Retrieval LTM - Combined Thesis Evaluation Runner",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
 
-    # ── Data inputs ──────────────────────────────────────────────────────────
+    # -- Data inputs ----------------------------------------------------------
     data_group = p.add_argument_group("Dataset Paths")
     data_group.add_argument(
         "--longmemeval-data", type=str, default=None,
@@ -112,7 +113,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
              "Useful for re-running Stage 2 without re-running Stage 1.",
     )
 
-    # ── LTM configuration ────────────────────────────────────────────────────
+    # -- LTM configuration ----------------------------------------------------
     ltm_group = p.add_argument_group("LTM Module Configuration")
     ltm_group.add_argument(
         "--embedding-model", type=str,
@@ -138,7 +139,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Maximum generation tokens for each SLM response.",
     )
 
-    # ── Evaluation control ───────────────────────────────────────────────────
+    # -- Evaluation control ---------------------------------------------------
     eval_group = p.add_argument_group("Evaluation Control")
     eval_group.add_argument(
         "--categories", nargs="+", default=None,
@@ -156,18 +157,18 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     eval_group.add_argument(
         "--skip-judge", action="store_true", default=False,
-        help="Skip Stage 2 LLM-as-a-Judge (no OpenAI key required).",
+        help="Skip Stage 2 LLM-as-a-Judge (no Gemini key required).",
     )
     eval_group.add_argument(
-        "--judge-model", type=str, default="gpt-4o",
-        help="OpenAI model to use as LLM judge (default: gpt-4o).",
+        "--judge-model", type=str, default="gemini-2.0-flash",
+        help="Google Gemini model to use as LLM judge (default: gemini-2.0-flash).",
     )
     eval_group.add_argument(
         "--full-context-tokens", type=float, default=None,
         help="Baseline token count (full history, no RAG) for token economy calculation.",
     )
 
-    # ── Output ───────────────────────────────────────────────────────────────
+    # -- Output ---------------------------------------------------------------
     out_group = p.add_argument_group("Output")
     out_group.add_argument(
         "--output-dir", type=str, default="./results",
@@ -191,32 +192,32 @@ def run_evaluation(args: argparse.Namespace) -> None:
     out_dir   = Path(args.output_dir) / run_id
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"\n{'═'*80}")
-    print(f"  Dense-Retrieval LTM — Combined Evaluation Run")
+    print(f"\n{'='*80}")
+    print(f"  Dense-Retrieval LTM - Combined Evaluation Run")
     print(f"  Run ID  : {run_id}")
     print(f"  Output  : {out_dir}")
-    print(f"{'═'*80}\n")
+    print(f"{'='*80}\n")
 
-    # ── Save run configuration for reproducibility ────────────────────────────
+    # -- Save run configuration for reproducibility ----------------------------
     config = vars(args)
     config["run_id"] = run_id
     with open(out_dir / "run_config.json", "w") as fh:
         json.dump(config, fh, indent=2)
-    print(f"[Runner] Configuration saved → {out_dir / 'run_config.json'}")
+    print(f"[Runner] Configuration saved -> {out_dir / 'run_config.json'}")
 
     # =========================================================================
-    # STAGE 0 — Load or Collect EvalResults
+    # STAGE 0 - Load or Collect EvalResults
     # =========================================================================
     all_results: list[EvalResult] = []
 
     if args.load_results:
-        # ── Load pre-existing results (skip adapter runs) ─────────────────────
+        # -- Load pre-existing results (skip adapter runs) ---------------------
         print(f"\n[Runner] Loading pre-existing results from: {args.load_results}")
         all_results = load_eval_results(args.load_results)
         print(f"[Runner] Loaded {len(all_results)} results.")
 
     else:
-        # ── Initialise the shared LTM module ─────────────────────────────────
+        # -- Initialise the shared LTM module ---------------------------------
         print("\n[Runner] Initialising VectorEmbeddedMemory LTM module …")
         ltm = VectorEmbeddedMemory(
             embedding_model_id = args.embedding_model,
@@ -226,12 +227,12 @@ def run_evaluation(args: argparse.Namespace) -> None:
         )
         print("[Runner] LTM module ready ✓\n")
 
-        # ── LongMemEval ───────────────────────────────────────────────────────
+        # -- LongMemEval -------------------------------------------------------
         if args.longmemeval_data:
-            print(f"{'─'*60}")
+            print(f"{'-'*60}")
             print(f"  Running LongMemEval Adapter")
             print(f"  Data : {args.longmemeval_data}")
-            print(f"{'─'*60}")
+            print(f"{'-'*60}")
             t0 = time.perf_counter()
 
             lme_adapter = LongMemEvalAdapter(
@@ -250,20 +251,20 @@ def run_evaluation(args: argparse.Namespace) -> None:
 
             lme_time = time.perf_counter() - t0
             print(
-                f"\n[Runner] LongMemEval complete — "
+                f"\n[Runner] LongMemEval complete - "
                 f"{len(lme_results)} items in {lme_time:.1f}s"
             )
             # Save intermediate checkpoint
             save_eval_results(lme_results, out_dir / "longmemeval_results.json")
         else:
-            print("[Runner] --longmemeval-data not provided — skipping LongMemEval.\n")
+            print("[Runner] --longmemeval-data not provided - skipping LongMemEval.\n")
 
-        # ── LoCoMo ────────────────────────────────────────────────────────────
+        # -- LoCoMo ------------------------------------------------------------
         if args.locomo_data:
-            print(f"\n{'─'*60}")
+            print(f"\n{'-'*60}")
             print(f"  Running LoCoMo Adapter")
             print(f"  Data : {args.locomo_data}")
-            print(f"{'─'*60}")
+            print(f"{'-'*60}")
             t1 = time.perf_counter()
 
             locomo_adapter = LoCoMoAdapter(
@@ -282,18 +283,18 @@ def run_evaluation(args: argparse.Namespace) -> None:
 
             locomo_time = time.perf_counter() - t1
             print(
-                f"\n[Runner] LoCoMo complete — "
+                f"\n[Runner] LoCoMo complete - "
                 f"{len(locomo_results)} items in {locomo_time:.1f}s"
             )
             save_eval_results(locomo_results, out_dir / "locomo_results.json")
         else:
-            print("[Runner] --locomo-data not provided — skipping LoCoMo.\n")
+            print("[Runner] --locomo-data not provided - skipping LoCoMo.\n")
 
-        # ── Save combined results checkpoint ──────────────────────────────────
+        # -- Save combined results checkpoint ----------------------------------
         if all_results:
             combined_path = out_dir / "combined_eval_results.json"
             save_eval_results(all_results, combined_path)
-            print(f"\n[Runner] Combined results saved → {combined_path}")
+            print(f"\n[Runner] Combined results saved -> {combined_path}")
         else:
             print("\n[Runner] No results collected. Check your data paths.")
             return
@@ -303,11 +304,11 @@ def run_evaluation(args: argparse.Namespace) -> None:
         return
 
     # =========================================================================
-    # STAGE 1 — Retrieval Metrics (Recall@K, NDCG@K, MAP@K)
+    # STAGE 1 - Retrieval Metrics (Recall@K, NDCG@K, MAP@K)
     # =========================================================================
-    print(f"\n{'═'*80}")
-    print(f"  COMPUTING STAGE 1 — RETRIEVAL METRICS")
-    print(f"{'═'*80}")
+    print(f"\n{'='*80}")
+    print(f"  COMPUTING STAGE 1 - RETRIEVAL METRICS")
+    print(f"{'='*80}")
 
     # Run for ALL results combined
     stage1_report = compute_stage1_metrics(all_results, k_values=args.k_values)
@@ -328,14 +329,14 @@ def run_evaluation(args: argparse.Namespace) -> None:
         print_stage1_report(locomo_stage1)
 
     # =========================================================================
-    # STAGE 2 — Generation Quality (LLM-as-a-Judge)
+    # STAGE 2 - Generation Quality (LLM-as-a-Judge)
     # =========================================================================
     stage2_report = None
 
     if not args.skip_judge:
-        print(f"\n{'═'*80}")
-        print(f"  COMPUTING STAGE 2 — GENERATION QUALITY (Judge: {args.judge_model})")
-        print(f"{'═'*80}\n")
+        print(f"\n{'='*80}")
+        print(f"  COMPUTING STAGE 2 - GENERATION QUALITY (Judge: {args.judge_model})")
+        print(f"{'='*80}\n")
 
         try:
             judge = LLMJudge(
@@ -355,9 +356,9 @@ def run_evaluation(args: argparse.Namespace) -> None:
     # =========================================================================
     # EFFICIENCY PROFILING
     # =========================================================================
-    print(f"\n{'═'*80}")
+    print(f"\n{'='*80}")
     print(f"  COMPUTING EFFICIENCY METRICS")
-    print(f"{'═'*80}")
+    print(f"{'='*80}")
 
     efficiency_report = compute_efficiency_metrics(
         all_results,
@@ -366,14 +367,14 @@ def run_evaluation(args: argparse.Namespace) -> None:
     print_efficiency_report(efficiency_report)
 
     # =========================================================================
-    # KNOWLEDGE UPDATE — Dedicated Analysis
+    # KNOWLEDGE UPDATE - Dedicated Analysis
     # =========================================================================
     ku_results = [r for r in all_results if r.category == "knowledge_update"]
     if ku_results:
-        print(f"\n{'═'*80}")
-        print(f"  KNOWLEDGE UPDATE — TEMPORAL CONTEXT INJECTION ANALYSIS")
+        print(f"\n{'='*80}")
+        print(f"  KNOWLEDGE UPDATE - TEMPORAL CONTEXT INJECTION ANALYSIS")
         print(f"  Items: {len(ku_results)}")
-        print(f"{'═'*80}")
+        print(f"{'='*80}")
 
         n_injected = sum(1 for r in ku_results if r.virtual_update_id is not None)
         n_injected_retrieved = sum(
@@ -403,10 +404,10 @@ def run_evaluation(args: argparse.Namespace) -> None:
     # =========================================================================
     ab_results = [r for r in all_results if r.category == "abstention"]
     if ab_results:
-        print(f"\n{'═'*80}")
-        print(f"  ABSTENTION — METACOGNITION ANALYSIS")
+        print(f"\n{'='*80}")
+        print(f"  ABSTENTION - METACOGNITION ANALYSIS")
         print(f"  Items: {len(ab_results)}")
-        print(f"{'═'*80}")
+        print(f"{'='*80}")
 
         abstention_phrases = [
             "i don't know", "i do not know", "i'm not sure",
@@ -434,10 +435,10 @@ def run_evaluation(args: argparse.Namespace) -> None:
         output_path = report_path,
     )
 
-    # ── Final Summary ─────────────────────────────────────────────────────────
-    print(f"\n{'═'*80}")
+    # -- Final Summary ---------------------------------------------------------
+    print(f"\n{'='*80}")
     print(f"  EVALUATION COMPLETE")
-    print(f"{'═'*80}")
+    print(f"{'='*80}")
     print(f"  Run ID              : {run_id}")
     print(f"  Total items         : {len(all_results)}")
     print(f"  Frameworks          : "
@@ -447,7 +448,7 @@ def run_evaluation(args: argparse.Namespace) -> None:
     for f in sorted(out_dir.iterdir()):
         size_kb = f.stat().st_size / 1024
         print(f"    {f.name:<40} {size_kb:>7.1f} KB")
-    print(f"\n{'═'*80}\n")
+    print(f"\n{'='*80}\n")
 
 
 # ---------------------------------------------------------------------------
@@ -469,7 +470,7 @@ if __name__ == "__main__":
     parser = build_arg_parser()
     args   = parser.parse_args()
 
-    # ── Validate: at least one data source or pre-loaded results ─────────────
+    # -- Validate: at least one data source or pre-loaded results -------------
     if not args.load_results and not args.longmemeval_data and not args.locomo_data:
         parser.error(
             "Provide at least one data source:\n"

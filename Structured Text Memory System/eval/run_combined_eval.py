@@ -62,7 +62,7 @@ _PROJECT_ROOT = _FILE_DIR.parent
 sys.path.insert(0, str(_PROJECT_ROOT))
 sys.path.insert(0, str(_FILE_DIR))
 
-from sparse_rag_pipeline import SparseEmbeddedMemory as VectorEmbeddedMemory         # noqa: E402
+from sparse_rag_pipeline import SparseEmbeddedMemory as VectorEmbeddedMemory
 from ltm_eval_adapter  import (
     LongMemEvalAdapter,
     LoCoMoAdapter,

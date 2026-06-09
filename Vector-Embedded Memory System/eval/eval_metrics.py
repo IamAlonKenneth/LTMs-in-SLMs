@@ -20,7 +20,7 @@ Thesis Reference Metrics
 -------------------------
   Recall@K  : fraction of |relevant ∩ retrieved_top_k| / |relevant|
   NDCG@K    : DCG@K / IDCG@K  (normalised discounted cumulative gain)
-  Faithfulness & Answer Relevance: via OpenAI GPT-4o as LLM-as-a-Judge
+  Faithfulness & Answer Relevance: via Google Gemini as LLM-as-a-Judge
 """
 
 from __future__ import annotations
@@ -36,12 +36,12 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
 
-# ── Conditional imports (allow the module to load even if RAGAS/OpenAI absent) ─
+# ── Conditional imports (allow the module to load even if Gemini absent) ─
 try:
-    from openai import OpenAI as _OpenAI
-    _OPENAI_AVAILABLE = True
+    import google.generativeai as genai
+    _GEMINI_AVAILABLE = True
 except ImportError:
-    _OPENAI_AVAILABLE = False
+    _GEMINI_AVAILABLE = False
 
 try:
     from ltm_eval_adapter import EvalResult   # relative import when run from eval/
@@ -351,7 +351,7 @@ class LLMJudge:
     """
     LLM-as-a-Judge for Stage 2 generation quality evaluation.
 
-    Uses GPT-4o (via OpenAI API) to evaluate Faithfulness, Answer Relevance,
+    Uses Google Gemini to evaluate Faithfulness, Answer Relevance,
     and Abstention Accuracy — three metrics that lexical approaches (BLEU,
     Exact Match) cannot capture reliably for conversational memory tasks.
 
@@ -361,35 +361,39 @@ class LLMJudge:
 
     Setup
     -----
-    Set the OPENAI_API_KEY environment variable before running:
-        export OPENAI_API_KEY="sk-..."
+    Set the GOOGLE_API_KEY environment variable before running:
+        export GOOGLE_API_KEY="your-gemini-api-key"
 
-    Note: GPT-4o is used *only* for evaluation scoring, not for the memory
+    Get a free API key from: https://ai.google.dev/
+
+    Note: Gemini is used *only* for evaluation scoring, not for the memory
     system itself. The LTM module (Gemma 3 4B) remains fully local.
     """
 
     def __init__(
         self,
-        judge_model  : str   = "gpt-4o",
+        judge_model  : str   = "gemini-2.0-flash",
         temperature  : float = 0.0,         # deterministic scoring
         max_retries  : int   = 3,
         verbose      : bool  = True,
     ) -> None:
-        if not _OPENAI_AVAILABLE:
+        if not _GEMINI_AVAILABLE:
             raise ImportError(
-                "openai package not installed. Run: pip install openai\n"
-                "Then set: export OPENAI_API_KEY='sk-...'"
+                "google-generativeai package not installed. Run: pip install google-generativeai\n"
+                "Then set: export GOOGLE_API_KEY='your-gemini-api-key'"
             )
 
-        api_key = os.getenv("OPENAI_API_KEY")
+        api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
             raise EnvironmentError(
-                "OPENAI_API_KEY not set. The LLM judge requires an OpenAI key.\n"
-                "Set it with: export OPENAI_API_KEY='sk-...'\n"
+                "GOOGLE_API_KEY not set. The LLM judge requires a Gemini API key.\n"
+                "Get a free key from: https://ai.google.dev/\n"
+                "Set it with: export GOOGLE_API_KEY='your-key'\n"
                 "Alternatively, use --skip-judge to run Stage 1 metrics only."
             )
 
-        self.client      = _OpenAI(api_key=api_key)
+        genai.configure(api_key=api_key)
+        self.client      = genai.GenerativeModel(judge_model)
         self.judge_model = judge_model
         self.temperature = temperature
         self.max_retries = max_retries
@@ -451,13 +455,14 @@ class LLMJudge:
         """Call the judge model and parse the JSON response."""
         for attempt in range(self.max_retries):
             try:
-                resp = self.client.chat.completions.create(
-                    model       = self.judge_model,
-                    messages    = [{"role": "user", "content": prompt}],
-                    temperature = self.temperature,
-                    max_tokens  = 200,
+                resp = self.client.generate_content(
+                    prompt,
+                    generation_config=genai.types.GenerationConfig(
+                        temperature=self.temperature,
+                        max_output_tokens=200,
+                    )
                 )
-                raw_text = resp.choices[0].message.content.strip()
+                raw_text = resp.text.strip()
                 # Strip markdown code fences if present
                 raw_text = raw_text.replace("```json", "").replace("```", "").strip()
                 return json.loads(raw_text)
