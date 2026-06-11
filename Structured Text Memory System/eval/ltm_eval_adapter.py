@@ -65,7 +65,7 @@ class EvalResult:
     ground_truth     : str                  # raw ground-truth string from dataset
 
     # ── LTM Retrieval Output ─────────────────────────────────────────────────
-    retrieved_memory_ids   : list[int]      # FAISS IDs returned by dense_retrieve()
+    retrieved_memory_ids   : list[int]      # FAISS IDs returned by sparse_retrieve()
     ground_truth_memory_ids: list[int]      # IDs the dataset says are relevant
     retrieved_memories     : list[dict]     # full memory dicts (text, score, rank)
 

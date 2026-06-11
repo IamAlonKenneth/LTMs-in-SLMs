@@ -654,6 +654,8 @@ def compute_efficiency_metrics(
     full_context_tokens : Average tokens per query if full history was injected
                           (no RAG). Pass None if baseline was not measured.
     """
+    # sparse_retrieval_s = query_expansion_s + bm25_rerank_s (total retrieval phase)
+    # bm25_rerank_s      = BM25 search only (without LLM expansion overhead)
     ret_ms   = [r.latency.get("sparse_retrieval_s", 0) * 1000 for r in results]
     gen_s    = [r.latency.get("slm_generation_s",  0)        for r in results]
     total_s  = [r.latency.get("total_pipeline_s",  0)        for r in results]
@@ -669,10 +671,12 @@ def compute_efficiency_metrics(
 
     def _cat_stats(subset: list[EvalResult]) -> dict[str, float]:
         return {
-            "mean_retrieval_ms"   : statistics.mean([r.latency.get("sparse_retrieval_s", 0)*1000 for r in subset]),
-            "mean_generation_s"   : statistics.mean([r.latency.get("slm_generation_s",  0)      for r in subset]),
-            "mean_prompt_tokens"  : statistics.mean([r.prompt_token_count                        for r in subset]),
-            "n_items"             : len(subset),
+            "mean_retrieval_ms"      : statistics.mean([r.latency.get("sparse_retrieval_s", 0)*1000 for r in subset]),
+            "mean_bm25_only_ms"      : statistics.mean([r.latency.get("bm25_rerank_s",      0)*1000 for r in subset]),
+            "mean_query_expansion_ms": statistics.mean([r.latency.get("query_expansion_s",  0)*1000 for r in subset]),
+            "mean_generation_s"      : statistics.mean([r.latency.get("slm_generation_s",   0)      for r in subset]),
+            "mean_prompt_tokens"     : statistics.mean([r.prompt_token_count                         for r in subset]),
+            "n_items"                : len(subset),
         }
 
     categories = set(r.category for r in results)

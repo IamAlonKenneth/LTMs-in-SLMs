@@ -54,6 +54,9 @@ import json
 import os
 import sys
 import time
+# Force UTF-8 on Windows CP1252 console to avoid box-drawing Unicode crashes
+if hasattr(sys.stdout, 'reconfigure'):
+    sys.stdout.reconfigure(encoding='utf-8')
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -246,7 +249,7 @@ def run_evaluation(args: argparse.Namespace) -> None:
             quantization       = args.quantization,
             verbose            = False,          # suppress per-call logs
         )
-        print("[Runner] LTM module ready ✓\n")
+        print("[Runner] LTM module ready")
 
         # -- LongMemEval -------------------------------------------------------
         if args.longmemeval_data:
