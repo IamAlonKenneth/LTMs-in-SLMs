@@ -75,7 +75,7 @@ def recall_at_k(
 
     Parameters
     ----------
-    retrieved_ids : Ranked list of FAISS IDs from dense_retrieve() — ORDER MATTERS.
+    retrieved_ids : Ranked list of FAISS IDs from sparse_retrieve() — ORDER MATTERS.
     relevant_ids  : Ground-truth FAISS IDs from the dataset evidence field.
     k             : Cutoff rank.
     """
@@ -654,7 +654,7 @@ def compute_efficiency_metrics(
     full_context_tokens : Average tokens per query if full history was injected
                           (no RAG). Pass None if baseline was not measured.
     """
-    ret_ms   = [r.latency.get("dense_retrieval_s", 0) * 1000 for r in results]
+    ret_ms   = [r.latency.get("sparse_retrieval_s", 0) * 1000 for r in results]
     gen_s    = [r.latency.get("slm_generation_s",  0)        for r in results]
     total_s  = [r.latency.get("total_pipeline_s",  0)        for r in results]
     p_toks   = [r.prompt_token_count                          for r in results]
@@ -669,7 +669,7 @@ def compute_efficiency_metrics(
 
     def _cat_stats(subset: list[EvalResult]) -> dict[str, float]:
         return {
-            "mean_retrieval_ms"   : statistics.mean([r.latency.get("dense_retrieval_s", 0)*1000 for r in subset]),
+            "mean_retrieval_ms"   : statistics.mean([r.latency.get("sparse_retrieval_s", 0)*1000 for r in subset]),
             "mean_generation_s"   : statistics.mean([r.latency.get("slm_generation_s",  0)      for r in subset]),
             "mean_prompt_tokens"  : statistics.mean([r.prompt_token_count                        for r in subset]),
             "n_items"             : len(subset),
