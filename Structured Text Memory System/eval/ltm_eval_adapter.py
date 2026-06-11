@@ -3,7 +3,7 @@ ltm_eval_adapter.py
 ===================
 Compatibility Layer — LTM Module ↔ LongMemEval / LoCoMo Evaluation Frameworks
 
-This adapter bridges the gap between the custom VectorEmbeddedMemory LTM module
+This adapter bridges the gap between the custom SparseEmbeddedMemory LTM module
 and the evaluation pipelines defined in:
 
   · LongMemEval : https://github.com/xiaowu0162/LongMemEval
@@ -21,8 +21,8 @@ Design Principles
 
 Terminology (aligned with thesis)
 ----------------------------------
-  Dense Retrieval  : FAISS k-NN lookup of relevant memories by vector similarity
-  LTM Store        : Persisted FAISS index + sidecar JSON (memory bank)
+  Sparse Retrieval : SQLite FTS5 keyword-match lookup of relevant memories
+  LTM Store        : Persisted FTS5 index + sidecar JSON (memory bank)
   Virtual Update   : Injected knowledge-update memory (not in dataset file)
   Session Ingestion: Converting raw dialogue turns into ltm_module memories
 """
@@ -30,20 +30,19 @@ Terminology (aligned with thesis)
 from __future__ import annotations
 
 import json
-import os
 import sys
-import re
-import copy
 from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
+
+from progress_tracker import ProgressTracker
 
 # ── Resolve project root so ltm_module is always importable ──────────────────
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from sparse_rag_pipeline import SparseEmbeddedMemory as VectorEmbeddedMemory  # noqa: E402
+from sparse_rag_pipeline import SparseEmbeddedMemory  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -115,7 +114,7 @@ class TemporalContextInjector:
 
     @staticmethod
     def inject(
-        ltm       : VectorEmbeddedMemory,
+        ltm       : SparseEmbeddedMemory,
         update_text: str,
         source_session_id: str = "virtual",
     ) -> int:
@@ -124,7 +123,7 @@ class TemporalContextInjector:
 
         Parameters
         ----------
-        ltm             : The active VectorEmbeddedMemory instance.
+        ltm             : The active SparseEmbeddedMemory instance.
         update_text     : The updated fact/preference string (from dataset).
         source_session_id: Label for transparency metadata.
 
@@ -148,7 +147,7 @@ class TemporalContextInjector:
         return virtual_id
 
     @staticmethod
-    def purge(ltm: VectorEmbeddedMemory, virtual_id: int) -> None:
+    def purge(ltm: SparseEmbeddedMemory, virtual_id: int) -> None:
         """
         Mark the virtual update memory as deleted after the test item completes.
         Prevents bleed into subsequent questions in the same evaluation run.
@@ -162,7 +161,7 @@ class TemporalContextInjector:
 
 class LongMemEvalAdapter:
     """
-    Adapts the LongMemEval benchmark to the VectorEmbeddedMemory LTM module.
+    Adapts the LongMemEval benchmark to the SparseEmbeddedMemory LTM module.
 
     LongMemEval Dataset Schema (raw JSON — DO NOT MODIFY)
     -------------------------------------------------------
@@ -228,38 +227,48 @@ class LongMemEvalAdapter:
 
     def __init__(
         self,
-        ltm          : VectorEmbeddedMemory,
-        data_path    : str | Path,
-        top_k        : int   = 5,
-        max_new_tokens: int  = 256,
-        temperature  : float = 0.0,         # deterministic for reproducibility
-        verbose      : bool  = True,
+        ltm                 : SparseEmbeddedMemory,
+        data_path           : str | Path,
+        top_k               : int   = 5,
+        max_new_tokens      : int   = 256,
+        temperature         : float = 0.0,
+        verbose             : bool  = True,
+        use_query_expansion : bool  = True,
+        checkpoint_path     : str | Path | None = None,
+        checkpoint_interval : int   = 10,
     ) -> None:
         """
         Parameters
         ----------
-        ltm           : Initialised VectorEmbeddedMemory instance (shared across runs).
-        data_path     : Path to LongMemEval JSON file (raw, unmodified).
-        top_k         : Dense retrieval top-K for each query.
-        max_new_tokens: SLM generation budget.
-        temperature   : Sampling temperature (0 = greedy for reproducibility).
-        verbose       : Print per-item progress.
+        ltm                 : Initialised SparseEmbeddedMemory instance (shared across runs).
+        data_path           : Path to LongMemEval JSON file (raw, unmodified).
+        top_k               : Dense retrieval top-K for each query.
+        max_new_tokens      : SLM generation budget.
+        temperature         : Sampling temperature (0 = greedy for reproducibility).
+        verbose             : Print per-item progress.
+        use_query_expansion : Run LLM-based query expansion before BM25 (slower but
+                              broader recall). Set False when Gemma Embedding is active.
+        checkpoint_path     : Path to write per-item checkpoint JSON. Enables resume.
+        checkpoint_interval : Flush checkpoint to disk every N completed items.
         """
-        self.ltm           = ltm
-        self.data_path     = Path(data_path)
-        self.top_k         = top_k
-        self.max_new_tokens = max_new_tokens
-        self.temperature   = temperature
-        self.verbose       = verbose
+        self.ltm                = ltm
+        self.data_path          = Path(data_path)
+        self.top_k              = top_k
+        self.max_new_tokens     = max_new_tokens
+        self.temperature        = temperature
+        self.verbose            = verbose
+        self.use_query_expansion = use_query_expansion
+        self.checkpoint_path     = Path(checkpoint_path) if checkpoint_path else None
+        self.checkpoint_interval = checkpoint_interval
 
         self._injector = TemporalContextInjector()
 
-        if not self.data_path.exists():
-            raise FileNotFoundError(
-                f"LongMemEval data file not found: {self.data_path}\n"
-                f"Clone the repo and verify the path:\n"
-                f"  git clone https://github.com/xiaowu0162/LongMemEval"
-            )
+        # if not self.data_path.exists():
+        #     raise FileNotFoundError(
+        #         f"LongMemEval data file not found: {self.data_path}\n"
+        #         f"Clone the repo and verify the path:\n"
+        #         f"  git clone https://github.com/xiaowu0162/LongMemEval"
+        #     )
 
         with open(self.data_path, "r", encoding="utf-8") as fh:
             self._raw_data: list[dict] = json.load(fh)
@@ -291,24 +300,69 @@ class LongMemEvalAdapter:
         """
         items = self._raw_data
         if categories:
-            # Normalise items by detected category, then filter
             items = [x for x in items if self._detect_category(x) in categories]
         if max_items:
             items = items[:max_items]
 
-        results: list[EvalResult] = []
-        for idx, item in enumerate(items, start=1):
-            cat = self._detect_category(item)
+        # ── Resume from checkpoint ────────────────────────────────────────────
+        completed = self._load_checkpoint()
+        if completed:
             self._log(
-                f"[LongMemEval] Item {idx}/{len(items)} | "
-                f"ID={item.get(self.KEY_QID)} | "
-                f"Category={cat}"
+                f"[LongMemEval] Resuming: {len(completed)}/{len(items)} items "
+                f"already done (loaded from {self.checkpoint_path})"
             )
-            result = self._process_item(item)
-            results.append(result)
 
-        self._log(f"[LongMemEval] Completed — {len(results)} results collected.")
-        return results
+        pending = [
+            (idx, item) for idx, item in enumerate(items, 1)
+            if item.get(self.KEY_QID, f"item_{idx}") not in completed
+        ]
+        done_results: list[EvalResult] = list(completed.values())
+
+        if not pending:
+            self._log("[LongMemEval] All items already complete from checkpoint.")
+            progress = ProgressTracker(len(items), name="LongMemEval")
+            progress.finish()
+            return done_results
+
+        # ── Process pending items ─────────────────────────────────────────────
+        progress = ProgressTracker(len(pending), name="LongMemEval")
+        new_results: list[EvalResult] = []
+
+        for step, (idx, item) in enumerate(pending, 1):
+            cat     = self._detect_category(item)
+            item_id = item.get(self.KEY_QID, f"item_{idx}")
+            progress.update(step_name=f"ID={item_id} cat={cat}")
+            result = self._process_item(item)
+            new_results.append(result)
+
+            if step % self.checkpoint_interval == 0:
+                self._save_checkpoint(done_results + new_results)
+
+        progress.finish()
+        all_results = done_results + new_results
+        self._save_checkpoint(all_results)
+        self._log(f"[LongMemEval] Completed — {len(all_results)} results collected.")
+        return all_results
+
+    # ------------------------------------------------------------------
+    # Private — Checkpoint
+    # ------------------------------------------------------------------
+
+    def _load_checkpoint(self) -> dict[str, "EvalResult"]:
+        if self.checkpoint_path and self.checkpoint_path.exists():
+            try:
+                loaded = load_eval_results(self.checkpoint_path)
+                return {r.question_id: r for r in loaded}
+            except Exception as exc:
+                self._log(f"[LongMemEval] Warning: checkpoint unreadable ({exc}), starting fresh.")
+        return {}
+
+    def _save_checkpoint(self, results: list["EvalResult"]) -> None:
+        if self.checkpoint_path:
+            save_eval_results(results, self.checkpoint_path, verbose=False)
+            self._log(
+                f"[LongMemEval] Checkpoint → {self.checkpoint_path} ({len(results)} items)"
+            )
 
     def _detect_category(self, item: dict) -> str:
         """
@@ -391,10 +445,18 @@ class LongMemEvalAdapter:
 
         # ── Step 5: Dense Retrieval + Generation ─────────────────────────────
         output = self.ltm.generate_response(
-            query           = query,
-            top_k           = self.top_k,
-            max_new_tokens  = self.max_new_tokens,
-            temperature     = self.temperature,
+            query               = query,
+            top_k               = self.top_k,
+            max_new_tokens      = self.max_new_tokens,
+            temperature         = self.temperature,
+            use_query_expansion = self.use_query_expansion,
+        )
+        lat = output.get("latency", {})
+        self._log(
+            f"  [Timing] expand={lat.get('query_expansion_s',0):.1f}s "
+            f"bm25={lat.get('bm25_rerank_s',0):.1f}s "
+            f"gen={lat.get('slm_generation_s',0):.1f}s "
+            f"total={lat.get('total_pipeline_s',0):.1f}s"
         )
 
         # ── Step 6: Purge Virtual Update to prevent contamination ─────────────
@@ -402,9 +464,6 @@ class LongMemEvalAdapter:
             self._injector.purge(self.ltm, virtual_id)
 
         # ── Step 7: Build EvalResult ──────────────────────────────────────────
-        prompt_tokens   = self._count_tokens(output["augmented_prompt"])
-        response_tokens = self._count_tokens(output["response"])
-
         return EvalResult(
             question_id             = qid,
             framework               = "longmemeval",
@@ -419,8 +478,8 @@ class LongMemEvalAdapter:
             augmented_prompt        = output["augmented_prompt"],
             virtual_update_id       = virtual_id,
             virtual_update_text     = virtual_text,
-            prompt_token_count      = prompt_tokens,
-            response_token_count    = response_tokens,
+            prompt_token_count      = output.get("prompt_token_count", 0),
+            response_token_count    = output.get("response_token_count", 0),
         )
 
     def _ingest_session(
@@ -459,20 +518,22 @@ class LongMemEvalAdapter:
                     "has_answer" : turn.get(self.KEY_HAS_ANSWER, False),
                     "framework"  : "longmemeval",
                 },
+                commit=False,  # defer commit until all turns in this session are inserted
             )
             faiss_ids.append(fid)
+
+        # Single commit for the whole session (~494 turns → 1 FTS5 merge instead of 494)
+        if faiss_ids:
+            self.ltm._db_conn.commit()
 
         return faiss_ids
 
     def _reset_ltm(self) -> None:
+        """Reset the LTM index between evaluation items.
+        Clears FTS5 table and sidecar store to prevent bleed.
         """
-        Reset the FAISS index and sidecar store for a fresh per-item LTM.
-        This ensures no bleed between evaluation items.
-        """
-        import faiss as _faiss
-        import numpy as _np
-
-        self.ltm.faiss_index    = _faiss.IndexFlatL2(self.ltm.embedding_dim)
+        self.ltm._db_conn.execute("DELETE FROM docs")
+        self.ltm._db_conn.commit()
         self.ltm.ltm_store      = {}
         self.ltm._next_faiss_id = 0
 
@@ -495,7 +556,7 @@ class LongMemEvalAdapter:
 class LoCoMoAdapter:
     """
     Adapts the LoCoMo (Long Conversational Memory) benchmark to the
-    VectorEmbeddedMemory LTM module.
+    SparseEmbeddedMemory LTM module.
 
     LoCoMo Dataset Schema — locomo10.json (raw JSON — DO NOT MODIFY)
     -----------------------------------------------------------------
@@ -567,19 +628,25 @@ class LoCoMoAdapter:
 
     def __init__(
         self,
-        ltm          : VectorEmbeddedMemory,
-        data_path    : str | Path,
-        top_k        : int   = 5,
-        max_new_tokens: int  = 256,
-        temperature  : float = 0.0,
-        verbose      : bool  = True,
+        ltm                 : SparseEmbeddedMemory,
+        data_path           : str | Path,
+        top_k               : int   = 5,
+        max_new_tokens      : int   = 256,
+        temperature         : float = 0.0,
+        verbose             : bool  = True,
+        use_query_expansion : bool  = True,
+        checkpoint_path     : str | Path | None = None,
+        checkpoint_interval : int   = 10,
     ) -> None:
-        self.ltm           = ltm
-        self.data_path     = Path(data_path)
-        self.top_k         = top_k
-        self.max_new_tokens = max_new_tokens
-        self.temperature   = temperature
-        self.verbose       = verbose
+        self.ltm                = ltm
+        self.data_path          = Path(data_path)
+        self.top_k              = top_k
+        self.max_new_tokens     = max_new_tokens
+        self.temperature        = temperature
+        self.verbose            = verbose
+        self.use_query_expansion = use_query_expansion
+        self.checkpoint_path     = Path(checkpoint_path) if checkpoint_path else None
+        self.checkpoint_interval = checkpoint_interval
 
         if not self.data_path.exists():
             raise FileNotFoundError(
@@ -616,21 +683,50 @@ class LoCoMoAdapter:
         categories : Filter to normalised category names (None = all).
         max_items  : Cap total number of QA items processed.
         """
-        results   : list[EvalResult] = []
-        item_count = 0
+        # ── Resume from checkpoint ────────────────────────────────────────────
+        completed = self._load_checkpoint()
+        if completed:
+            self._log(
+                f"[LoCoMo] Resuming: {len(completed)} items already done "
+                f"(loaded from {self.checkpoint_path})"
+            )
+
+        done_results: list[EvalResult] = list(completed.values())
+        new_results : list[EvalResult] = []
+        item_count  = 0
+
+        total_qas = sum(len(s.get(self.KEY_QA, [])) for s in self._raw_data)
+        if max_items:
+            total_qas = min(total_qas, max_items)
+        pending_count = max(1, total_qas - len(completed))
+        progress = ProgressTracker(pending_count, name="LoCoMo")
 
         for sample in self._raw_data:
             if max_items and item_count >= max_items:
                 break
 
             conv_id  = str(sample.get(self.KEY_SAMPLE_ID, "unknown"))
-            conv     = sample.get(self.KEY_CONV, {})      # the dict with session_N keys
+            conv     = sample.get(self.KEY_CONV, {})
             qa_list  = sample.get(self.KEY_QA, [])
+
+            # Build set of eligible qids for this conversation (respecting category filter)
+            eligible_qids: set[str] = set()
+            for qa in qa_list:
+                raw_type = qa.get(self.KEY_CATEGORY, "single-hop")
+                cat = self.TYPE_MAP.get(raw_type, "single_hop")
+                if categories and cat not in categories:
+                    continue
+                qid = f"{conv_id}__{qa.get(self.KEY_QUESTION, '')[:30].replace(' ', '_')}"
+                eligible_qids.add(qid)
+
+            # Skip the whole conversation if all its eligible items are done
+            if eligible_qids and eligible_qids.issubset(completed.keys()):
+                item_count += len(eligible_qids)
+                continue
 
             # ── Reset LTM once per conversation ──────────────────────────────
             self._reset_ltm()
-            # Returns both session→faiss_ids and dia_id→faiss_id maps
-            session_to_faiss_ids, diaid_to_faiss_id = self._ingest_all_sessions(conv, conv_id)
+            _, diaid_to_faiss_id = self._ingest_all_sessions(conv, conv_id)
 
             for qa in qa_list:
                 if max_items and item_count >= max_items:
@@ -642,17 +738,47 @@ class LoCoMoAdapter:
                 if categories and category not in categories:
                     continue
 
-                self._log(
-                    f"[LoCoMo] Sample={conv_id} | Category={category}"
-                )
+                qid = f"{conv_id}__{qa.get(self.KEY_QUESTION, '')[:30].replace(' ', '_')}"
+
+                if qid in completed:
+                    item_count += 1
+                    continue
+
+                progress.update(step_name=f"Sample={conv_id} cat={category}")
                 result = self._process_qa(
-                    qa, conv_id, session_to_faiss_ids, diaid_to_faiss_id, category
+                    qa, conv_id, diaid_to_faiss_id, category
                 )
-                results.append(result)
+                new_results.append(result)
                 item_count += 1
 
-        self._log(f"[LoCoMo] Completed — {len(results)} results collected.")
-        return results
+                if len(new_results) % self.checkpoint_interval == 0:
+                    self._save_checkpoint(done_results + new_results)
+
+        progress.finish()
+        all_results = done_results + new_results
+        self._save_checkpoint(all_results)
+        self._log(f"[LoCoMo] Completed — {len(all_results)} results collected.")
+        return all_results
+
+    # ------------------------------------------------------------------
+    # Private — Checkpoint
+    # ------------------------------------------------------------------
+
+    def _load_checkpoint(self) -> dict[str, "EvalResult"]:
+        if self.checkpoint_path and self.checkpoint_path.exists():
+            try:
+                loaded = load_eval_results(self.checkpoint_path)
+                return {r.question_id: r for r in loaded}
+            except Exception as exc:
+                self._log(f"[LoCoMo] Warning: checkpoint unreadable ({exc}), starting fresh.")
+        return {}
+
+    def _save_checkpoint(self, results: list["EvalResult"]) -> None:
+        if self.checkpoint_path:
+            save_eval_results(results, self.checkpoint_path, verbose=False)
+            self._log(
+                f"[LoCoMo] Checkpoint → {self.checkpoint_path} ({len(results)} items)"
+            )
 
     # ------------------------------------------------------------------
     # Private — Processing
@@ -660,11 +786,10 @@ class LoCoMoAdapter:
 
     def _process_qa(
         self,
-        qa                  : dict,
-        conv_id             : str,
-        session_to_faiss_ids: dict[str, list[int]],
-        diaid_to_faiss_id   : dict[int, int],
-        category            : str,
+        qa                : dict,
+        conv_id           : str,
+        diaid_to_faiss_id : dict[int, int],
+        category          : str,
     ) -> EvalResult:
         """Process one QA item from LoCoMo."""
         qid      = f"{conv_id}__{qa.get('question', '')[:30].replace(' ', '_')}"
@@ -691,14 +816,19 @@ class LoCoMoAdapter:
 
         # ── Dense Retrieval + Generation ──────────────────────────────────────
         output = self.ltm.generate_response(
-            query          = effective_query,
-            top_k          = self.top_k,
-            max_new_tokens = self.max_new_tokens,
-            temperature    = self.temperature,
+            query               = effective_query,
+            top_k               = self.top_k,
+            max_new_tokens      = self.max_new_tokens,
+            temperature         = self.temperature,
+            use_query_expansion = self.use_query_expansion,
         )
-
-        prompt_tokens   = self._count_tokens(output["augmented_prompt"])
-        response_tokens = self._count_tokens(output["response"])
+        lat = output.get("latency", {})
+        self._log(
+            f"  [Timing] bm25={lat.get('bm25_rerank_s', 0):.1f}s "
+            f"gen={lat.get('slm_generation_s', 0):.1f}s "
+            f"total={lat.get('total_pipeline_s', 0):.1f}s "
+            f"tok={output.get('response_token_count', 0)}"
+        )
 
         return EvalResult(
             question_id             = qid,
@@ -712,8 +842,8 @@ class LoCoMoAdapter:
             predicted_answer        = output["response"],
             latency                 = output["latency"],
             augmented_prompt        = output["augmented_prompt"],
-            prompt_token_count      = prompt_tokens,
-            response_token_count    = response_tokens,
+            prompt_token_count      = output.get("prompt_token_count", 0),
+            response_token_count    = output.get("response_token_count", 0),
         )
 
     def _ingest_all_sessions(
@@ -769,19 +899,26 @@ class LoCoMoAdapter:
                         "dia_id"         : dia_id,
                         "framework"      : "locomo",
                     },
+                    commit=False,  # defer commit until all turns in this session are inserted
                 )
                 ids.append(fid)
                 if dia_id is not None:
                     diaid_to_faiss[str(dia_id)] = fid
+
+            # Single commit per session
+            if ids:
+                self.ltm._db_conn.commit()
 
             session_to_ids[sess_key] = ids
 
         return session_to_ids, diaid_to_faiss
 
     def _reset_ltm(self) -> None:
-        """Reset the LTM index between conversations."""
-        import faiss as _faiss
-        self.ltm.faiss_index    = _faiss.IndexFlatL2(self.ltm.embedding_dim)
+        """Reset the LTM index between conversations.
+        Clears FTS5 table and sidecar store to prevent bleed.
+        """
+        self.ltm._db_conn.execute("DELETE FROM docs")
+        self.ltm._db_conn.commit()
         self.ltm.ltm_store      = {}
         self.ltm._next_faiss_id = 0
 
@@ -800,7 +937,7 @@ class LoCoMoAdapter:
 # Utility — Save Results to JSON
 # ---------------------------------------------------------------------------
 
-def save_eval_results(results: list[EvalResult], output_path: str | Path) -> None:
+def save_eval_results(results: list[EvalResult], output_path: str | Path, verbose: bool = True) -> None:
     """
     Serialise a list of EvalResult objects to a JSON file.
     Used as intermediate checkpoint between Stage 1 and Stage 2 evaluation.
@@ -830,7 +967,8 @@ def save_eval_results(results: list[EvalResult], output_path: str | Path) -> Non
     with open(output_path, "w", encoding="utf-8") as fh:
         json.dump(serialisable, fh, indent=2, ensure_ascii=False)
 
-    print(f"[Adapter] Results saved → {output_path} ({len(results)} items)")
+    if verbose:
+        print(f"[Adapter] Results saved → {output_path} ({len(results)} items)")
 
 
 def load_eval_results(input_path: str | Path) -> list[EvalResult]:

@@ -66,7 +66,7 @@ faiss_index.bin
 *.sqlite3
 
 # Evaluation outputs and results
-results/
+# results/
 results_*/
 eval_results/
 *.json.bak
@@ -96,7 +96,7 @@ htmlcov/
 ehthumbs.db
 
 # Environment-specific
-.env
+.env.*
 .env.local
 .env.*.local
 
@@ -117,3 +117,12 @@ _del_cred.*
 node_modules/
 npm-debug.log
 yarn-error.log
+longmemeval_cache/
+longmemeval_oracle.json
+Benchmarks/
+
+main.md
+model_audit/
+run_with_tracker.py
+"_Pro__LTM_in_SLM (3).pdf"
+THESIS_DATA_EXTRACTION.txt

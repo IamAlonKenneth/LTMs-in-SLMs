@@ -28,8 +28,11 @@ from __future__ import annotations
 import json
 import math
 import os
+import re
 import statistics
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -309,6 +312,30 @@ Respond with ONLY a JSON object in this format:
 {{"score": <1-5>, "reasoning": "<one sentence>"}}
 """
 
+COMBINED_EVAL_PROMPT = """\
+You are an expert evaluator for an AI memory system. Score the response on two dimensions.
+
+RETRIEVED CONTEXT (memories the model had access to):
+{retrieved_context}
+
+USER QUESTION:
+{query}
+
+MODEL RESPONSE:
+{predicted_answer}
+
+Score on both dimensions (1-5):
+
+FAITHFULNESS — is the response grounded in the retrieved context with no hallucinations?
+  5=fully supported  4=mostly supported  3=partially supported  2=mostly fabricated  1=contradicts context
+
+ANSWER RELEVANCE — does the response directly and completely answer the question?
+  5=complete answer  4=minor irrelevant details  3=partial answer  2=tangentially related  1=off-topic
+
+Respond with ONLY this JSON (no other text):
+{{"faithfulness": {{"score": <1-5>, "reasoning": "<one sentence>"}}, "answer_relevance": {{"score": <1-5>, "reasoning": "<one sentence>"}}}}
+"""
+
 ABSTENTION_PROMPT = """\
 You are an expert evaluator for an AI memory system.
 
@@ -420,34 +447,34 @@ class LLMJudge:
             for m in result.retrieved_memories
         ) or "  [No memories retrieved]"
 
-        # ── Faithfulness (all non-abstention categories) ───────────────────
         if result.category != "abstention":
-            f_prompt = FAITHFULNESS_PROMPT.format(
+            # Single API call for both faithfulness + answer_relevance
+            combined = self._call_judge(COMBINED_EVAL_PROMPT.format(
                 retrieved_context = retrieved_context,
+                query             = result.query,
                 predicted_answer  = result.predicted_answer,
-            )
-            f_score = self._call_judge(f_prompt)
-            scores["faithfulness"]          = f_score.get("score")
-            scores["faithfulness_reasoning"] = f_score.get("reasoning", "")
-
-        # ── Answer Relevance (all categories) ─────────────────────────────
-        ar_prompt = ANSWER_RELEVANCE_PROMPT.format(
-            query            = result.query,
-            predicted_answer = result.predicted_answer,
-        )
-        ar_score = self._call_judge(ar_prompt)
-        scores["answer_relevance"]          = ar_score.get("score")
-        scores["answer_relevance_reasoning"] = ar_score.get("reasoning", "")
-
-        # ── Abstention Accuracy (adversarial category only) ────────────────
-        if result.category == "abstention":
-            ab_prompt = ABSTENTION_PROMPT.format(
+            ))
+            f  = combined.get("faithfulness",    {}) or {}
+            ar = combined.get("answer_relevance", {}) or {}
+            scores["faithfulness"]               = f.get("score")
+            scores["faithfulness_reasoning"]      = f.get("reasoning", "")
+            scores["answer_relevance"]            = ar.get("score")
+            scores["answer_relevance_reasoning"]  = ar.get("reasoning", "")
+        else:
+            # Abstention: answer_relevance only (no context to judge faithfulness)
+            ar_score = self._call_judge(ANSWER_RELEVANCE_PROMPT.format(
                 query            = result.query,
                 predicted_answer = result.predicted_answer,
-            )
-            ab_score = self._call_judge(ab_prompt)
-            scores["abstention_score"]          = ab_score.get("score")
-            scores["abstention_reasoning"]       = ab_score.get("reasoning", "")
+            ))
+            scores["answer_relevance"]           = ar_score.get("score")
+            scores["answer_relevance_reasoning"]  = ar_score.get("reasoning", "")
+
+            ab_score = self._call_judge(ABSTENTION_PROMPT.format(
+                query            = result.query,
+                predicted_answer = result.predicted_answer,
+            ))
+            scores["abstention_score"]      = ab_score.get("score")
+            scores["abstention_reasoning"]  = ab_score.get("reasoning", "")
 
         return scores
 
@@ -459,12 +486,17 @@ class LLMJudge:
                     prompt,
                     generation_config=genai.types.GenerationConfig(
                         temperature=self.temperature,
-                        max_output_tokens=200,
+                        max_output_tokens=8192,  # thinking + response share this budget
                     )
                 )
                 raw_text = resp.text.strip()
-                # Strip markdown code fences if present
-                raw_text = raw_text.replace("```json", "").replace("```", "").strip()
+                # Gemini 2.5+ may prepend thinking/preamble before the JSON.
+                # Grab everything from the first '{' to the last '}' — handles
+                # preamble, markdown fences, and reasoning text with braces.
+                start = raw_text.find('{')
+                end   = raw_text.rfind('}')
+                if start != -1 and end > start:
+                    raw_text = raw_text[start:end + 1]
                 return json.loads(raw_text)
             except json.JSONDecodeError:
                 if self.verbose:
@@ -479,32 +511,70 @@ class LLMJudge:
 
 
 def compute_stage2_metrics(
-    results    : list[EvalResult],
-    judge      : LLMJudge,
+    results             : list[EvalResult],
+    judge               : LLMJudge,
+    checkpoint_path     : Path | None = None,
+    checkpoint_interval : int = 50,
+    max_workers         : int = 8,
 ) -> GenerationMetricReport:
     """
     Run the LLM-as-a-Judge on all results and aggregate scores.
 
     Parameters
     ----------
-    results : EvalResult list from Stage 1 evaluation run.
-    judge   : Initialised LLMJudge instance.
+    results             : EvalResult list from Stage 1 evaluation run.
+    judge               : Initialised LLMJudge instance.
+    checkpoint_path     : If set, save/resume partial scores here so a crash
+                          does not lose progress on long runs.
+    checkpoint_interval : Save checkpoint every N items (default 50).
 
     Returns
     -------
     GenerationMetricReport with mean scores per category and overall.
     """
+    # ── Load existing checkpoint ───────────────────────────────────────────
     per_item_scores: list[dict[str, Any]] = []
-    n_skipped = 0
-
-    for idx, result in enumerate(results, start=1):
-        print(f"  [Stage 2] Scoring {idx}/{len(results)} | {result.question_id}")
+    done_ids: set[str] = set()
+    if checkpoint_path and Path(checkpoint_path).exists():
         try:
-            scores = judge.score_result(result)
-            per_item_scores.append(scores)
+            with open(checkpoint_path, encoding="utf-8") as fh:
+                per_item_scores = json.load(fh)
+            done_ids = {s["question_id"] for s in per_item_scores}
+            print(f"  [Stage 2] Resumed from checkpoint: {len(done_ids)} items already scored.")
+        except Exception as exc:
+            print(f"  [Stage 2] Warning: checkpoint unreadable ({exc}), starting fresh.")
+            per_item_scores = []
+
+    n_skipped  = 0
+    _lock      = threading.Lock()
+    pending    = [r for r in results if r.question_id not in done_ids]
+    total      = len(results)
+
+    def _score_one(result: EvalResult) -> dict[str, Any] | None:
+        try:
+            return judge.score_result(result)
         except Exception as exc:
             print(f"    [Warning] Skipped {result.question_id}: {exc}")
-            n_skipped += 1
+            return None
+
+    with ThreadPoolExecutor(max_workers=max_workers) as pool:
+        futures = {pool.submit(_score_one, r): r for r in pending}
+        for future in as_completed(futures):
+            scores = future.result()
+            if scores is None:
+                with _lock:
+                    n_skipped += 1
+                continue
+            with _lock:
+                per_item_scores.append(scores)
+                done_ids.add(scores["question_id"])
+                completed = len(per_item_scores)
+            print(f"  [Stage 2] {completed}/{total} done | {scores['question_id']}")
+            if checkpoint_path and completed % checkpoint_interval == 0:
+                with _lock:
+                    with open(checkpoint_path, "w", encoding="utf-8") as fh:
+                        json.dump(per_item_scores, fh, ensure_ascii=False, indent=2)
+                print(f"  [Stage 2] Checkpoint saved ({completed} items).")
 
     # ── Aggregate ──────────────────────────────────────────────────────────
     def _mean_std(vals: list[float]) -> tuple[float, float]:

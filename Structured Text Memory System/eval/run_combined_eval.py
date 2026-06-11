@@ -1,7 +1,7 @@
 """
 run_combined_eval.py
 ====================
-Master Evaluation Runner — Dense-Retrieval LTM Thesis Evaluation Suite
+Master Evaluation Runner — Sparse-Retrieval LTM Thesis Evaluation Suite
 
 Sequentially executes:
   1. LongMemEval evaluation  (all 4 cognitive categories)
@@ -62,7 +62,19 @@ _PROJECT_ROOT = _FILE_DIR.parent
 sys.path.insert(0, str(_PROJECT_ROOT))
 sys.path.insert(0, str(_FILE_DIR))
 
-from sparse_rag_pipeline import SparseEmbeddedMemory as VectorEmbeddedMemory
+# ── Load API keys from .env.YE / .env at the repo root ───────────────────────
+try:
+    from dotenv import load_dotenv as _load_dotenv
+    _repo_root = _FILE_DIR.parents[1]   # …/LTMs-in-SLMs/
+    for _env_name in (".env.YE", ".env"):
+        _env_path = _repo_root / _env_name
+        if _env_path.exists():
+            _load_dotenv(_env_path)
+            break
+except ImportError:
+    pass  # python-dotenv not installed; fall back to os.environ only
+
+from sparse_rag_pipeline import SparseEmbeddedMemory
 from ltm_eval_adapter  import (
     LongMemEvalAdapter,
     LoCoMoAdapter,
@@ -88,7 +100,7 @@ from eval_metrics import (
 
 def build_arg_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        description="Dense-Retrieval LTM — Combined Thesis Evaluation Runner",
+        description="Sparse-Retrieval LTM — Combined Thesis Evaluation Runner",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
@@ -134,8 +146,8 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Dense retrieval top-K for each query (default: 5).",
     )
     ltm_group.add_argument(
-        "--max-new-tokens", type=int, default=256,
-        help="Maximum generation tokens for each SLM response.",
+        "--max-new-tokens", type=int, default=64,
+        help="Maximum generation tokens for each SLM response (default: 64; Gemma 3 IT stops earlier via <end_of_turn>).",
     )
 
     # ── Evaluation control ───────────────────────────────────────────────────
@@ -156,11 +168,20 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     eval_group.add_argument(
         "--skip-judge", action="store_true", default=False,
-        help="Skip Stage 2 LLM-as-a-Judge (no OpenAI key required).",
+        help="Skip Stage 2 LLM-as-a-Judge (no Gemini key required).",
     )
     eval_group.add_argument(
-        "--judge-model", type=str, default="gpt-4o",
-        help="OpenAI model to use as LLM judge (default: gpt-4o).",
+        "--skip-expansion", action="store_true", default=False,
+        help="Skip LLM query expansion (~15s saved per item). "
+             "Gemma Embedding handles vocabulary gaps instead.",
+    )
+    eval_group.add_argument(
+        "--judge-model", type=str, default="gemini-2.5-flash",
+        help="Gemini model to use as LLM judge (default: gemini-2.5-flash).",
+    )
+    eval_group.add_argument(
+        "--judge-workers", type=int, default=8,
+        help="Parallel workers for LLM judge API calls (default: 8).",
     )
     eval_group.add_argument(
         "--full-context-tokens", type=float, default=None,
@@ -172,6 +193,13 @@ def build_arg_parser() -> argparse.ArgumentParser:
     out_group.add_argument(
         "--output-dir", type=str, default="./results",
         help="Directory to write all output files.",
+    )
+    out_group.add_argument(
+        "--run-id", type=str, default=None,
+        metavar="RUN_ID",
+        help="Resume a previous run by reusing its run ID (e.g., 20240610_120000). "
+             "Checkpoint files in that run's output directory are loaded and completed "
+             "items are skipped. If omitted, a new timestamped ID is created.",
     )
     out_group.add_argument(
         "--verbose", action="store_true", default=True,
@@ -187,12 +215,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
 
 def run_evaluation(args: argparse.Namespace) -> None:
 
-    run_id    = datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_id    = args.run_id or datetime.now().strftime("%Y%m%d_%H%M%S")
     out_dir   = Path(args.output_dir) / run_id
     out_dir.mkdir(parents=True, exist_ok=True)
 
     print(f"\n{'═'*80}")
-    print(f"  Dense-Retrieval LTM — Combined Evaluation Run")
+    print(f"  Sparse-Retrieval LTM — Combined Evaluation Run")
     print(f"  Run ID  : {run_id}")
     print(f"  Output  : {out_dir}")
     print(f"{'═'*80}\n")
@@ -217,14 +245,26 @@ def run_evaluation(args: argparse.Namespace) -> None:
 
     else:
         # ── Initialise the shared LTM module ─────────────────────────────────
-        print("\n[Runner] Initialising VectorEmbeddedMemory LTM module …")
-        ltm = VectorEmbeddedMemory(
+        print("\n[Runner] Initialising SparseEmbeddedMemory LTM module …")
+        ltm = SparseEmbeddedMemory(
             embedding_model_id = args.embedding_model,
             slm_model_id       = args.slm_model,
             quantization       = args.quantization,
             verbose            = False,          # suppress per-call logs
         )
-        print("[Runner] LTM module ready ✓\n")
+        print(f"[Runner] LTM module ready ✓")
+        # Show device regardless of verbose flag
+        print(f"[Runner] SLM device  : {ltm._slm_device}")
+        print(f"[Runner] SLM dtype   : {next(ltm.slm_model.parameters()).dtype}")
+        # Check device map to detect CPU offloading
+        hf_map = getattr(ltm.slm_model, "hf_device_map", None)
+        if hf_map:
+            gpu_layers = sum(1 for v in hf_map.values() if v == 0)
+            cpu_layers = sum(1 for v in hf_map.values() if "cpu" in str(v))
+            print(f"[Runner] Model device map: {gpu_layers} GPU / {cpu_layers} CPU layers")
+            if cpu_layers > 0:
+                print(f"[Runner] *** WARNING: {cpu_layers} layers on CPU — this is the speed bottleneck!")
+        print(f"[Runner] Backend     : SQLite FTS5 (sparse keyword retrieval)\n")
 
         # ── LongMemEval ───────────────────────────────────────────────────────
         if args.longmemeval_data:
@@ -235,12 +275,14 @@ def run_evaluation(args: argparse.Namespace) -> None:
             t0 = time.perf_counter()
 
             lme_adapter = LongMemEvalAdapter(
-                ltm            = ltm,
-                data_path      = args.longmemeval_data,
-                top_k          = args.top_k,
-                max_new_tokens = args.max_new_tokens,
-                temperature    = 0.0,
-                verbose        = args.verbose,
+                ltm                 = ltm,
+                data_path           = args.longmemeval_data,
+                top_k               = args.top_k,
+                max_new_tokens      = args.max_new_tokens,
+                temperature         = 0.0,
+                verbose             = args.verbose,
+                use_query_expansion = not args.skip_expansion,
+                checkpoint_path     = out_dir / "longmemeval_checkpoint.json",
             )
             lme_results = lme_adapter.run(
                 categories = args.categories,
@@ -267,12 +309,14 @@ def run_evaluation(args: argparse.Namespace) -> None:
             t1 = time.perf_counter()
 
             locomo_adapter = LoCoMoAdapter(
-                ltm            = ltm,
-                data_path      = args.locomo_data,
-                top_k          = args.top_k,
-                max_new_tokens = args.max_new_tokens,
-                temperature    = 0.0,
-                verbose        = args.verbose,
+                ltm                 = ltm,
+                data_path           = args.locomo_data,
+                top_k               = args.top_k,
+                max_new_tokens      = args.max_new_tokens,
+                temperature         = 0.0,
+                verbose             = args.verbose,
+                use_query_expansion = not args.skip_expansion,
+                checkpoint_path     = out_dir / "locomo_checkpoint.json",
             )
             locomo_results = locomo_adapter.run(
                 categories = args.categories,
@@ -343,7 +387,12 @@ def run_evaluation(args: argparse.Namespace) -> None:
                 temperature = 0.0,
                 verbose     = args.verbose,
             )
-            stage2_report = compute_stage2_metrics(all_results, judge)
+            stage2_report = compute_stage2_metrics(
+                all_results, judge,
+                checkpoint_path     = out_dir / "stage2_checkpoint.json",
+                checkpoint_interval = 50,
+                max_workers         = args.judge_workers,
+            )
             print_stage2_report(stage2_report)
         except (ImportError, EnvironmentError) as exc:
             print(f"\n[Runner] Stage 2 skipped: {exc}")

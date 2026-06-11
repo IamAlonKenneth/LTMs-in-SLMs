@@ -1,0 +1,25 @@
+{
+  "longmemeval_data": null,
+  "locomo_data": null,
+  "load_results": "Structured Text Memory System/eval/results/20260610_190250/combined_eval_results.json",
+  "embedding_model": "google/embeddinggemma-300m",
+  "slm_model": "google/gemma-3-4b-it",
+  "quantization": "none",
+  "top_k": 5,
+  "max_new_tokens": 64,
+  "categories": null,
+  "k_values": [
+    1,
+    3,
+    5,
+    10
+  ],
+  "max_items": null,
+  "skip_judge": false,
+  "skip_expansion": false,
+  "judge_model": "gemini-2.0-flash",
+  "full_context_tokens": null,
+  "output_dir": "./Structured Text Memory System/eval/results",
+  "run_id": "20260610_190250",
+  "verbose": true
+}

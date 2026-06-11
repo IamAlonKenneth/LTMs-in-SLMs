@@ -5,7 +5,7 @@ Sparse-Retrieval Long-Term Memory (LTM) Module
 for Gemma 3 4B Small Language Model (SLM)
 
 Research Focus : Edge / Local Deployment
-Retrieval Index: SQLite FTS5 inverted index (BM25 + exponential time-decay)
+Retrieval Index: SQLite FTS5 (BM25 + time-decay) + Gemma Embedding re-ranking (hybrid)
 Persistence    : SQLite DB file + sidecar JSON dictionary (rowid -> text + metadata)
 Generator      : google/gemma-3-4b-it  —  in-process via HuggingFace transformers
 
@@ -19,7 +19,7 @@ without modification.
   vector_embed_module.py              sparse_rag_pipeline.py
   ─────────────────────────────────   ──────────────────────────────────────
   FAISS IndexFlatL2                   SQLite FTS5 virtual table (BM25)
-  google/embedding-gemma-300m         (removed — no dense embeddings)
+  google/embedding-gemma-300m         loaded — hybrid BM25 + embedding rerank
   l2_distance  (lower = better)       1 / (final_score + ε)   [same convention]
   dense_retrieve()                    sparse BM25 + time-decay retrieval
   faiss_index.ntotal                  SQL COUNT on active sidecar rows
@@ -28,7 +28,7 @@ without modification.
   _next_faiss_id                      maintained identically (SQLite rowid)
 
 Extra keys appended to result dicts (evaluation code ignores unknown keys):
-  bm25_score, recency_score, final_score
+  bm25_score, recency_score, embedding_score, final_score
 
 Extra latency keys in generate_response (evaluation code ignores them):
   query_expansion_s, bm25_rerank_s
@@ -69,7 +69,7 @@ CONTEXT_HEADER         = "[RETRIEVED CONTEXT]"
 CONTEXT_FOOTER         = "[/RETRIEVED CONTEXT]"
 
 # Sparse-retrieval tunables
-DEFAULT_CANDIDATE_K  = 20    # FTS5 rows fetched before time-decay re-ranking
+DEFAULT_CANDIDATE_K  = 10    # FTS5 rows fetched before time-decay re-ranking
 DEFAULT_DECAY_LAMBDA = 0.1   # λ in  Score_final = BM25 × e^(−λ·Δt)
 
 # Filenames used by save_ltm / load_ltm
@@ -96,9 +96,10 @@ class SparseEmbeddedMemory:
 
     Encapsulates
     ────────────
-    • SQLite FTS5 inverted index   — keyword BM25 scoring; no dense vectors
-    • BM25 × time-decay re-ranker  — Score_final = BM25 × e^(−λ·Δt)
-    • Query expansion (Gemma 3 4B) — broadens FTS5 recall via LLM synonyms
+    • SQLite FTS5 inverted index        — keyword BM25 candidate retrieval
+    • Gemma Embedding (300M) re-ranker  — semantic re-scoring of BM25 candidates
+    • BM25 × time-decay + hybrid score  — Score = (α·BM25 + (1-α)·cosine) × e^(−λ·Δt)
+    • Query expansion (Gemma 3 4B)      — broadens FTS5 recall via LLM synonyms
     • Sidecar JSON map             — { str(rowid): {text, timestamp, metadata} }
     • Gemma 3 4B SLM               — in-process; full lifecycle owned here
 
@@ -123,7 +124,7 @@ class SparseEmbeddedMemory:
     def __init__(
         self,
         # ── Kept verbatim for drop-in compatibility ───────────────────────
-        embedding_model_id : str   = "google/embedding-gemma-300m",
+        embedding_model_id : str   = "google/embeddinggemma-300m",
         slm_model_id       : str   = "google/gemma-3-4b-it",
         quantization       : str   = "none",   # "4bit" | "8bit" | "none"
         device             : str   = "auto",
@@ -133,12 +134,13 @@ class SparseEmbeddedMemory:
         db_path            : str   = ":memory:",
         decay_lambda       : float = DEFAULT_DECAY_LAMBDA,
         candidate_k        : int   = DEFAULT_CANDIDATE_K,
+        hybrid_alpha       : float = 0.3,  # BM25 weight in hybrid score; 0=dense-only, 1=BM25-only
     ) -> None:
         """
         Parameters
         ──────────
-        embedding_model_id : Accepted for API compatibility; not loaded.
-                             Pass any string — it is stored but never used.
+        embedding_model_id : HuggingFace repo for the dense embedding model.
+                             Used to re-rank BM25 candidates by semantic similarity.
         slm_model_id       : HuggingFace repo for Gemma 3 4B (or any causal LM).
         quantization       : "4bit" (NF4, ≈3 GB VRAM), "8bit" (≈5 GB),
                              or "none" (bfloat16, ≈8 GB).
@@ -160,6 +162,7 @@ class SparseEmbeddedMemory:
         self.db_path            = db_path
         self.decay_lambda       = decay_lambda
         self.candidate_k        = candidate_k
+        self.hybrid_alpha       = hybrid_alpha
         self._device_pref       = device
 
         # ── Sidecar dict  (identical role to ltm_store in dense module) ──
@@ -180,6 +183,10 @@ class SparseEmbeddedMemory:
         self._log(f"Loading SLM: {slm_model_id} [quantization={quantization}] …")
         self._load_slm()
 
+        # ── Embedding model: google/embedding-gemma-300m (~600 MB bfloat16) ─
+        self._log(f"Loading embedding model: {embedding_model_id} …")
+        self._load_embedding_model()
+
         self._log("Sparse LTM Module initialised ✓")
 
     # ─────────────────────────────────────────────────────────────────────
@@ -190,6 +197,7 @@ class SparseEmbeddedMemory:
         self,
         text    : str,
         metadata: dict[str, Any] | None = None,
+        commit  : bool = True,
     ) -> int:
         """
         Ingest a text fragment into the Sparse-Retrieval LTM.
@@ -227,7 +235,8 @@ class SparseEmbeddedMemory:
             "INSERT INTO docs(content, timestamp, metadata) VALUES (?, ?, ?)",
             (text, ts, json.dumps(metadata)),
         )
-        self._db_conn.commit()
+        if commit:
+            self._db_conn.commit()
 
         doc_id = cursor.lastrowid                # SQLite assigns rowid automatically
 
@@ -239,10 +248,12 @@ class SparseEmbeddedMemory:
         }
         self._next_faiss_id = doc_id + 1
 
-        self._log(
-            f"[Ingestion] Memory stored → ID={doc_id} | "
-            f"tokens≈{len(text.split())} | total_memories={self._active_count()}"
-        )
+        # Guard: only compute _active_count() when the log will actually print
+        if self.verbose:
+            self._log(
+                f"[Ingestion] Memory stored → ID={doc_id} | "
+                f"tokens≈{len(text.split())} | total_memories={self._active_count()}"
+            )
         return doc_id
 
     # ─────────────────────────────────────────────────────────────────────
@@ -251,8 +262,9 @@ class SparseEmbeddedMemory:
 
     def dense_retrieve(
         self,
-        query : str,
-        top_k : int = DEFAULT_TOP_K,
+        query               : str,
+        top_k               : int  = DEFAULT_TOP_K,
+        use_query_expansion : bool = True,
     ) -> list[dict[str, Any]]:
         """
         Execute Sparse Retrieval against the SQLite FTS5 index.
@@ -264,7 +276,7 @@ class SparseEmbeddedMemory:
         ────────
         1. Query Expansion   — Gemma 3 4B generates 4 related keywords to
                                bridge vocabulary mismatch (the core weakness of
-                               bag-of-words / BM25 retrieval systems).
+           x                    bag-of-words / BM25 retrieval systems).
         2. FTS5 MATCH Search — The OR-expanded query is run against the inverted
                                index. bm25(docs) scores each matching row.
         3. Time-Decay Rerank — Each BM25 score is multiplied by e^(−λ·Δt):
@@ -291,15 +303,15 @@ class SparseEmbeddedMemory:
 
         # Step 1 — Query expansion
         t_exp = time.perf_counter()
-        expanded  = self._expand_query(query)
+        expanded  = self._expand_query(query) if use_query_expansion else []
         fts_query = self._build_fts5_query(query, expanded)
         self._log(
             f"[sparse_retrieve] expansion: {time.perf_counter()-t_exp:.2f}s  "
             f"FTS5 query: {fts_query!r}"
         )
 
-        # Steps 2 + 3 — FTS5 search + time-decay re-ranking
-        return self._fts_search_and_rerank(fts_query, top_k)
+        # Steps 2 + 3 — FTS5 search + hybrid re-ranking
+        return self._fts_search_and_rerank(fts_query, top_k, query)
 
     # ─────────────────────────────────────────────────────────────────────
     # C.  Context Injection — Prompt Construction
@@ -373,11 +385,12 @@ class SparseEmbeddedMemory:
 
     def generate_response(
         self,
-        query          : str,
-        top_k          : int   = DEFAULT_TOP_K,
-        max_new_tokens : int   = DEFAULT_MAX_NEW_TOKENS,
-        temperature    : float = 0.7,
-        include_scores : bool  = False,
+        query               : str,
+        top_k               : int   = DEFAULT_TOP_K,
+        max_new_tokens      : int   = DEFAULT_MAX_NEW_TOKENS,
+        temperature         : float = 0.7,
+        include_scores      : bool  = False,
+        use_query_expansion : bool  = True,
     ) -> dict[str, Any]:
         """
         End-to-end Sparse-LTM-augmented inference pipeline.
@@ -427,12 +440,12 @@ class SparseEmbeddedMemory:
         t_ret = time.perf_counter()
 
         t_exp = time.perf_counter()
-        expanded  = self._expand_query(query)
+        expanded  = self._expand_query(query) if use_query_expansion else []
         fts_query = self._build_fts5_query(query, expanded)
         latency["query_expansion_s"] = time.perf_counter() - t_exp
 
         t_bm25 = time.perf_counter()
-        retrieved_mems = self._fts_search_and_rerank(fts_query, top_k)
+        retrieved_mems = self._fts_search_and_rerank(fts_query, top_k, query)
         latency["bm25_rerank_s"] = time.perf_counter() - t_bm25
 
         # sparse_retrieval_s is the compatibility key the eval harness expects.
@@ -466,12 +479,24 @@ class SparseEmbeddedMemory:
 
         prompt_len = inputs["input_ids"].shape[-1]
 
+        use_sampling = temperature > 0
+
+        # Gemma 3 IT ends turns with <end_of_turn>; add it alongside <eos> so
+        # generation stops as soon as the model finishes, not at max_new_tokens.
+        eot_id  = self.slm_tokenizer.convert_tokens_to_ids("<end_of_turn>")
+        eos_ids = [self.slm_tokenizer.eos_token_id]
+        if eot_id != self.slm_tokenizer.unk_token_id:
+            eos_ids.append(eot_id)
+
         with torch.inference_mode():
             output_ids = self.slm_model.generate(
                 **inputs,
                 max_new_tokens = max_new_tokens,
-                do_sample      = (temperature > 0),
-                temperature    = temperature if temperature > 0 else 1.0,
+                eos_token_id   = eos_ids,
+                do_sample      = use_sampling,
+                temperature    = temperature if use_sampling else 1.0,
+                top_p          = None if not use_sampling else 0.95,
+                top_k          = None if not use_sampling else 50,
                 pad_token_id   = self.slm_tokenizer.eos_token_id,
             )
 
@@ -497,10 +522,12 @@ class SparseEmbeddedMemory:
         )
 
         return {
-            "response"        : response_text,
-            "memory_ids_used" : memory_ids_used,
-            "retrieved_mems"  : retrieved_mems,
-            "latency"         : latency,
+            "response"           : response_text,
+            "memory_ids_used"    : memory_ids_used,
+            "retrieved_mems"     : retrieved_mems,
+            "latency"            : latency,
+            "prompt_token_count" : prompt_len,
+            "response_token_count": len(new_ids),
             "augmented_prompt": augmented_prompt,
         }
 
@@ -699,6 +726,11 @@ class SparseEmbeddedMemory:
         These calls are safe even on machines with no GPU — they silently
         return without error when CUDA or MPS is unavailable.
         """
+        if getattr(self, "_embed_loaded", False):
+            del self.embed_model
+            del self.embed_tokenizer
+            self._embed_loaded = False
+
         if getattr(self, "_slm_loaded", False):
             self._log("Unloading SLM weights from device memory …")
             del self.slm_model
@@ -814,12 +846,17 @@ class SparseEmbeddedMemory:
         # Tokenizer
         self.slm_tokenizer = AutoTokenizer.from_pretrained(self.slm_model_id)
 
+        # Gemma 3 uses EOS token as pad token — set explicitly to avoid
+        # CUDA device-side assert failures in sampling-based generation.
+        if self.slm_tokenizer.pad_token is None:
+            self.slm_tokenizer.pad_token = self.slm_tokenizer.eos_token
+
         # Model weights
         bnb_cfg = self._build_bnb_config(self.quantization)
         load_kw: dict[str, Any] = {
             "device_map"         : "auto",
             "low_cpu_mem_usage"  : True,
-            "attn_implementation": "eager",   # compatible with all hardware
+            "attn_implementation": "sdpa",  # faster than eager; works on PyTorch 2.0+
         }
         if bnb_cfg is not None:
             load_kw["quantization_config"] = bnb_cfg
@@ -831,6 +868,10 @@ class SparseEmbeddedMemory:
             self.slm_model_id, **load_kw
         )
         self.slm_model.eval()
+
+        # Propagate pad_token_id to model config (required for Gemma 3 generation)
+        if self.slm_model.config.pad_token_id is None:
+            self.slm_model.config.pad_token_id = self.slm_tokenizer.pad_token_id
         self._slm_loaded = True
         self._log(
             f"SLM ready in {time.perf_counter()-t0:.1f}s  |  "
@@ -839,13 +880,31 @@ class SparseEmbeddedMemory:
         )
 
     # ─────────────────────────────────────────────────────────────────────
+    # Private  —  Embedding Model Loading
+    # ─────────────────────────────────────────────────────────────────────
+
+    def _load_embedding_model(self) -> None:
+        """Load google/embedding-gemma-300m in bfloat16 onto the same device as the SLM."""
+        import torch
+        from transformers import AutoTokenizer, AutoModel
+
+        self.embed_tokenizer = AutoTokenizer.from_pretrained(self.embedding_model_id)
+        self.embed_model = AutoModel.from_pretrained(
+            self.embedding_model_id,
+            torch_dtype=torch.bfloat16,
+        ).to(self._slm_device).eval()
+        self._embed_loaded = True
+        self._log(f"Embedding model ready on {self._slm_device}")
+
+    # ─────────────────────────────────────────────────────────────────────
     # Private  —  Core Retrieval (shared by dense_retrieve + generate_response)
     # ─────────────────────────────────────────────────────────────────────
 
     def _fts_search_and_rerank(
         self,
-        fts_query : str,
-        top_k     : int,
+        fts_query      : str,
+        top_k          : int,
+        original_query : str = "",
     ) -> list[dict[str, Any]]:
         """
         Execute the FTS5 MATCH query and apply BM25 × time-decay re-ranking.
@@ -960,6 +1019,10 @@ class SparseEmbeddedMemory:
                 "final_score"  : final,
             })
 
+        # Hybrid re-ranking: Gemma Embedding re-scores BM25 candidates
+        if original_query and getattr(self, "_embed_loaded", False):
+            scored = self._hybrid_rerank(original_query, scored)
+
         # Sort descending by final_score, slice to top_k, assign rank.
         scored.sort(key=lambda d: d["final_score"], reverse=True)
         result = scored[:top_k]
@@ -967,10 +1030,79 @@ class SparseEmbeddedMemory:
             d["rank"] = i + 1
 
         self._log(
-            f"[FTS5+Rerank] {len(result)} result(s) returned  "
+            f"[FTS5+Hybrid] {len(result)} result(s) returned  "
             f"(from {len(rows)} FTS5 candidates)"
         )
         return result
+
+    # ─────────────────────────────────────────────────────────────────────
+    # Private  —  Hybrid Reranking (Gemma Embedding)
+    # ─────────────────────────────────────────────────────────────────────
+
+    def _embed_texts_batch(self, texts: list[str]):
+        """Batch-embed texts with Gemma Embedding; returns L2-normalised numpy (n, 768)."""
+        import torch
+        import numpy as np
+
+        encoded = self.embed_tokenizer(
+            texts,
+            return_tensors = "pt",
+            truncation     = True,
+            max_length     = 256,
+            padding        = True,
+        ).to(self._slm_device)
+
+        with torch.inference_mode():
+            outputs = self.embed_model(**encoded)
+
+        hidden     = outputs.last_hidden_state              # (n, seq_len, 768)
+        mask       = encoded["attention_mask"]              # (n, seq_len)
+        mask_exp   = mask.unsqueeze(-1).float()
+        sum_h      = (hidden * mask_exp).sum(dim=1)
+        count      = mask_exp.sum(dim=1).clamp(min=1e-9)
+        mean_pool  = sum_h / count                          # (n, 768)
+        norm       = mean_pool.norm(dim=-1, keepdim=True).clamp(min=1e-9)
+        return (mean_pool / norm).cpu().float().numpy()     # (n, 768) L2-normalised
+
+    def _hybrid_rerank(
+        self,
+        query      : str,
+        candidates : list[dict[str, Any]],
+    ) -> list[dict[str, Any]]:
+        """
+        Re-score BM25+time-decay candidates using Gemma Embedding cosine similarity.
+
+        Final score = (α × BM25_norm + (1-α) × cosine) × recency
+        where α = self.hybrid_alpha (default 0.3).
+        Vectors are already L2-normalised, so cosine = dot product.
+        """
+        import numpy as np
+
+        if not candidates:
+            return candidates
+
+        # Batch-embed query + all candidates in a single forward pass
+        texts    = [query] + [c["text"] for c in candidates]
+        vecs     = self._embed_texts_batch(texts)           # (1+n, 768)
+        q_vec    = vecs[0]                                  # (768,)
+        c_vecs   = vecs[1:]                                 # (n, 768)
+
+        cosines  = c_vecs @ q_vec                           # (n,) — dot = cosine (normalised)
+
+        bm25_arr = np.array([c["bm25_score"] for c in candidates], dtype=np.float32)
+        bm25_max = float(bm25_arr.max())
+        bm25_norm = bm25_arr / (bm25_max + 1e-9)
+
+        for i, c in enumerate(candidates):
+            cosine            = float(cosines[i])
+            c["embedding_score"] = cosine
+            c["final_score"]  = (
+                self.hybrid_alpha * float(bm25_norm[i]) +
+                (1.0 - self.hybrid_alpha) * cosine
+            ) * c["recency_score"]
+            c["l2_distance"]  = 1.0 / (c["final_score"] + 1e-9)
+
+        return candidates
 
     # ─────────────────────────────────────────────────────────────────────
     # Private  —  Query Expansion
@@ -1022,22 +1154,29 @@ class SparseEmbeddedMemory:
             JSON array:""")
 
         messages  = [{"role": "user", "content": prompt}]
-        model_inputs = self.slm_tokenizer.apply_chat_template(
+        raw_prompt = self.slm_tokenizer.apply_chat_template(
             messages,
-            return_tensors        = "pt",
+            tokenize      = False,
             add_generation_prompt = True,
         )
+        model_inputs = self.slm_tokenizer(
+            raw_prompt,
+            return_tensors = "pt",
+            truncation     = True,
+            max_length     = 1024,
+        ).to(self._slm_device)
 
-        input_ids = model_inputs["input_ids"].to(self._slm_device)
+        input_ids = model_inputs["input_ids"]
 
         prompt_len = input_ids.shape[-1]
 
         with torch.inference_mode():
             out_ids = self.slm_model.generate(
-                input_ids,
-                max_new_tokens = 96,
-                do_sample      = True,
-                temperature    = 0.35,
+                **model_inputs,
+                max_new_tokens = 48,  # JSON array of 4 short strings < 40 tokens
+                do_sample      = False,
+                top_p          = None,
+                top_k          = None,
                 pad_token_id   = self.slm_tokenizer.eos_token_id,
             )
         
@@ -1066,41 +1205,45 @@ class SparseEmbeddedMemory:
     # Private  —  FTS5 Query Builder
     # ─────────────────────────────────────────────────────────────────────
 
+    _FTS5_STOPWORDS = frozenset({
+        "what","when","where","who","why","how","which","did","do","does",
+        "is","are","was","were","the","a","an","and","or","in","of","to",
+        "for","with","on","at","by","from","up","about","into","through",
+        "that","this","these","those","have","has","had","be","been","being",
+        "i","my","your","his","her","its","our","their","me","you","we","they",
+        "it","him","not","no","can","could","would","should","will","just",
+        "also","but","if","then","so","as","any","all","each","other","more",
+        "most","some","such","than","too","very","don","isn","aren","wasn",
+        "weren","won","couldn","wouldn","shouldn","tell","said","say","told",
+    })
+
     def _build_fts5_query(
         self,
         original_query: str,
         expanded_terms: list[str],
     ) -> str:
         """
-        Combine the original query tokens and LLM-expanded terms into a
-        single FTS5 OR query string to maximise retrieval recall.
+        Combine content words from the original query with LLM-expanded terms
+        into a single FTS5 OR query to maximise recall.
 
-        FTS5 OR query syntax
-        ────────────────────
-        • Tokens separated by spaces inside a clause are implicitly ANDed:
-              python sqlite fts5  →  rows containing all three tokens
-        • OR joins alternative clauses; a row matching ANY clause is returned:
-              python OR sqlite    →  rows containing python OR sqlite (or both)
-        • Multi-word terms must be double-quoted for phrase matching:
-              "machine learning"  →  the two tokens must appear adjacent
-
-        Strategy
-        ────────
-        The original query is treated as an implicit-AND clause (preserving
-        precision), then OR'd with each expanded term (improving recall).
-
-        Example
-        ───────
-        original : "BM25 ranking"
-        expanded : ["relevance score", "term frequency", "inverted index", "IR ranking"]
-        output   : '"BM25 ranking" OR "relevance score" OR "term frequency"
-                    OR "inverted index" OR "IR ranking"'
+        The original query must NOT be quoted as a phrase — it is a natural
+        language question and will never appear verbatim in haystack sessions.
+        Instead, extract meaningful content words and OR them individually.
+        Expanded terms (1-3 words) use phrase quoting only when multi-word.
         """
+        import re
+
         def _fts5_term(t: str) -> str:
-            t = t.strip().replace('"', "")    # sanitise embedded quotes
+            t = t.strip().replace('"', "").replace("'", "")
             return f'"{t}"' if " " in t else t
 
-        base = _fts5_term(original_query)
+        tokens = re.findall(r'\b[a-zA-Z]\w*\b', original_query.lower())
+        content_words = [
+            t for t in tokens
+            if t not in self._FTS5_STOPWORDS and len(t) > 2
+        ]
+
+        base = " OR ".join(content_words) if content_words else _fts5_term(original_query)
         rest = " OR ".join(_fts5_term(t) for t in expanded_terms if t.strip())
         return f"{base} OR {rest}" if rest else base
 
@@ -1153,7 +1296,7 @@ class SparseEmbeddedMemory:
                 load_in_4bit              = True,
                 bnb_4bit_quant_type       = "nf4",
                 bnb_4bit_use_double_quant = True,
-                bnb_4bit_compute_dtype    = torch.float16,
+                bnb_4bit_compute_dtype    = torch.bfloat16,
             )
         if quantization == "8bit":
             return BitsAndBytesConfig(load_in_8bit=True)
@@ -1201,7 +1344,7 @@ if __name__ == "__main__":
     # Instantiate via the drop-in alias — syntactically identical to the
     # dense module's __main__ block.
     ltm = VectorEmbeddedMemory(
-        embedding_model_id = "google/embedding-gemma-300m",  # accepted, unused
+        embedding_model_id = "google/embeddinggemma-300m",  # accepted, unused
         slm_model_id       = "google/gemma-3-4b-it",
         quantization       = "none",    # "4bit" recommended on ≤8 GB VRAM
         verbose            = True,

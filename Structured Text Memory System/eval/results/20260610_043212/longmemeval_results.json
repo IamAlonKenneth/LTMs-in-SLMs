@@ -1,0 +1,629 @@
+[
+  {
+    "question_id": "e47becba",
+    "framework": "longmemeval",
+    "category": "single_hop",
+    "query": "What degree did I graduate with?",
+    "ground_truth": "Business Administration",
+    "predicted_answer": "",
+    "retrieved_memory_ids": [
+      531,
+      532,
+      494
+    ],
+    "ground_truth_memory_ids": [
+      527,
+      528,
+      529,
+      530,
+      531,
+      532,
+      533,
+      534,
+      535,
+      536,
+      537,
+      538
+    ],
+    "retrieved_memories": [
+      {
+        "memory_id": 531,
+        "text": "[USER] (Session answer_280352e9, 2023/05/30 (Tue) 17:27): I graduated with a degree in Business Administration, which has definitely helped me in my new role. Do you have any advice on how to stay organized when it comes to paperwork and documentation, especially when it comes to tracking expenses and reimbursements?",
+        "timestamp": "2026-06-09T20:32:50.764921+00:00",
+        "metadata": {
+          "session_id": "answer_280352e9",
+          "date": "2023/05/30 (Tue) 17:27",
+          "role": "user",
+          "turn_index": 4,
+          "has_answer": true,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.14427471174324288,
+        "bm25_score": 6.931286715947398,
+        "recency_score": 0.9999906069908738,
+        "final_score": 6.931221610308019,
+        "rank": 1
+      },
+      {
+        "memory_id": 532,
+        "text": "[ASSISTANT] (Session answer_280352e9, 2023/05/30 (Tue) 17:27): Congratulations on your degree in Business Administration! That's a great foundation for your new role.\n\nStaying organized with paperwork and documentation is crucial, especially when it comes to tracking expenses and reimbursements. Here are some tips to help you stay on top of it:\n\n1. **Create a filing system**: Develop a consistent filing system, both physical and digital, to store and categorize your documents. This could include folders, binders, or digital files labeled by category (e.g., expenses, invoices, receipts, etc.).\n2. **Digitize your documents**: Scan or digitize paper documents to reduce clutter and make them easily searchable. Consider using cloud storage services like Google Drive, Dropbox, or OneDrive to access your files from anywhere.\n3. **Expense tracking tools**: Utilize expense tracking tools like Expensify, Concur, or Zoho Expense to streamline your expense reporting and reimbursement process. These tools often have mobile apps, making it easy to track expenses on-the-go.\n4. **Receipt organization**: Designate a specific place to store receipts, such as a receipt binder or a digital folder. Consider using a receipt scanning app like Shoeboxed or Neat to digitize your receipts.\n5. **Categorize and tag documents**: Use clear categories and tags to label your documents, making it easy to search and find specific files. For example, you could use tags like \"Q1 Expenses,\" \"Travel Reimbursements,\" or \"Project XYZ Invoices.\"\n6. **Set reminders**: Schedule regular reminders to review and submit expense reports, ensuring you don't miss deadlines or forget to file important documents.\n7. **Centralize your documentation**: Designate a central location, like a shared drive or intranet, to store company-wide documents, policies, and procedures. This ensures everyone has access to the same information.\n8. **Use templates**: Create templates for frequently used documents, such as expense reports or invoices, to save time and ensure consistency.\n9. **Verify and review**: Regularly verify the accuracy of your documents and review them for completeness. This helps prevent errors and ensures you're staying organized.\n10. **Stay up-to-date with company policies**: Familiarize yourself with your company's policies and procedures regarding documentation, expenses, and reimbursements. This will help you stay compliant and avoid any potential issues.\n\nBy implementing these strategies, you'll be well on your way to staying organized and efficient when it comes to paperwork and documentation, especially with tracking expenses and reimbursements.\n\nRemember to always follow your company's specific guidelines and policies, and don't hesitate to ask for help if you need it. Good luck!",
+        "timestamp": "2026-06-09T20:32:50.764921+00:00",
+        "metadata": {
+          "session_id": "answer_280352e9",
+          "date": "2023/05/30 (Tue) 17:27",
+          "role": "assistant",
+          "turn_index": 5,
+          "has_answer": true,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.33501399090263134,
+        "bm25_score": 2.9849780006739532,
+        "recency_score": 0.9999906069908738,
+        "final_score": 2.9849499627483516,
+        "rank": 2
+      },
+      {
+        "memory_id": 494,
+        "text": "[ASSISTANT] (Session 02bd2b90_3, 2023/05/30 (Tue) 11:27): Congratulations on converting your guest room into a home office! Creating a comfortable and functional workspace is essential for productivity and overall well-being. I'd be happy to help you optimize your space. Here are some tips to get you started:\n\n1. **Ergonomic Essentials**:\n\t* Invest in a comfortable, adjustable chair with good lumbar support. This will help prevent back and neck strain.\n\t* Position your chair at a comfortable height, with your feet flat on the floor or on a footrest, and your arms at a 90-degree angle to the keyboard.\n\t* Consider a standing desk or a sit-stand workstation to alternate between sitting and standing throughout the day.\n2. **Lighting**:\n\t* Natural light is ideal, so place your desk near a window if possible. If not, use a high-quality desk lamp to provide focused lighting.\n\t* Avoid harsh overhead lighting, which can cause eye strain.\n3. **Desk and Storage**:\n\t* Choose a desk that fits your work style: consider a larger surface area for multiple monitors or a smaller, more compact design for a laptop-only setup.\n\t* Invest in a comfortable keyboard tray and a mouse pad with a built-in wrist rest.\n\t* Add storage solutions like shelves, cabinets, or a file organizer to keep your workspace clutter-free and organized.\n4. **Noise Reduction**:\n\t* Consider sound-absorbing materials like acoustic panels or a noise machine to minimize distractions and create a peaceful environment.\n5. **Personal Touches**:\n\t* Add plants to purify the air and boost mood.\n\t* Hang artwork or prints that inspire you or create a calming atmosphere.\n\t* Incorporate personal items, like family photos or motivational quotes, to make the space feel more welcoming.\n6. **Color Scheme**:\n\t* Choose a palette that promotes productivity and calmness, such as blues, greens, or neutral tones.\n\t* Avoid bold or bright colors that might be distracting.\n7. **Technology and Accessories**:\n\t* Invest in a good quality monitor, keyboard, and mouse.\n\t* Consider a white noise machine, a USB hub, or a paper tray to keep your workspace organized.\n8. **Cable Management**:\n\t* Use cable ties, cable organizers, or a cord concealment system to keep your workspace tidy and reduce clutter.\n9. **Air Quality**:\n\t* Consider investing in an air purifier to maintain a healthy indoor environment.\n10. **Flexibility**:\n\t* Design your space to be flexible and adaptable to different work styles and tasks.\n\nBefore you start setting up your space, take some time to think about your work habits and preferences. Ask yourself:\n\n* What are my most common tasks and activities?\n* What tools and equipment do I need to have within easy reach?\n* How do I like to work – sitting, standing, or a combination of both?\n* What are my personal comfort levels regarding temperature, lighting, and noise?\n\nBy considering these factors and incorporating the tips above, you'll be well on your way to creating a comfortable and functional home workspace that boosts your productivity and overall well-being. Happy decorating!",
+        "timestamp": "2026-06-09T20:32:50.757882+00:00",
+        "metadata": {
+          "session_id": "02bd2b90_3",
+          "date": "2023/05/30 (Tue) 11:27",
+          "role": "assistant",
+          "turn_index": 1,
+          "has_answer": false,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.36955326878040573,
+        "bm25_score": 2.7059952795846796,
+        "recency_score": 0.9999905988439597,
+        "final_score": 2.7059698401008117,
+        "rank": 3
+      }
+    ],
+    "latency": {
+      "query_expansion_s": 8.111099799978547,
+      "bm25_rerank_s": 0.001293900073505938,
+      "sparse_retrieval_s": 8.112395500065759,
+      "context_injection_s": 1.6300007700920105e-05,
+      "slm_generation_s": 20.182440900010988,
+      "total_pipeline_s": 28.294852700084448
+    },
+    "virtual_update_id": null,
+    "virtual_update_text": "",
+    "prompt_token_count": 1497,
+    "response_token_count": 0
+  },
+  {
+    "question_id": "118b2229",
+    "framework": "longmemeval",
+    "category": "single_hop",
+    "query": "How long is my daily commute to work?",
+    "ground_truth": "45 minutes each way",
+    "predicted_answer": "",
+    "retrieved_memory_ids": [
+      89,
+      81,
+      1,
+      90,
+      167
+    ],
+    "ground_truth_memory_ids": [
+      81,
+      82,
+      83,
+      84,
+      85,
+      86,
+      87,
+      88,
+      89,
+      90,
+      91,
+      92
+    ],
+    "retrieved_memories": [
+      {
+        "memory_id": 89,
+        "text": "[USER] (Session answer_40a90d51, 2023/05/22 (Mon) 21:18): I've been listening to audiobooks during my daily commute, which takes 45 minutes each way.",
+        "timestamp": "2026-06-09T20:33:19.103660+00:00",
+        "metadata": {
+          "session_id": "answer_40a90d51",
+          "date": "2023/05/22 (Mon) 21:18",
+          "role": "user",
+          "turn_index": 8,
+          "has_answer": true,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.08126534219981117,
+        "bm25_score": 12.305475842219154,
+        "recency_score": 0.9999912947450669,
+        "final_score": 12.305368719914874,
+        "rank": 1
+      },
+      {
+        "memory_id": 81,
+        "text": "[USER] (Session answer_40a90d51, 2023/05/22 (Mon) 21:18): I'm looking for some new fiction audiobook recommendations. I've been enjoying audiobooks a lot lately, especially during my daily commute.",
+        "timestamp": "2026-06-09T20:33:19.102664+00:00",
+        "metadata": {
+          "session_id": "answer_40a90d51",
+          "date": "2023/05/22 (Mon) 21:18",
+          "role": "user",
+          "turn_index": 0,
+          "has_answer": false,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.08301819728227068,
+        "bm25_score": 12.045656725119535,
+        "recency_score": 0.9999912935922991,
+        "final_score": 12.045551850721061,
+        "rank": 2
+      },
+      {
+        "memory_id": 1,
+        "text": "[USER] (Session db73b7e4_4, 2023/05/20 (Sat) 03:29): I'm looking for some advice on how to take care of my leather boots. I've been wearing my new boots almost daily since January 15th, and I want to make sure they last long. Do you have any tips on how to condition them?",
+        "timestamp": "2026-06-09T20:33:19.089656+00:00",
+        "metadata": {
+          "session_id": "db73b7e4_4",
+          "date": "2023/05/20 (Sat) 03:29",
+          "role": "user",
+          "turn_index": 0,
+          "has_answer": false,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.11862655090865838,
+        "bm25_score": 8.429889546317181,
+        "recency_score": 0.9999912785368748,
+        "final_score": 8.429816025346353,
+        "rank": 3
+      },
+      {
+        "memory_id": 90,
+        "text": "[ASSISTANT] (Session answer_40a90d51, 2023/05/22 (Mon) 21:18): That's a great way to make the most of your commute time! An hour each way is a significant amount of time that can be utilized for personal development, entertainment, or relaxation. Audiobooks are an excellent choice for commutes, as they allow you to multitask while still enjoying a good story or learning something new.\n\nWith an hour of commute time each way, you can easily get through a significant portion of an audiobook. You might even find yourself looking forward to your commute, knowing that you'll have some dedicated time to immerse yourself in a good story or learn something new.\n\nHave you noticed any benefits from listening to audiobooks during your commute? For example, do you feel more relaxed, energized, or inspired after listening to a particular book?\n\nAlso, are there any specific genres or topics you prefer to listen to during your commute? Do you find that certain types of books help you relax, while others keep you more engaged and awake?",
+        "timestamp": "2026-06-09T20:33:19.103660+00:00",
+        "metadata": {
+          "session_id": "answer_40a90d51",
+          "date": "2023/05/22 (Mon) 21:18",
+          "role": "assistant",
+          "turn_index": 9,
+          "has_answer": false,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.12086377321651949,
+        "bm25_score": 8.273849794664285,
+        "recency_score": 0.9999912947450669,
+        "final_score": 8.273777768692543,
+        "rank": 4
+      },
+      {
+        "memory_id": 167,
+        "text": "[ASSISTANT] (Session ultrachat_392094, 2023/05/24 (Wed) 14:32): Yes, individuals can contribute to coral reef conservation efforts through their daily activities. Small actions taken to protect the environment can have a significant impact on the health of coral reefs in the long run. Here are some ways individuals can help:\n\n1. Conserve Water: Using minimal water reduces the flow of nitrogen and phosphorus-rich runoff into the ocean, which contributes to coral reef destruction. \n\n2. Reduce Carbon Footprint: Reducing carbon emissions by carpooling or using public transportation, reducing energy consumption, and using energy-efficient devices can also help.\n\n3. Use eco-friendly Products: Refraining from using single-use plastic products, such as straws, bags, or takeout containers, can help lessen plastic pollution that ends up in the ocean.\n\n4. Eat Sustainable Seafood: Sustainable seafood practices can help in reducing overfishing and restoring fish populations, which contribute to the overall health of coral reef ecosystems.\n\n5. Practice Responsible Beach and Ocean Activities: Avoid leaving behind trash or stepping on coral reefs when swimming or snorkeling near them. Always use designated water facilities when swimming. \n\n6. Support Coral Reef Conservation Efforts: By donating to organizations that carry out coral reef restoration work, you contribute to conserving coral reefs. You can also participate in beach and ocean cleanup activities in your community.\n\nIn conclusion, with concerted efforts from individuals, governments, and private organizations, it is possible to conserve coral reefs for future generations. Every small action counts, and being aware of our impact while making changes to our daily activities can make a huge difference.",
+        "timestamp": "2026-06-09T20:33:19.115073+00:00",
+        "metadata": {
+          "session_id": "ultrachat_392094",
+          "date": "2023/05/24 (Wed) 14:32",
+          "role": "assistant",
+          "turn_index": 7,
+          "has_answer": false,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.12419334621468853,
+        "bm25_score": 8.052031147210064,
+        "recency_score": 0.9999913079544427,
+        "final_score": 8.051961158588504,
+        "rank": 5
+      }
+    ],
+    "latency": {
+      "query_expansion_s": 7.457521199947223,
+      "bm25_rerank_s": 0.0006914000259712338,
+      "sparse_retrieval_s": 7.458214299986139,
+      "context_injection_s": 7.999944500625134e-06,
+      "slm_generation_s": 20.649847600026987,
+      "total_pipeline_s": 28.108069899957627
+    },
+    "virtual_update_id": null,
+    "virtual_update_text": "",
+    "prompt_token_count": 937,
+    "response_token_count": 0
+  },
+  {
+    "question_id": "51a45a95",
+    "framework": "longmemeval",
+    "category": "single_hop",
+    "query": "Where did I redeem a $5 coupon on coffee creamer?",
+    "ground_truth": "Target",
+    "predicted_answer": "",
+    "retrieved_memory_ids": [
+      445,
+      446,
+      442,
+      394,
+      106
+    ],
+    "ground_truth_memory_ids": [
+      441,
+      442,
+      443,
+      444,
+      445,
+      446,
+      447,
+      448,
+      449,
+      450,
+      451,
+      452
+    ],
+    "retrieved_memories": [
+      {
+        "memory_id": 445,
+        "text": "[USER] (Session answer_d61669c7, 2023/05/29 (Mon) 13:28): I actually redeemed a $5 coupon on coffee creamer last Sunday, which was a nice surprise since I didn't know I had it in my email inbox.",
+        "timestamp": "2026-06-09T20:33:47.374582+00:00",
+        "metadata": {
+          "session_id": "answer_d61669c7",
+          "date": "2023/05/29 (Mon) 13:28",
+          "role": "user",
+          "turn_index": 4,
+          "has_answer": true,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.048097172239357854,
+        "bm25_score": 20.791437116741943,
+        "recency_score": 0.9999906679312756,
+        "final_score": 20.79124308962189,
+        "rank": 1
+      },
+      {
+        "memory_id": 446,
+        "text": "[ASSISTANT] (Session answer_d61669c7, 2023/05/29 (Mon) 13:28): That's awesome! Redeeming a surprise coupon is always a great feeling, especially when it's on something you need or regularly buy like coffee creamer! It's like finding money in your pocket that you didn't know you had.\n\nIt's also a great reminder to regularly check your email inbox for coupons and offers. Many retailers, like Target, send exclusive coupons and promotions to their email subscribers. By staying on top of your email, you can catch those surprise deals and save even more.\n\nHere's a tip to help you stay organized:\n\n**Designate an email folder:** Create a specific folder in your email inbox for coupons, offers, and promotions. This way, you can easily find and sort through them when you need to. You can also set up filters or labels to automatically sort these emails into your designated folder.\n\nBy doing this, you'll be more likely to catch those surprise coupons and make the most of your savings.\n\nHow often do you typically shop at Target, and what are some of your favorite items to buy there?",
+        "timestamp": "2026-06-09T20:33:47.374582+00:00",
+        "metadata": {
+          "session_id": "answer_d61669c7",
+          "date": "2023/05/29 (Mon) 13:28",
+          "role": "assistant",
+          "turn_index": 5,
+          "has_answer": false,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.07488615124070762,
+        "bm25_score": 13.353728500034428,
+        "recency_score": 0.9999906679312756,
+        "final_score": 13.35360388212234,
+        "rank": 2
+      },
+      {
+        "memory_id": 442,
+        "text": "[ASSISTANT] (Session answer_d61669c7, 2023/05/29 (Mon) 13:28): The eternal quest for coupon and receipt organization! I'm happy to help. Here are some tips to help you tame the chaos:\n\n**Coupon Organization:**\n\n1. **Coupon Binder:** Invest in a three-ring binder or a small accordion file with labeled sections for different categories (e.g., food, household, personal care, etc.). This will help you keep your coupons organized and easily accessible.\n2. **Coupon Clipping:** Clip coupons as soon as you receive them, and sort them into their respective categories. You can also consider using a coupon clipping service or a coupon app like Fetch Rewards or Ibotta.\n3. **Expiration Dates:** Organize your coupons by expiration date, with the soonest expiring coupons in the front. This ensures you use them before they expire.\n4. **Store-Specific Coupons:** Keep separate sections for store-specific coupons, like those for your local grocery store or favorite retailer.\n5. **Digital Coupons:** If you receive digital coupons via email or apps, consider printing them out and adding them to your binder or storing them digitally in a designated folder on your phone or computer.\n\n**Receipt Organization:**\n\n1. **Receipt File:** Designate a file or folder specifically for receipts, and separate them into categories (e.g., groceries, entertainment, clothing, etc.).\n2. **Digital Receipts:** Take advantage of digital receipts whenever possible, and store them in a designated email folder or app like Shoeboxed or Receipt Bank.\n3. **Receipt Scanner:** Consider investing in a receipt scanner or using a mobile app like Neat or Genius Scan to digitize your paper receipts.\n4. **Label and Date:** Label each receipt with the date, store name, and a brief description of the purchase.\n5. **Purge Regularly:** Set a regular schedule (e.g., quarterly) to review and purge receipts that are no longer needed or have expired.\n\n**Additional Tips:**\n\n1. **Store Loyalty Cards:** Keep your store loyalty cards in a separate section of your binder or on a keychain to ensure you always have them handy.\n2. **Cashback Apps:** If you use cashback apps like Rakuten (formerly known as Ebates) or TopCashback, consider storing your receipts in a separate folder or digital file for easy access.\n3. **Budgeting Tools:** Consider using budgeting tools like Mint, Personal Capital, or YNAB (You Need a Budget) to track your expenses and stay on top of your finances.\n4. **Go Digital:** Consider digitizing your entire coupon and receipt system using apps like Expense Manager or Pocketbook to simplify your organization process.\n\nRemember, the key to successful coupon and receipt organization is to create a system that works for you and stick to it. Happy organizing!",
+        "timestamp": "2026-06-09T20:33:47.374582+00:00",
+        "metadata": {
+          "session_id": "answer_d61669c7",
+          "date": "2023/05/29 (Mon) 13:28",
+          "role": "assistant",
+          "turn_index": 1,
+          "has_answer": false,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.12741776462813642,
+        "bm25_score": 7.848272452015467,
+        "recency_score": 0.9999906679312756,
+        "final_score": 7.848199211397577,
+        "rank": 3
+      },
+      {
+        "memory_id": 394,
+        "text": "[ASSISTANT] (Session 98c198fb, 2023/05/28 (Sun) 15:47): I'd be happy to help with gift ideas for your sister's birthday.\n\n**Gift Ideas Based on Her Interests:**\n\nSince you're hosting a game night, I'll assume your sister enjoys social activities, games, and good company. Here are some gift ideas based on those interests:\n\n1. **Board Game Subscription**: A subscription to a board game service like Board Game Bento or Game Night in a Box, which delivers new games to her doorstep every month.\n2. **Personalized Game Piece**: A customized game piece, such as a wooden or 3D-printed token, with her name or initials, to make her game nights even more special.\n3. **Experience Gift**: Treat her to a fun experience, like an escape room, a cooking class, or a wine and paint night, which she can enjoy with friends.\n4. **Gourmet Food Basket**: A gift basket filled with her favorite snacks, chocolates, or gourmet food items, perfect for future game nights or gatherings.\n\n**Other Ideas:**\n\n1. **Book or Magazine Subscription**: A book by her favorite author or a subscription to a magazine that aligns with her interests.\n2. **Fun Accessories**: A fun or quirky accessory, such as a set of colorful pens, a journal, or a decorative item for her home.\n3. **Relaxation and Wellness**: A spa day, a scented candle, or a cozy throw blanket to help her relax and unwind.\n4. **Technology and Gadgets**: A new smartwatch, wireless earbuds, or a power bank to keep her devices charged on-the-go.\n\n**Creative and Thoughtful Ideas:**\n\n1. **Customized Photo Album**: A beautifully designed photo album or frame with pictures of special memories you've shared together.\n2. **Handmade Coupon Book**: Create a book of coupons that she can redeem for things like \"one free game night,\" \"one free movie night,\" or \"one free dinner cooked by me.\"\n3. **Personalized Item**: A customized item, such as a monogrammed tote bag, a personalized phone case, or a photo-printed mug.\n\nRemember, the most important thing is to show your sister that you care and appreciate her. Whatever gift you choose, make sure it's thoughtful and reflects your relationship.",
+        "timestamp": "2026-06-09T20:33:47.368275+00:00",
+        "metadata": {
+          "session_id": "98c198fb",
+          "date": "2023/05/28 (Sun) 15:47",
+          "role": "assistant",
+          "turn_index": 5,
+          "has_answer": false,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.13963493451729114,
+        "bm25_score": 7.161598512385029,
+        "recency_score": 0.9999906606315752,
+        "final_score": 7.161531627578011,
+        "rank": 4
+      },
+      {
+        "memory_id": 106,
+        "text": "[ASSISTANT] (Session 07ba9acd_2, 2023/05/22 (Mon) 23:57): Chicago is an amazing city! Millennium Park is definitely a highlight, and you can't go wrong with deep-dish pizza.\n\nNow, about those snacks for your Seattle trip... Packing your own snacks is a great idea, especially when you're unsure about the availability of your favorite foods or have specific dietary needs. Here are some non-perishable, mess-free snack recommendations that are easy to pack:\n\n1. **Nuts and seeds**: Almonds, cashews, pumpkin seeds, or trail mix are all nutritious and filling.\n2. **Dried fruits**: Dried apricots, cranberries, or raisins are sweet and chewy.\n3. **Energy bars**: Look for compact, low-mess options like Clif Bars, granola bars, or protein bars.\n4. **Jerky**: Beef, turkey, or chicken jerky is a protein-packed snack that's easy to pack.\n5. **Crackers and peanut butter**: Individual packets of crackers and peanut butter are a satisfying snack.\n6. **Instant oatmeal**: Single-serve packets of oatmeal are a great breakfast or snack option.\n7. **Dark chocolate**: A few squares of dark chocolate can be a nice pick-me-up.\n8. **Tea or instant coffee**: If you're a coffee or tea lover, consider packing individual packets or a travel-sized coffee maker.\n\nRemember to pack your snacks in airtight containers or ziplock bags to keep them fresh and mess-free.\n\nFor Seattle, you might also consider packing some snacks that are specific to the Pacific Northwest, like dried cranberries or smoked salmon jerky.\n\nWhat do you think? Are there any specific snack preferences or dietary restrictions I can help with?",
+        "timestamp": "2026-06-09T20:33:47.322119+00:00",
+        "metadata": {
+          "session_id": "07ba9acd_2",
+          "date": "2023/05/22 (Mon) 23:57",
+          "role": "assistant",
+          "turn_index": 7,
+          "has_answer": false,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.1748250359573916,
+        "bm25_score": 5.720058269836946,
+        "recency_score": 0.9999906072107791,
+        "final_score": 5.720004542535287,
+        "rank": 5
+      }
+    ],
+    "latency": {
+      "query_expansion_s": 8.04931689996738,
+      "bm25_rerank_s": 0.0005548000335693359,
+      "sparse_retrieval_s": 8.04987450002227,
+      "context_injection_s": 1.4299992471933365e-05,
+      "slm_generation_s": 31.33903969998937,
+      "total_pipeline_s": 39.38892850000411
+    },
+    "virtual_update_id": null,
+    "virtual_update_text": "",
+    "prompt_token_count": 1991,
+    "response_token_count": 0
+  },
+  {
+    "question_id": "58bf7951",
+    "framework": "longmemeval",
+    "category": "single_hop",
+    "query": "What play did I attend at the local community theater?",
+    "ground_truth": "The Glass Menagerie",
+    "predicted_answer": "",
+    "retrieved_memory_ids": [
+      322,
+      323,
+      327,
+      180,
+      181
+    ],
+    "ground_truth_memory_ids": [
+      320,
+      321,
+      322,
+      323,
+      324,
+      325,
+      326,
+      327,
+      328,
+      329,
+      330,
+      331
+    ],
+    "retrieved_memories": [
+      {
+        "memory_id": 322,
+        "text": "[USER] (Session answer_355c48bb, 2023/05/26 (Fri) 07:31): I'll definitely try those suggestions. By the way, I recently went to a play at the local community theater and was impressed by the lead actress's performance - she reminded me of my friend Emily, who's also an aspiring actress.",
+        "timestamp": "2026-06-09T20:34:26.904012+00:00",
+        "metadata": {
+          "session_id": "answer_355c48bb",
+          "date": "2023/05/26 (Fri) 07:31",
+          "role": "user",
+          "turn_index": 2,
+          "has_answer": false,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.04997775482429146,
+        "bm25_score": 20.009096462252977,
+        "recency_score": 0.9999902827983698,
+        "final_score": 20.008902029828214,
+        "rank": 1
+      },
+      {
+        "memory_id": 323,
+        "text": "[ASSISTANT] (Session answer_355c48bb, 2023/05/26 (Fri) 07:31): That's great to hear! It's always exciting to discover new talent and be impressed by a performance. Community theaters are wonderful platforms for local artists to showcase their skills, and it's fantastic that you're supporting the arts in your area.\n\nIt's interesting that the lead actress reminded you of your friend Emily, who's also an aspiring actress. Perhaps you could encourage Emily to audition for a role at the community theater or explore other local theater groups. Who knows, maybe she'll get her big break!\n\nAs a side note, I'm a large language model, I don't have personal relationships or acquaintances, so I don't know Emily or any other individuals. I'm here to provide information and assist with inquiries to the best of my abilities.\n\nIf you'd like to discuss more about the play, the community theater, or Emily's interests, I'm happy to chat with you!",
+        "timestamp": "2026-06-09T20:34:26.904012+00:00",
+        "metadata": {
+          "session_id": "answer_355c48bb",
+          "date": "2023/05/26 (Fri) 07:31",
+          "role": "assistant",
+          "turn_index": 3,
+          "has_answer": false,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.050302404438058765,
+        "bm25_score": 19.879958590789464,
+        "recency_score": 0.9999902827983698,
+        "final_score": 19.879765413223435,
+        "rank": 2
+      },
+      {
+        "memory_id": 327,
+        "text": "[ASSISTANT] (Session answer_355c48bb, 2023/05/26 (Fri) 07:31): I'm glad you're considering taking acting classes! Unfortunately, as a large language model, I don't have access to specific local information about studios or instructors in your area. I can provide some general advice, though!\n\nTo find acting classes for adults in your area, you can try the following:\n\n1. **Online Search**: Google \"acting classes for adults near me\" or \"acting studios in [your city/state]\" to find local options. You can also check online directories like Yelp or Google Maps.\n2. **Community Centers**: Many community centers, recreation centers, or parks and recreation departments offer acting classes for adults. They might be more affordable and a great way to get started.\n3. **Local Colleges or Universities**: Many drama departments at colleges and universities offer continuing education or extension courses in acting for adults. These classes might be taught by experienced instructors and provide a more academic approach.\n4. **Acting Unions**: Look for local branches of acting unions like Actors' Equity Association or Screen Actors Guild (SAG-AFTRA). They might offer classes, workshops, or resources for adults interested in acting.\n5. **Word of Mouth**: Ask friends, family, or coworkers if they know of any good acting studios or instructors in the area. Personal recommendations can be a great way to find a good fit.\n6. **Social Media**: Follow local acting studios, theaters, or instructors on social media platforms like Facebook or Instagram. They often post about upcoming classes, workshops, or events.\n\nBefore committing to a class or studio, consider factors like:\n\n* The instructor's experience and teaching style\n* The type of acting techniques or styles taught (e.g., Method, Improv, etc.)\n* The class size and format (e.g., group classes, private coaching, etc.)\n* The cost and scheduling\n* Any prerequisites or experience required\n\nRemember to have fun and be open to learning and growing as an actor!",
+        "timestamp": "2026-06-09T20:34:26.905022+00:00",
+        "metadata": {
+          "session_id": "answer_355c48bb",
+          "date": "2023/05/26 (Fri) 07:31",
+          "role": "assistant",
+          "turn_index": 7,
+          "has_answer": false,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.1322151168000445,
+        "bm25_score": 7.563505143721278,
+        "recency_score": 0.9999902839673398,
+        "final_score": 7.563431656458276,
+        "rank": 3
+      },
+      {
+        "memory_id": 180,
+        "text": "[USER] (Session sharegpt_gmLF3PE_17, 2023/05/23 (Tue) 20:05): In a school they conduct a grand admission test for new students to join. This test has got 500 questions in it. A student Yash who is fond of this school since his early days writes the admission test and answered only 80% of the initial 250 questions correctly. If he needs to get an overall score of 60% in that test , how many questions he needs to attend without mistake in the remaining questions ?\n\n145\n\n100\n\n120\n\n160",
+        "timestamp": "2026-06-09T20:34:26.858540+00:00",
+        "metadata": {
+          "session_id": "sharegpt_gmLF3PE_17",
+          "date": "2023/05/23 (Tue) 20:05",
+          "role": "user",
+          "turn_index": 9,
+          "has_answer": false,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.15492491169445197,
+        "bm25_score": 6.45480290312202,
+        "recency_score": 0.9999902301692529,
+        "final_score": 6.45473984079015,
+        "rank": 4
+      },
+      {
+        "memory_id": 181,
+        "text": "[ASSISTANT] (Session sharegpt_gmLF3PE_17, 2023/05/23 (Tue) 20:05): Yash answered 80% of the initial 250 questions correctly, which is 200 questions.\n\nTo get an overall score of 60%, Yash needs to answer correctly 60% of the total questions, which is (60/100) \\* 500 = 300 questions.\n\nSo far, he has answered 200 questions correctly, which means he needs to answer 300 - 200 = 100 more questions correctly.\n\nSince he will be answering only the remaining 250 questions, he needs to answer 100 out of 250 questions without any mistake.\n\nTherefore, Yash needs to attend 100 questions without mistake in the remaining questions. Answer: 100.",
+        "timestamp": "2026-06-09T20:34:26.858540+00:00",
+        "metadata": {
+          "session_id": "sharegpt_gmLF3PE_17",
+          "date": "2023/05/23 (Tue) 20:05",
+          "role": "assistant",
+          "turn_index": 10,
+          "has_answer": false,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.16285391723240006,
+        "bm25_score": 6.140532489226414,
+        "recency_score": 0.9999902301692529,
+        "final_score": 6.140472497263298,
+        "rank": 5
+      }
+    ],
+    "latency": {
+      "query_expansion_s": 8.31812039995566,
+      "bm25_rerank_s": 0.0009716000640764832,
+      "sparse_retrieval_s": 8.319093800033443,
+      "context_injection_s": 9.400071576237679e-06,
+      "slm_generation_s": 22.211214100010693,
+      "total_pipeline_s": 30.530317300115712
+    },
+    "virtual_update_id": null,
+    "virtual_update_text": "",
+    "prompt_token_count": 1265,
+    "response_token_count": 0
+  },
+  {
+    "question_id": "1e043500",
+    "framework": "longmemeval",
+    "category": "single_hop",
+    "query": "What is the name of the playlist I created on Spotify?",
+    "ground_truth": "Summer Vibes",
+    "predicted_answer": "",
+    "retrieved_memory_ids": [
+      130,
+      131,
+      39,
+      45,
+      40
+    ],
+    "ground_truth_memory_ids": [
+      128,
+      129,
+      130,
+      131,
+      132,
+      133,
+      134,
+      135,
+      136,
+      137,
+      138,
+      139
+    ],
+    "retrieved_memories": [
+      {
+        "memory_id": 130,
+        "text": "[USER] (Session answer_3e012175, 2023/05/21 (Sun) 13:13): What's a good music streaming service that can help me discover new music and artists, especially in the ambient and lo-fi genres? Also, by the way, I've been listening to this one playlist on Spotify that I created, called Summer Vibes, and it's got all these chill tracks that are perfect for relaxing or working out.",
+        "timestamp": "2026-06-09T20:34:57.553198+00:00",
+        "metadata": {
+          "session_id": "answer_3e012175",
+          "date": "2023/05/21 (Sun) 13:13",
+          "role": "user",
+          "turn_index": 2,
+          "has_answer": true,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.051332512615838724,
+        "bm25_score": 19.481002672271053,
+        "recency_score": 0.9999911845828375,
+        "final_score": 19.480830939105754,
+        "rank": 1
+      },
+      {
+        "memory_id": 131,
+        "text": "[ASSISTANT] (Session answer_3e012175, 2023/05/21 (Sun) 13:13): Music discovery is a great topic!\n\nFor ambient and lo-fi music, I'd recommend the following music streaming services:\n\n1. **Bandcamp**: While not a traditional streaming service, Bandcamp is a fantastic platform for discovering new artists and labels in the ambient and lo-fi genres. You can browse through tags, genres, and labels to find hidden gems. They also offer a \"Discover\" feature that suggests music based on your listening history.\n2. **Apple Music**: Apple Music has a vast collection of ambient and lo-fi music, and their \"Browse\" tab features a \"Moods\" section that's perfect for discovering relaxing music. They also have a \"New Music Mix\" playlist that updates regularly, showcasing new artists and tracks.\n3. **Tidal**: Tidal's \"Discover\" feature is powered by human curators, which means you'll get recommendations based on your listening habits and preferences. They also have a \"Rising\" section that highlights emerging artists.\n4. **Deezer**: Deezer's \"Discover\" feature uses AI to recommend music based on your listening history, and they have a \"Mood\" section that's perfect for finding relaxing music.\n\nAs for your Summer Vibes playlist, it sounds like you've got a great mix of chill tracks! If you're looking for more music to add, you might enjoy the following playlists on Spotify:\n\n1. **Lo-Fi Girl**: A popular playlist with over 2 million followers, featuring a constant stream of lo-fi hip-hop and chillhop tracks.\n2. **Ambient Universe**: A playlist with a focus on ambient, drone, and experimental music.\n3. **Chillhop Music**: A playlist featuring a mix of lo-fi hip-hop, chillhop, and instrumental tracks.\n4. **Coffee Shop Jazz**: A playlist with a relaxing atmosphere, perfect for working or studying.\n\nYou can also try exploring Spotify's \"Discover Weekly\" and \"Release Radar\" playlists, which are tailored to your listening habits and preferences.\n\nLastly, if you're interested in discovering new music and artists, I'd recommend checking out online music communities like Reddit's \"WeAreTheMusicMakers\" and \"Music\" subreddits, as well as online forums dedicated to ambient and lo-fi music. These communities are great resources for discovering new music and connecting with like-minded listeners.",
+        "timestamp": "2026-06-09T20:34:57.553198+00:00",
+        "metadata": {
+          "session_id": "answer_3e012175",
+          "date": "2023/05/21 (Sun) 13:13",
+          "role": "assistant",
+          "turn_index": 3,
+          "has_answer": false,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.07353606582517327,
+        "bm25_score": 13.598889255223245,
+        "recency_score": 0.9999911845828375,
+        "final_score": 13.598769375341513,
+        "rank": 2
+      },
+      {
+        "memory_id": 39,
+        "text": "[ASSISTANT] (Session 01bd9def, 2023/05/20 (Sat) 07:28): What a great task! Updating your online presence after a name change can be a daunting task, but with a comprehensive checklist, you'll be well on your way to getting everything in order. Here's a thorough checklist to help you update your online presence:\n\n**Personal Accounts:**\n\n1. **Email:**\n\t* Update your email address with your new name (if possible) or set up a new email account.\n\t* Update your email signature with your new name and contact information.\n\t* Notify friends, family, and contacts about the change.\n2. **Social Media:**\n\t* Update your name on:\n\t\t+ Facebook\n\t\t+ Twitter\n\t\t+ Instagram\n\t\t+ LinkedIn\n\t\t+ TikTok\n\t\t+ YouTube\n\t\t+ Pinterest\n\t\t+ Other platforms you're active on\n\t* Update your profile picture and bio to reflect your new name.\n3. **Blogging and Online Communities:**\n\t* Update your username and profile information on:\n\t\t+ WordPress\n\t\t+ Blogger\n\t\t+ Medium\n\t\t+ Reddit\n\t\t+ Quora\n\t\t+ Other online communities you're a part of\n4. **Online Storage and File Sharing:**\n\t* Update your account information on:\n\t\t+ Google Drive\n\t\t+ Dropbox\n\t\t+ Microsoft OneDrive\n\t\t+ iCloud\n\t\t+ Other cloud storage services\n\n**Financial and Shopping Accounts:**\n\n1. **Banking and Credit Cards:**\n\t* Update your name with your bank(s)\n\t* Update your credit card information (if applicable)\n2. **Online Shopping Accounts:**\n\t* Update your account information on:\n\t\t+ Amazon\n\t\t+ eBay\n\t\t+ PayPal\n\t\t+ Other online shopping platforms\n3. **Subscription Services:**\n\t* Update your account information on:\n\t\t+ Netflix\n\t\t+ Hulu\n\t\t+ Apple Music\n\t\t+ Spotify\n\t\t+ Other subscription services\n\n**Professional and Educational:**\n\n1. **Professional Networks:**\n\t* Update your profile on:\n\t\t+ LinkedIn\n\t\t+ Academia.edu\n\t\t+ ResearchGate\n\t\t+ Other professional networks\n2. **Online Learning Platforms:**\n\t* Update your account information on:\n\t\t+ Coursera\n\t\t+ Udemy\n\t\t+ edX\n\t\t+ Other online learning platforms\n3. **Alumni Associations:**\n\t* Update your information with your alma mater's alumni association (if applicable)\n\n**Other:**\n\n1. **Gaming Accounts:**\n\t* Update your account information on:\n\t\t+ Xbox\n\t\t+ PlayStation\n\t\t+ Steam\n\t\t+ Other gaming platforms\n2. **Travel and Rewards:**\n\t* Update your account information on:\n\t\t+ Airlines\n\t\t+ Hotels\n\t\t+ Loyalty programs\n\t\t+ Travel rewards credit cards\n3. **Health and Wellness:**\n\t* Update your account information on:\n\t\t+ Health insurance providers\n\t\t+ Fitness tracking apps\n\t\t+ Telemedicine services\n\n**Additional Tips:**\n\n* Take this opportunity to review your online presence and remove any accounts you no longer use or need.\n* Update your emergency contact information with your new name.\n* Consider setting up a password manager to keep track of your updated login credentials.\n* Be patient and methodical in your updates, as it may take some time to complete.\n\nRemember to also update your physical records, such as your driver's license, passport, and identification documents, as needed. Good luck with your digital update!",
+        "timestamp": "2026-06-09T20:34:57.535615+00:00",
+        "metadata": {
+          "session_id": "01bd9def",
+          "date": "2023/05/20 (Sat) 07:28",
+          "role": "assistant",
+          "turn_index": 1,
+          "has_answer": false,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.12134384424739995,
+        "bm25_score": 8.241117148765717,
+        "recency_score": 0.9999911642323227,
+        "final_score": 8.241044332169189,
+        "rank": 3
+      },
+      {
+        "memory_id": 45,
+        "text": "[ASSISTANT] (Session 01bd9def, 2023/05/20 (Sat) 07:28): Updating your alma mater with your new name is an important step.\n\nTo update your name with your alma mater, you'll typically need to provide documentation to verify your name change. The required documents may vary depending on the institution, but here are some common ones:\n\n1. **Certified copy of your name change decree or court order**: This is the official document that confirms your name change. Make sure it's a certified copy, as photocopies might not be accepted.\n2. **Government-issued ID with your new name**: This could be your updated driver's license, state ID, or passport.\n3. **Completed name change form (if provided by the institution)**: Some institutions might have a specific form for updating your name. Check their website or contact their records office to see if they have a specific form.\n\nYou may need to send these documents to the institution's:\n\n* Registrar's office\n* Alumni relations department\n* Records office\n* Human resources department (if you're a university employee)\n\nCheck your alma mater's website or contact them directly to confirm their specific requirements and the correct department to send the documents to.\n\nOnce you've gathered the necessary documents, you can:\n\n* Mail them to the institution's address\n* Upload them through an online portal (if available)\n* Fax them to the institution (if they accept faxes)\n\nKeep in mind that the institution might have a processing time for updating your records, so be patient and allow a few weeks for the changes to take effect.\n\nRemember to update your alumni association membership, if applicable, to ensure you receive any relevant communications and benefits.\n\nI hope that helps, Emily!",
+        "timestamp": "2026-06-09T20:34:57.537182+00:00",
+        "metadata": {
+          "session_id": "01bd9def",
+          "date": "2023/05/20 (Sat) 07:28",
+          "role": "assistant",
+          "turn_index": 7,
+          "has_answer": false,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.1783923111713893,
+        "bm25_score": 5.605672280869377,
+        "recency_score": 0.999991166045964,
+        "final_score": 5.6056227606181075,
+        "rank": 4
+      },
+      {
+        "memory_id": 40,
+        "text": "[USER] (Session 01bd9def, 2023/05/20 (Sat) 07:28): I'm actually going through this process right now after a recent divorce and name change. I was previously married to John Wilson and just changed my name to Emily Rose Thompson.",
+        "timestamp": "2026-06-09T20:34:57.535615+00:00",
+        "metadata": {
+          "session_id": "01bd9def",
+          "date": "2023/05/20 (Sat) 07:28",
+          "role": "user",
+          "turn_index": 2,
+          "has_answer": false,
+          "framework": "longmemeval"
+        },
+        "l2_distance": 0.18313552758177834,
+        "bm25_score": 5.460485187485329,
+        "recency_score": 0.9999911642323227,
+        "final_score": 5.460436939906807,
+        "rank": 5
+      }
+    ],
+    "latency": {
+      "query_expansion_s": 7.54949449992273,
+      "bm25_rerank_s": 0.0008208000799641013,
+      "sparse_retrieval_s": 7.550317500019446,
+      "context_injection_s": 2.3799948394298553e-05,
+      "slm_generation_s": 30.753035299945623,
+      "total_pipeline_s": 38.30337659991346
+    },
+    "virtual_update_id": null,
+    "virtual_update_text": "",
+    "prompt_token_count": 2001,
+    "response_token_count": 0
+  }
+]

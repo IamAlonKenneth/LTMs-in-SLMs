@@ -63,6 +63,18 @@ _PROJECT_ROOT = _FILE_DIR.parent
 sys.path.insert(0, str(_PROJECT_ROOT))
 sys.path.insert(0, str(_FILE_DIR))
 
+# ── Load API keys from .env.YE / .env at the repo root ───────────────────────
+try:
+    from dotenv import load_dotenv as _load_dotenv
+    _repo_root = _FILE_DIR.parents[1]   # …/LTMs-in-SLMs/
+    for _env_name in (".env.YE", ".env"):
+        _env_path = _repo_root / _env_name
+        if _env_path.exists():
+            _load_dotenv(_env_path)
+            break
+except ImportError:
+    pass  # python-dotenv not installed; fall back to os.environ only
+
 from vector_embed_module        import VectorEmbeddedMemory
 from ltm_eval_adapter  import (
     LongMemEvalAdapter,
@@ -160,8 +172,12 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Skip Stage 2 LLM-as-a-Judge (no Gemini key required).",
     )
     eval_group.add_argument(
-        "--judge-model", type=str, default="gemini-2.0-flash",
-        help="Google Gemini model to use as LLM judge (default: gemini-2.0-flash).",
+        "--judge-model", type=str, default="gemini-2.5-flash",
+        help="Google Gemini model to use as LLM judge (default: gemini-2.5-flash).",
+    )
+    eval_group.add_argument(
+        "--judge-workers", type=int, default=8,
+        help="Parallel workers for LLM judge API calls (default: 8).",
     )
     eval_group.add_argument(
         "--full-context-tokens", type=float, default=None,
@@ -173,6 +189,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
     out_group.add_argument(
         "--output-dir", type=str, default="./results",
         help="Directory to write all output files.",
+    )
+    out_group.add_argument(
+        "--run-id", type=str, default=None,
+        metavar="RUN_ID",
+        help="Resume or re-use a previous run ID instead of generating a new timestamp.",
     )
     out_group.add_argument(
         "--verbose", action="store_true", default=True,
@@ -188,7 +209,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
 
 def run_evaluation(args: argparse.Namespace) -> None:
 
-    run_id    = datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_id    = args.run_id or datetime.now().strftime("%Y%m%d_%H%M%S")
     out_dir   = Path(args.output_dir) / run_id
     out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -344,7 +365,12 @@ def run_evaluation(args: argparse.Namespace) -> None:
                 temperature = 0.0,
                 verbose     = args.verbose,
             )
-            stage2_report = compute_stage2_metrics(all_results, judge)
+            stage2_report = compute_stage2_metrics(
+                all_results, judge,
+                checkpoint_path     = out_dir / "stage2_checkpoint.json",
+                checkpoint_interval = 50,
+                max_workers         = args.judge_workers,
+            )
             print_stage2_report(stage2_report)
         except (ImportError, EnvironmentError) as exc:
             print(f"\n[Runner] Stage 2 skipped: {exc}")

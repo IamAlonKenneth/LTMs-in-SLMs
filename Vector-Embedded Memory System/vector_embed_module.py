@@ -5,7 +5,7 @@ Dense-Retrieval Long-Term Memory (LTM) Module
 for Gemma 3 4B Small Language Model (SLM)
 
 Research Focus : Edge / Local Deployment
-Embedding Model: google/embedding-gemma-300m (768-d vectors)
+Embedding Model: google/embeddinggemma-300m (768-d vectors)
 Vector Index   : FAISS IndexFlatL2  (brute-force L2, 100% recall)
 Persistence    : Sidecar JSON dictionary (FAISS int-ID → text + metadata)
 
@@ -36,7 +36,7 @@ from transformers import (              # pip install transformers
 # ---------------------------------------------------------------------------
 # Constants — keep aligned with thesis terminology
 # ---------------------------------------------------------------------------
-EMBEDDING_DIM          = 768           # google/embedding-gemma-300m output dim
+EMBEDDING_DIM          = 768           # google/embeddinggemma-300m output dim
 DEFAULT_TOP_K          = 5             # default number of memories to retrieve
 DEFAULT_MAX_NEW_TOKENS = 512           # max generation tokens for Gemma 3 4B
 CONTEXT_HEADER         = "[RETRIEVED CONTEXT]"
@@ -59,7 +59,7 @@ class VectorEmbeddedMemory:
     Dense-Retrieval Long-Term Memory (LTM) Module.
 
     Encapsulates:
-      - Embedding model  : google/embedding-gemma-300m
+      - Embedding model  : google/embeddinggemma-300m
       - FAISS index      : IndexFlatL2 (exact / brute-force)
       - Sidecar JSON map : { faiss_int_id (str) -> { "text", "timestamp", ... } }
       - Gemma 3 4B SLM   : loaded with optional 4-bit / 8-bit quantization
@@ -79,7 +79,7 @@ class VectorEmbeddedMemory:
     # ------------------------------------------------------------------
     def __init__(
         self,
-        embedding_model_id : str  = "google/embedding-gemma-300m",
+        embedding_model_id : str  = "google/embeddinggemma-300m",
         slm_model_id        : str  = "google/gemma-3-4b-it",
         quantization        : str  = "4bit",          # "4bit" | "8bit" | "none"
         device              : str  = "auto",
@@ -139,7 +139,7 @@ class VectorEmbeddedMemory:
         self.slm_model = AutoModelForCausalLM.from_pretrained(
             slm_model_id,
             quantization_config  = bnb_config,          # None if quantization="none"
-            device_map           = "auto",
+            device_map           = "cuda",
             torch_dtype          = torch.float16,
             low_cpu_mem_usage    = True,
             attn_implementation  = "eager",             # compatible with all HW
@@ -694,7 +694,7 @@ class VectorEmbeddedMemory:
                 load_in_4bit              = True,
                 bnb_4bit_quant_type       = "nf4",       # NormalFloat4
                 bnb_4bit_use_double_quant = True,        # nested quantization
-                bnb_4bit_compute_dtype    = torch.float16,
+                bnb_4bit_compute_dtype    = torch.bfloat16,
             )
         elif quantization == "8bit":
             return BitsAndBytesConfig(load_in_8bit=True)

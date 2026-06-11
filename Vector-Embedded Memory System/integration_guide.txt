@@ -7,7 +7,7 @@
 Document Type : Technical Integration Reference
 Module File   : ltm_module.py  (class: VectorEmbeddedMemory)
 Target SLM    : google/gemma-3-4b-it
-Embedding     : google/embedding-gemma-300m (768-d)
+Embedding     : google/embeddinggemma-300m (768-d)
 Vector Index  : FAISS IndexFlatL2
 
 --------------------------------------------------------------------------------
@@ -63,8 +63,8 @@ SECTION 1 — ENVIRONMENT SETUP
 
     python -c "
     from transformers import AutoModel, AutoTokenizer, AutoModelForCausalLM
-    AutoTokenizer.from_pretrained('google/embedding-gemma-300m')
-    AutoModel.from_pretrained('google/embedding-gemma-300m')
+    AutoTokenizer.from_pretrained('google/embeddinggemma-300m')
+    AutoModel.from_pretrained('google/embeddinggemma-300m')
     AutoTokenizer.from_pretrained('google/gemma-3-4b-it')
     AutoModelForCausalLM.from_pretrained('google/gemma-3-4b-it')
     print('All models cached.')
@@ -94,7 +94,7 @@ SECTION 2 — INITIALIZATION GUIDE
     from ltm_module import VectorEmbeddedMemory
 
     ltm = VectorEmbeddedMemory(
-        embedding_model_id = "google/embedding-gemma-300m",
+        embedding_model_id = "google/embeddinggemma-300m",
         slm_model_id       = "google/gemma-3-4b-it",
         quantization       = "4bit",     # NF4 — ~60-70% VRAM reduction vs fp16
         device             = "auto",     # auto-selects CUDA if available
@@ -110,7 +110,7 @@ SECTION 2 — INITIALIZATION GUIDE
 2.2  CPU-Only Initialization (Development / No GPU)
 ----------------------------------------------------
     ltm = VectorEmbeddedMemory(
-        embedding_model_id = "google/embedding-gemma-300m",
+        embedding_model_id = "google/embeddinggemma-300m",
         slm_model_id       = "google/gemma-3-4b-it",
         quantization       = "none",     # fp32 on CPU — no bitsandbytes needed
         device             = "cpu",
@@ -150,7 +150,7 @@ SECTION 3 — USAGE EXAMPLE (Full Interaction Round)
 
   # Step 0 — Initialise
   ltm = VectorEmbeddedMemory(
-      embedding_model_id = "google/embedding-gemma-300m",
+      embedding_model_id = "google/embeddinggemma-300m",
       slm_model_id       = "google/gemma-3-4b-it",
       quantization       = "4bit",
   )
@@ -380,7 +380,7 @@ SECTION 7 — DESIGN NOTES FOR THESIS DISCUSSION
     step (~20-50 ms), not the FAISS search step (<1 ms for N<10,000).
 
 7.2  Why Mean-Pooling + L2 Normalisation for Embeddings?
-  - google/embedding-gemma-300m is an encoder-style model; it produces a hidden
+  - google/embeddinggemma-300m is an encoder-style model; it produces a hidden
     state per token, not a single sentence vector.
   - Mean-pooling (weighted by the attention mask) aggregates token representations
     into a single 768-d sentence vector — the standard approach for bi-encoder
