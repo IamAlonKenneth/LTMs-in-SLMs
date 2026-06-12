@@ -173,7 +173,7 @@ Table 4.3 presents Stage 2 scores on LongMemEval. The Vector/Dense
 system achieves a mean faithfulness of 4.05/5 (σ=1.27) and mean answer
 relevance of 4.39/5 (σ=0.98), indicating that the majority of responses
 are both grounded in retrieved memory and correctly answer the question.
-The distribution of faithfulness scores confirms this: 59.0% of Vector
+The distribution of faithfulness scores confirms this: 58.9% of Vector
 items receive a score of 5/5 (no ungrounded claims), with 14.0% scoring
 2/5 and 15.3% scoring 3/5.
 
@@ -188,7 +188,7 @@ faithfulness=5/5, representing 30.7% of the valid distribution), as
 truncated responses that happen to begin with grounded context can still
 be scored faithful. However, no truncated response successfully
 completed an answer, yielding universal answer relevance floor scores.
-The faithfulness bimodal distribution (56.7% at 1/5, 29.0% at 5/5) is
+The faithfulness bimodal distribution (59.9% at 1/5, 30.7% at 5/5) is
 the characteristic signature of this truncation pattern.
 
 For the LongMemEval abstention category (n=30), the Vector system
@@ -206,7 +206,7 @@ rather than genuine knowledge-boundary detection.
   Answer Relevance (mean)  1.00/5 (σ=0.00)    4.39/5 (σ=0.98)   All Sparse items at floor; EOS bug
   Abstention score         4.10/5 (σ=0.76)    3.23/5 (σ=1.79)   Sparse advantage is artefactual (empty responses)
   Items scored (n)         500                 500                —
-  Faithfulness @5/5        30.7% (144/469)     59.0% (277/470)   Strong vector majority achieving top score
+  Faithfulness @5/5        30.7% (144/469)     58.9% (277/470)   Strong vector majority achieving top score
   Answer Relevance @1/5    100% (500/500)      0.6%  (3/500)     Total failure vs near-zero failure
 
   : Stage 2 generation quality on LongMemEval.
@@ -330,9 +330,9 @@ out-of-vocabulary or paraphrased queries.
 
 ::: doublespace
 The Vector/Dense system generates responses significantly faster than
-the Sparse/BM25 system: 11.0s per item (LME) vs 21.7s per item (Sparse
-LME), and 7.5s per item (Vector LoCoMo) vs 16.8s per item (Sparse
-LoCoMo). The Vector system is approximately 2.0× faster in both cases.
+the Sparse/BM25 system: 11.0s per item vs 21.7s per item on LongMemEval
+(2.0× faster), and 7.5s per item vs 16.8s per item on LoCoMo (2.3×
+faster).
 This speed advantage stems primarily from two sources. First, the Sparse
 pipeline includes a query expansion step where Gemma 3 4B generates
 synonym variants before issuing the BM25 query, adding an extra
@@ -629,9 +629,11 @@ cross-session memory with a lightweight dense retrieval backend.
 Third, the study documents a previously uncharacterized failure mode
 specific to Gemma 3 IT in generation pipelines: the requirement for dual
 stop-token configuration (`<eos>` and `<end_of_turn>`). This failure mode
-produces diagnostically distinct bimodal score distributions (approximately
-50% floor / 50% ceiling on faithfulness) that can be identified from
-evaluation outputs without requiring generation trace analysis.
+produces diagnostically distinct bimodal score distributions — mass
+concentrated at the faithfulness floor (1/5) and ceiling (5/5) with few
+intermediate scores (59.9%/30.7% on LongMemEval; 49.7%/47.4% on LoCoMo)
+— that can be identified from evaluation outputs without requiring generation
+trace analysis.
 
 Fourth, the category-level analysis of LongMemEval generation performance
 identifies temporal reasoning as the hardest category for this

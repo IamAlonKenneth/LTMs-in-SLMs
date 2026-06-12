@@ -1,0 +1,327 @@
+{
+  "answer_relevance": {
+    "dv": "answer_relevance",
+    "n_subjects": 500,
+    "means": {
+      "baseline": 3.494,
+      "bm25": 1.0,
+      "vector": 4.39
+    },
+    "stds": {
+      "baseline": 1.2920149400105327,
+      "bm25": 0.0,
+      "vector": 0.9817472461436401
+    },
+    "normality": {
+      "baseline": {
+        "W": 0.8440215584498074,
+        "p": 8.676288266460007e-22,
+        "normal": false
+      },
+      "bm25": {
+        "W": 1.0,
+        "p": 1.0,
+        "normal": true
+      },
+      "vector": {
+        "W": 0.6479135848865942,
+        "p": 8.617304791232758e-31,
+        "normal": false
+      }
+    },
+    "mauchly_W": 0.7620653103637268,
+    "mauchly_p": 4.131007608674054e-30,
+    "sphericity_met": false,
+    "anova_F": 1848.883790589964,
+    "anova_df_num": 2.0,
+    "anova_df_den": 998.0,
+    "anova_p": 0.0,
+    "anova_p_GG": 2.2236415223234895e-272,
+    "epsilon_GG": 0.8077970577703233,
+    "partial_eta2": 0.7013626206051364,
+    "significant": true,
+    "posthoc": [
+      {
+        "pair": "baseline vs bm25",
+        "T": 43.16322794099435,
+        "p_bonf": 4.17733244232697e-170,
+        "cohen_d": 2.7278302004347044,
+        "significant": true
+      },
+      {
+        "pair": "baseline vs vector",
+        "T": -13.003458828931963,
+        "p_bonf": 5.074585963471483e-33,
+        "cohen_d": -0.7802975751266886,
+        "significant": true
+      },
+      {
+        "pair": "bm25 vs vector",
+        "T": -77.2120367385804,
+        "p_bonf": 3.6185199617894815e-279,
+        "cohen_d": -4.8796472298248945,
+        "significant": true
+      }
+    ]
+  },
+  "recall_at_5": {
+    "dv": "recall_at_5",
+    "n_subjects": 500,
+    "means": {
+      "baseline": 0.0,
+      "bm25": 0.23099130630727496,
+      "vector": 0.23792235876906162
+    },
+    "stds": {
+      "baseline": 0.0,
+      "bm25": 0.1724818030363428,
+      "vector": 0.17413076369874772
+    },
+    "normality": {
+      "baseline": {
+        "W": 1.0,
+        "p": 1.0,
+        "normal": true
+      },
+      "bm25": {
+        "W": 0.7801656734871221,
+        "p": 2.211817694238489e-25,
+        "normal": false
+      },
+      "vector": {
+        "W": 0.7752086149848681,
+        "p": 1.2621324192394107e-25,
+        "normal": false
+      }
+    },
+    "mauchly_W": 0.40321335409766823,
+    "mauchly_p": 6.000561367012411e-99,
+    "sphericity_met": false,
+    "anova_F": 846.1975647769086,
+    "anova_df_num": 2.0,
+    "anova_df_den": 998.0,
+    "anova_p": 1.2243966154678987e-215,
+    "anova_p_GG": 2.4892788320445458e-136,
+    "epsilon_GG": 0.6262577424267627,
+    "partial_eta2": 0.3795271713699205,
+    "significant": true,
+    "posthoc": [
+      {
+        "pair": "baseline vs bm25",
+        "T": -29.94589887292116,
+        "p_bonf": 4.692759199852202e-113,
+        "cohen_d": -1.8925212784453325,
+        "significant": true
+      },
+      {
+        "pair": "baseline vs vector",
+        "T": -30.552359403598082,
+        "p_bonf": 7.191772715508568e-116,
+        "cohen_d": -1.9308483783835872,
+        "significant": true
+      },
+      {
+        "pair": "bm25 vs vector",
+        "T": -2.206786640566838,
+        "p_bonf": 0.08335068894546527,
+        "cohen_d": -0.03996256767038289,
+        "significant": false
+      }
+    ]
+  },
+  "memory_error": {
+    "dv": "memory_error",
+    "n_subjects": 469,
+    "means": {
+      "baseline": 0.1513859275053305,
+      "bm25": 0.5991471215351812,
+      "vector": 0.03411513859275053
+    },
+    "stds": {
+      "baseline": 0.35880737620671227,
+      "bm25": 0.49059456960692893,
+      "vector": 0.1817187515461619
+    },
+    "normality": {
+      "baseline": {
+        "W": 0.42819467425667523,
+        "p": 5.5829473493145796e-36,
+        "normal": false
+      },
+      "bm25": {
+        "W": 0.6220781551972902,
+        "p": 8.771269563138327e-31,
+        "normal": false
+      },
+      "vector": {
+        "W": 0.17374859949646126,
+        "p": 5.902521803977284e-41,
+        "normal": false
+      }
+    },
+    "mauchly_W": 0.8213924087006907,
+    "mauchly_p": 1.1157962534193615e-20,
+    "sphericity_met": false,
+    "anova_F": 303.53499065957755,
+    "anova_df_num": 2.0,
+    "anova_df_den": 936.0,
+    "anova_p": 2.469595447529667e-102,
+    "anova_p_GG": 2.574518164856328e-87,
+    "epsilon_GG": 0.8484588147761629,
+    "partial_eta2": 0.30691614010126794,
+    "significant": true,
+    "posthoc": [
+      {
+        "pair": "baseline vs bm25",
+        "T": -15.996658217236392,
+        "p_bonf": 8.74088544465362e-46,
+        "cohen_d": -1.0409973748064938,
+        "significant": true
+      },
+      {
+        "pair": "baseline vs vector",
+        "T": 6.199059506265042,
+        "p_bonf": 3.7441308670656375e-09,
+        "cohen_d": 0.41201695981468667,
+        "significant": true
+      },
+      {
+        "pair": "bm25 vs vector",
+        "T": 22.760783788976266,
+        "p_bonf": 2.8020696389286513e-77,
+        "cohen_d": 1.5261550135827802,
+        "significant": true
+      }
+    ]
+  },
+  "retrieval_latency_ms": {
+    "dv": "retrieval_latency_ms",
+    "n_subjects": 500,
+    "means": {
+      "baseline": 0.0,
+      "bm25": 8633.54722439847,
+      "vector": 76.95982519979589
+    },
+    "stds": {
+      "baseline": 0.0,
+      "bm25": 398.8497530020931,
+      "vector": 23.359186081301864
+    },
+    "normality": {
+      "baseline": {
+        "W": 1.0,
+        "p": 1.0,
+        "normal": true
+      },
+      "bm25": {
+        "W": 0.9202401873998992,
+        "p": 1.3126269716043758e-15,
+        "normal": false
+      },
+      "vector": {
+        "W": 0.843162908071677,
+        "p": 7.640940122409196e-22,
+        "normal": false
+      }
+    },
+    "mauchly_W": 0.010172101315450672,
+    "mauchly_p": 0.0,
+    "sphericity_met": false,
+    "anova_F": 233421.50360679041,
+    "anova_df_num": 2.0,
+    "anova_df_den": 998.0,
+    "anova_p": 0.0,
+    "anova_p_GG": 0.0,
+    "epsilon_GG": 0.5025560254035477,
+    "partial_eta2": 0.9967759599882614,
+    "significant": true,
+    "posthoc": [
+      {
+        "pair": "baseline vs bm25",
+        "T": -484.02182364165327,
+        "p_bonf": 0.0,
+        "cohen_d": -30.589217053092487,
+        "significant": true
+      },
+      {
+        "pair": "baseline vs vector",
+        "T": -73.67011850682346,
+        "p_bonf": 8.234418873815775e-270,
+        "cohen_d": -4.655805038660119,
+        "significant": true
+      },
+      {
+        "pair": "bm25 vs vector",
+        "T": 483.05990728813407,
+        "p_bonf": 0.0,
+        "cohen_d": 30.26468359173881,
+        "significant": true
+      }
+    ]
+  },
+  "token_utilization_pct": {
+    "dv": "token_utilization_pct",
+    "n_subjects": 500,
+    "means": {
+      "baseline": 0.0219078125,
+      "bm25": 1.0876343750000002,
+      "vector": 0.7834625000000001
+    },
+    "stds": {
+      "baseline": 0.007309566161144384,
+      "bm25": 0.3841887007509592,
+      "vector": 0.3487561741721609
+    },
+    "normality": {
+      "baseline": {
+        "W": 0.8228419749783421,
+        "p": 4.3563667928991074e-23,
+        "normal": false
+      },
+      "bm25": {
+        "W": 0.9640736986750205,
+        "p": 1.0469186329890772e-09,
+        "normal": false
+      },
+      "vector": {
+        "W": 0.8256697398941363,
+        "p": 6.390504652100005e-23,
+        "normal": false
+      }
+    },
+    "mauchly_W": 0.979401746475059,
+    "mauchly_p": 0.00561380930106663,
+    "sphericity_met": false,
+    "anova_F": 2150.1390070223497,
+    "anova_df_num": 2.0,
+    "anova_df_den": 998.0,
+    "anova_p": 0.0,
+    "anova_p_GG": 0.0,
+    "epsilon_GG": 0.9798174713176327,
+    "partial_eta2": 0.6916273498471357,
+    "significant": true,
+    "posthoc": [
+      {
+        "pair": "baseline vs bm25",
+        "T": -62.04854954367501,
+        "p_bonf": 2.8412777528346045e-236,
+        "cohen_d": -3.919322780814606,
+        "significant": true
+      },
+      {
+        "pair": "baseline vs vector",
+        "T": -49.10167971603848,
+        "p_bonf": 1.014333146524746e-192,
+        "cohen_d": -3.0851212946115063,
+        "significant": true
+      },
+      {
+        "pair": "bm25 vs vector",
+        "T": 17.404286068205952,
+        "p_bonf": 6.864938050489255e-53,
+        "cohen_d": 0.8284079834421375,
+        "significant": true
+      }
+    ]
+  }
+}

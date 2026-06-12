@@ -1,0 +1,26 @@
+{
+  "longmemeval_data": "./Benchmarks/longmemeval_cache/longmemeval_s_cleaned.json",
+  "locomo_data": "./Benchmarks\\locomo\\data\\locomo10.json",
+  "load_results": null,
+  "embedding_model": "google/embeddinggemma-300m",
+  "slm_model": "google/gemma-3-4b-it",
+  "quantization": "4bit",
+  "top_k": 5,
+  "max_new_tokens": 256,
+  "categories": null,
+  "k_values": [
+    1,
+    3,
+    5,
+    10
+  ],
+  "max_items": null,
+  "skip_judge": false,
+  "skip_expansion": true,
+  "judge_model": "gemini-2.5-flash",
+  "judge_workers": 16,
+  "full_context_tokens": null,
+  "output_dir": "Structured Text Memory System",
+  "run_id": "20260612_033423",
+  "verbose": true
+}

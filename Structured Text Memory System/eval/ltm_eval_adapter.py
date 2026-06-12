@@ -236,6 +236,7 @@ class LongMemEvalAdapter:
         use_query_expansion : bool  = True,
         checkpoint_path     : str | Path | None = None,
         checkpoint_interval : int   = 10,
+        batch_size          : int   = 1,
     ) -> None:
         """
         Parameters
@@ -250,6 +251,8 @@ class LongMemEvalAdapter:
                               broader recall). Set False when Gemma Embedding is active.
         checkpoint_path     : Path to write per-item checkpoint JSON. Enables resume.
         checkpoint_interval : Flush checkpoint to disk every N completed items.
+        batch_size          : Number of prompts to generate simultaneously on the GPU.
+                              1 = sequential (original). 4–8 recommended for 6 GB VRAM.
         """
         self.ltm                = ltm
         self.data_path          = Path(data_path)
@@ -260,6 +263,7 @@ class LongMemEvalAdapter:
         self.use_query_expansion = use_query_expansion
         self.checkpoint_path     = Path(checkpoint_path) if checkpoint_path else None
         self.checkpoint_interval = checkpoint_interval
+        self.batch_size          = batch_size
 
         self._injector = TemporalContextInjector()
 
@@ -324,19 +328,51 @@ class LongMemEvalAdapter:
             progress.finish()
             return done_results
 
-        # ── Process pending items ─────────────────────────────────────────────
-        progress = ProgressTracker(len(pending), name="LongMemEval")
         new_results: list[EvalResult] = []
 
-        for step, (idx, item) in enumerate(pending, 1):
-            cat     = self._detect_category(item)
-            item_id = item.get(self.KEY_QID, f"item_{idx}")
-            progress.update(step_name=f"ID={item_id} cat={cat}")
-            result = self._process_item(item)
-            new_results.append(result)
+        if self.batch_size > 1:
+            # ── Two-pass: CPU retrieval then batched GPU generation ───────────
+            # Pass 1: ingest + BM25 retrieve for every item (CPU-only, fast)
+            self._log(
+                f"[LongMemEval] Pass 1/2 — retrieving context for "
+                f"{len(pending)} items (CPU) …"
+            )
+            all_ctxs: list[dict] = []
+            for step, (_, item) in enumerate(pending, 1):
+                all_ctxs.append(self._retrieve_for_item(item))
+                if step % 50 == 0 or step == len(pending):
+                    self._log(f"[LongMemEval] Retrieval {step}/{len(pending)}")
 
-            if step % self.checkpoint_interval == 0:
-                self._save_checkpoint(done_results + new_results)
+            # Pass 2: batch SLM generation (GPU)
+            self._log(
+                f"[LongMemEval] Pass 2/2 — generating {len(all_ctxs)} responses "
+                f"in batches of {self.batch_size} …"
+            )
+            progress = ProgressTracker(len(all_ctxs), name="LongMemEval")
+            for batch_start in range(0, len(all_ctxs), self.batch_size):
+                batch = all_ctxs[batch_start : batch_start + self.batch_size]
+                gen_out = self.ltm.generate_batch(
+                    [c["augmented_prompt"] for c in batch],
+                    self.max_new_tokens,
+                    self.temperature,
+                )
+                for ctx, gen in zip(batch, gen_out):
+                    result = self._build_result_from_ctx(ctx, gen)
+                    new_results.append(result)
+                    progress.update(step_name=f"ID={ctx['qid']} cat={ctx['category']}")
+                    if len(new_results) % self.checkpoint_interval == 0:
+                        self._save_checkpoint(done_results + new_results)
+        else:
+            # ── Sequential (original behaviour) ──────────────────────────────
+            progress = ProgressTracker(len(pending), name="LongMemEval")
+            for step, (idx, item) in enumerate(pending, 1):
+                cat     = self._detect_category(item)
+                item_id = item.get(self.KEY_QID, f"item_{idx}")
+                result  = self._process_item(item)
+                new_results.append(result)
+                progress.update(step_name=f"ID={item_id} cat={cat}")
+                if step % self.checkpoint_interval == 0:
+                    self._save_checkpoint(done_results + new_results)
 
         progress.finish()
         all_results = done_results + new_results
@@ -399,12 +435,15 @@ class LongMemEvalAdapter:
         self._reset_ltm()
 
         # ── Step 2: Ingest sessions (already in chronological order) ─────────
+        # All sessions committed in one transaction — reduces 49 FTS5 b-tree
+        # merges per LME item down to 1, giving a significant speedup.
         session_to_faiss_ids: dict[str, list[int]] = {}
         for sess_idx, session_turns in enumerate(sessions):
             sid  = session_ids[sess_idx] if sess_idx < len(session_ids) else f"sess_{sess_idx}"
             date = dates[sess_idx]       if sess_idx < len(dates)       else ""
             faiss_ids = self._ingest_session(session_turns, sid, date)
             session_to_faiss_ids[sid] = faiss_ids
+        self.ltm._db_conn.commit()  # single commit for all sessions in this item
 
         # ── Step 3: Knowledge Update — Temporal Context Injection ─────────────
         # For knowledge-update items, the update information is embedded in the
@@ -522,20 +561,122 @@ class LongMemEvalAdapter:
             )
             faiss_ids.append(fid)
 
-        # Single commit for the whole session (~494 turns → 1 FTS5 merge instead of 494)
-        if faiss_ids:
-            self.ltm._db_conn.commit()
-
+        # commit=False on every INSERT; caller commits once after all sessions.
         return faiss_ids
+
+    def _retrieve_for_item(self, item: dict) -> dict:
+        """
+        Retrieval-only phase for one LME item: reset → ingest → BM25 → prompt.
+        Does NOT call the SLM. Used by the two-pass batched path.
+        """
+        qid      = item.get(self.KEY_QID, "unknown")
+        query    = item.get(self.KEY_QUESTION, "")
+        gt       = item.get(self.KEY_ANSWER, "")
+        category = self._detect_category(item)
+
+        sessions     = item.get(self.KEY_SESSIONS, [])
+        session_ids  = item.get(self.KEY_SESSION_IDS, [])
+        dates        = item.get(self.KEY_DATES, [])
+        evidence_ids = item.get(self.KEY_EVIDENCE, [])
+
+        self._reset_ltm()
+
+        session_to_faiss_ids: dict[str, list[int]] = {}
+        for sess_idx, session_turns in enumerate(sessions):
+            sid  = session_ids[sess_idx] if sess_idx < len(session_ids) else f"sess_{sess_idx}"
+            date = dates[sess_idx]       if sess_idx < len(dates)       else ""
+            session_to_faiss_ids[sid] = self._ingest_session(session_turns, sid, date)
+        self.ltm._db_conn.commit()
+
+        virtual_id, virtual_text = None, ""
+        if category == self.CATEGORY_KNOWLEDGE_UPDATE and evidence_ids:
+            last_ev_idx = None
+            for i, sid in enumerate(session_ids):
+                if sid in evidence_ids:
+                    last_ev_idx = i
+            if last_ev_idx is not None and last_ev_idx < len(sessions):
+                ev_turns = sessions[last_ev_idx]
+                ev_date  = dates[last_ev_idx] if last_ev_idx < len(dates) else ""
+                parts = [
+                    t.get(self.KEY_CONTENT, "")
+                    for t in ev_turns
+                    if t.get(self.KEY_HAS_ANSWER) and t.get(self.KEY_CONTENT, "").strip()
+                ]
+                if parts:
+                    update_text  = f"(Updated on {ev_date}) " + " ".join(parts)
+                    virtual_id   = self._injector.inject(self.ltm, update_text, qid)
+                    virtual_text = update_text
+
+        gt_faiss_ids: list[int] = []
+        for ev_sid in evidence_ids:
+            gt_faiss_ids.extend(session_to_faiss_ids.get(ev_sid, []))
+        if virtual_id is not None:
+            gt_faiss_ids.append(virtual_id)
+
+        ctx = self.ltm.retrieve_context(
+            query               = query,
+            top_k               = self.top_k,
+            use_query_expansion = self.use_query_expansion,
+        )
+
+        if virtual_id is not None:
+            self._injector.purge(self.ltm, virtual_id)
+
+        lat = ctx["latency"]
+        self._log(
+            f"  [Retrieve] bm25={lat.get('bm25_rerank_s', 0):.2f}s  {qid}"
+        )
+
+        return {
+            "qid"               : qid,
+            "category"          : category,
+            "query"             : query,
+            "ground_truth"      : gt,
+            "augmented_prompt"  : ctx["augmented_prompt"],
+            "memory_ids_used"   : ctx["memory_ids_used"],
+            "retrieved_mems"    : ctx["retrieved_mems"],
+            "latency"           : ctx["latency"],
+            "prompt_token_count": ctx["prompt_token_count"],
+            "gt_faiss_ids"      : gt_faiss_ids,
+            "virtual_update_id" : virtual_id,
+            "virtual_update_text": virtual_text,
+        }
+
+    def _build_result_from_ctx(self, ctx: dict, gen: dict) -> "EvalResult":
+        """Combine a retrieval context dict with a generate_batch() output into EvalResult."""
+        lat = {
+            **ctx["latency"],
+            "slm_generation_s": gen["slm_generation_s"],
+            "total_pipeline_s": (
+                ctx["latency"].get("sparse_retrieval_s", 0)
+                + ctx["latency"].get("context_injection_s", 0)
+                + gen["slm_generation_s"]
+            ),
+        }
+        return EvalResult(
+            question_id             = ctx["qid"],
+            framework               = "longmemeval",
+            category                = ctx["category"],
+            query                   = ctx["query"],
+            ground_truth            = ctx["ground_truth"],
+            retrieved_memory_ids    = ctx["memory_ids_used"],
+            ground_truth_memory_ids = ctx["gt_faiss_ids"],
+            retrieved_memories      = ctx["retrieved_mems"],
+            predicted_answer        = gen["response"],
+            latency                 = lat,
+            augmented_prompt        = ctx["augmented_prompt"],
+            virtual_update_id       = ctx.get("virtual_update_id"),
+            virtual_update_text     = ctx.get("virtual_update_text", ""),
+            prompt_token_count      = ctx["prompt_token_count"],
+            response_token_count    = gen["response_token_count"],
+        )
 
     def _reset_ltm(self) -> None:
         """Reset the LTM index between evaluation items.
-        Clears FTS5 table and sidecar store to prevent bleed.
+        Uses reset_index() (DROP + CREATE) instead of DELETE FROM docs —
+        O(1) vs O(n·tokens) for FTS5 posting-list teardown.
         """
-        self.ltm._db_conn.execute("DELETE FROM docs")
-        self.ltm._db_conn.commit()
-        self.ltm.ltm_store      = {}
-        self.ltm._next_faiss_id = 0
+        self.ltm.reset_index()
 
     def _count_tokens(self, text: str) -> int:
         """Approximate token count using the SLM tokenizer."""
@@ -637,6 +778,7 @@ class LoCoMoAdapter:
         use_query_expansion : bool  = True,
         checkpoint_path     : str | Path | None = None,
         checkpoint_interval : int   = 10,
+        batch_size          : int   = 1,
     ) -> None:
         self.ltm                = ltm
         self.data_path          = Path(data_path)
@@ -647,6 +789,7 @@ class LoCoMoAdapter:
         self.use_query_expansion = use_query_expansion
         self.checkpoint_path     = Path(checkpoint_path) if checkpoint_path else None
         self.checkpoint_interval = checkpoint_interval
+        self.batch_size          = batch_size
 
         if not self.data_path.exists():
             raise FileNotFoundError(
@@ -691,9 +834,10 @@ class LoCoMoAdapter:
                 f"(loaded from {self.checkpoint_path})"
             )
 
-        done_results: list[EvalResult] = list(completed.values())
-        new_results : list[EvalResult] = []
-        item_count  = 0
+        done_results : list[EvalResult] = list(completed.values())
+        new_results  : list[EvalResult] = []
+        pending_ctxs : list[dict]       = []   # used by two-pass batched path
+        item_count   = 0
 
         total_qas = sum(len(s.get(self.KEY_QA, [])) for s in self._raw_data)
         if max_items:
@@ -744,15 +888,38 @@ class LoCoMoAdapter:
                     item_count += 1
                     continue
 
-                progress.update(step_name=f"Sample={conv_id} cat={category}")
-                result = self._process_qa(
-                    qa, conv_id, diaid_to_faiss_id, category
-                )
-                new_results.append(result)
+                if self.batch_size > 1:
+                    # Two-pass: retrieve context now, generate later
+                    ctx = self._retrieve_for_qa(qa, conv_id, diaid_to_faiss_id, category)
+                    pending_ctxs.append(ctx)
+                else:
+                    result = self._process_qa(qa, conv_id, diaid_to_faiss_id, category)
+                    new_results.append(result)
+                    progress.update(step_name=f"Sample={conv_id} cat={category}")
+                    if len(new_results) % self.checkpoint_interval == 0:
+                        self._save_checkpoint(done_results + new_results)
+
                 item_count += 1
 
-                if len(new_results) % self.checkpoint_interval == 0:
-                    self._save_checkpoint(done_results + new_results)
+        # ── Two-pass: batch generate after all retrievals complete ────────────
+        if self.batch_size > 1 and pending_ctxs:
+            self._log(
+                f"[LoCoMo] Pass 2/2 — generating {len(pending_ctxs)} responses "
+                f"in batches of {self.batch_size} …"
+            )
+            for batch_start in range(0, len(pending_ctxs), self.batch_size):
+                batch   = pending_ctxs[batch_start : batch_start + self.batch_size]
+                gen_out = self.ltm.generate_batch(
+                    [c["augmented_prompt"] for c in batch],
+                    self.max_new_tokens,
+                    self.temperature,
+                )
+                for ctx, gen in zip(batch, gen_out):
+                    result = self._build_locomo_result_from_ctx(ctx, gen)
+                    new_results.append(result)
+                    progress.update(step_name=f"Sample={ctx['conv_id']} cat={ctx['category']}")
+                    if len(new_results) % self.checkpoint_interval == 0:
+                        self._save_checkpoint(done_results + new_results)
 
         progress.finish()
         all_results = done_results + new_results
@@ -846,6 +1013,79 @@ class LoCoMoAdapter:
             response_token_count    = output.get("response_token_count", 0),
         )
 
+    def _retrieve_for_qa(
+        self,
+        qa                : dict,
+        conv_id           : str,
+        diaid_to_faiss_id : dict,
+        category          : str,
+    ) -> dict:
+        """Retrieval-only version of _process_qa. No SLM call."""
+        qid      = f"{conv_id}__{qa.get('question', '')[:30].replace(' ', '_')}"
+        query    = qa.get(self.KEY_QUESTION, "")
+        gt       = qa.get(self.KEY_ANSWER, "")
+        evidence = qa.get(self.KEY_EVIDENCE, [])
+
+        gt_faiss_ids: list[int] = []
+        for dia_id in evidence:
+            fid = diaid_to_faiss_id.get(str(dia_id))
+            if fid is not None:
+                gt_faiss_ids.append(fid)
+
+        effective_query = query
+        if category == "abstention":
+            effective_query = (
+                f"{query}\n"
+                f"(If the answer is not in your memory, respond with 'I don't know.')"
+            )
+
+        ctx = self.ltm.retrieve_context(
+            query               = effective_query,
+            top_k               = self.top_k,
+            use_query_expansion = self.use_query_expansion,
+        )
+
+        return {
+            "qid"               : qid,
+            "conv_id"           : conv_id,
+            "category"          : category,
+            "query"             : query,
+            "ground_truth"      : gt,
+            "augmented_prompt"  : ctx["augmented_prompt"],
+            "memory_ids_used"   : ctx["memory_ids_used"],
+            "retrieved_mems"    : ctx["retrieved_mems"],
+            "latency"           : ctx["latency"],
+            "prompt_token_count": ctx["prompt_token_count"],
+            "gt_faiss_ids"      : gt_faiss_ids,
+        }
+
+    def _build_locomo_result_from_ctx(self, ctx: dict, gen: dict) -> "EvalResult":
+        """Combine a LoCoMo retrieval context with generate_batch() output."""
+        lat = {
+            **ctx["latency"],
+            "slm_generation_s": gen["slm_generation_s"],
+            "total_pipeline_s": (
+                ctx["latency"].get("sparse_retrieval_s", 0)
+                + ctx["latency"].get("context_injection_s", 0)
+                + gen["slm_generation_s"]
+            ),
+        }
+        return EvalResult(
+            question_id             = ctx["qid"],
+            framework               = "locomo",
+            category                = ctx["category"],
+            query                   = ctx["query"],
+            ground_truth            = ctx["ground_truth"],
+            retrieved_memory_ids    = ctx["memory_ids_used"],
+            ground_truth_memory_ids = ctx["gt_faiss_ids"],
+            retrieved_memories      = ctx["retrieved_mems"],
+            predicted_answer        = gen["response"],
+            latency                 = lat,
+            augmented_prompt        = ctx["augmented_prompt"],
+            prompt_token_count      = ctx["prompt_token_count"],
+            response_token_count    = gen["response_token_count"],
+        )
+
     def _ingest_all_sessions(
         self,
         conv   : dict,
@@ -905,22 +1145,17 @@ class LoCoMoAdapter:
                 if dia_id is not None:
                     diaid_to_faiss[str(dia_id)] = fid
 
-            # Single commit per session
-            if ids:
-                self.ltm._db_conn.commit()
-
             session_to_ids[sess_key] = ids
 
+        # Single commit for the entire conversation — caller owns the transaction.
+        self.ltm._db_conn.commit()
         return session_to_ids, diaid_to_faiss
 
     def _reset_ltm(self) -> None:
         """Reset the LTM index between conversations.
-        Clears FTS5 table and sidecar store to prevent bleed.
+        Uses reset_index() (DROP + CREATE) — O(1) vs DELETE FROM docs.
         """
-        self.ltm._db_conn.execute("DELETE FROM docs")
-        self.ltm._db_conn.commit()
-        self.ltm.ltm_store      = {}
-        self.ltm._next_faiss_id = 0
+        self.ltm.reset_index()
 
     def _count_tokens(self, text: str) -> int:
         try:

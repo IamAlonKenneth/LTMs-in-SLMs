@@ -11,37 +11,40 @@ from datetime import timedelta
 class ProgressTracker:
     """Tracks progress with timing and ETA."""
 
-    def __init__(self, total_items: int, name: str = ""):
+    def __init__(self, total_items: int, name: str = "") -> None:
         self.total_items = total_items
-        self.name = name
-        self.current = 0
-        self.start_time = time.time()
+        self.name        = name or "Progress"
+        self.current     = 0
+        self.start_time  = time.time()
+        self.step_times: list[float] = []
 
-    def update(self, step_name: str = ""):
-        """Log progress of one item."""
+    def update(self, step_name: str = "") -> None:
         self.current += 1
         elapsed = time.time() - self.start_time
+        self.step_times.append(elapsed)
 
-        # avg time per completed item (current-1 items done before this update call)
-        completed = self.current - 1
-        avg_time = (elapsed / completed) if completed > 0 else elapsed
+        if self.total_items > 0 and self.current > 0:
+            avg_step      = elapsed / self.current
+            remaining     = (self.total_items - self.current) * avg_step
+            eta_str       = str(timedelta(seconds=int(remaining)))
+            pct           = self.current / self.total_items * 100
+            label         = f" {step_name} |" if step_name else ""
+            print(
+                f"  [{self.name}] {self.current}/{self.total_items} "
+                f"({pct:.0f}%) — {elapsed:.0f}s elapsed "
+                f"{label} ETA {eta_str}",
+                flush=True,
+            )
+        else:
+            print(
+                f"  [{self.name}] {self.current}/{self.total_items} "
+                f"— {elapsed:.0f}s elapsed",
+                flush=True,
+            )
 
-        remaining = self.total_items - self.current
-        eta_seconds = remaining * avg_time
-        eta_str = str(timedelta(seconds=int(eta_seconds)))
-
-        percent = (self.current / self.total_items) * 100
-        elapsed_str = str(timedelta(seconds=int(elapsed)))
-
-        status = f"[{self.name}] {self.current}/{self.total_items} ({percent:.1f}%) | "
-        status += f"Elapsed: {elapsed_str} | ETA: {eta_str}"
-        if step_name:
-            status += f" | {step_name}"
-
-        print(status)
-
-    def finish(self):
-        """Log completion."""
-        total_time = time.time() - self.start_time
-        total_str = str(timedelta(seconds=int(total_time)))
-        print(f"[{self.name}] COMPLETE in {total_str}\n")
+    def finish(self) -> None:
+        elapsed = time.time() - self.start_time
+        print(
+            f"  [{self.name}] Complete in {timedelta(seconds=int(elapsed))}",
+            flush=True,
+        )

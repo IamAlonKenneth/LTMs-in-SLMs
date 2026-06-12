@@ -137,7 +137,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="HuggingFace ID for the Gemma 3 4B SLM.",
     )
     ltm_group.add_argument(
-        "--quantization", type=str, default="none",
+        "--quantization", type=str, default="4bit",
         choices=["4bit", "8bit", "none"],
         help="SLM quantization mode (4bit recommended for edge deployment).",
     )
@@ -148,6 +148,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
     ltm_group.add_argument(
         "--max-new-tokens", type=int, default=64,
         help="Maximum generation tokens for each SLM response (default: 64; Gemma 3 IT stops earlier via <end_of_turn>).",
+    )
+    ltm_group.add_argument(
+        "--batch-size", type=int, default=4,
+        help="Number of prompts to generate simultaneously on the GPU (default: 4). "
+             "1 = sequential. 4–8 recommended for RTX 4050 6 GB + 4-bit Gemma 3 4B.",
     )
 
     # ── Evaluation control ───────────────────────────────────────────────────
@@ -283,6 +288,7 @@ def run_evaluation(args: argparse.Namespace) -> None:
                 verbose             = args.verbose,
                 use_query_expansion = not args.skip_expansion,
                 checkpoint_path     = out_dir / "longmemeval_checkpoint.json",
+                batch_size          = args.batch_size,
             )
             lme_results = lme_adapter.run(
                 categories = args.categories,
@@ -317,6 +323,7 @@ def run_evaluation(args: argparse.Namespace) -> None:
                 verbose             = args.verbose,
                 use_query_expansion = not args.skip_expansion,
                 checkpoint_path     = out_dir / "locomo_checkpoint.json",
+                batch_size          = args.batch_size,
             )
             locomo_results = locomo_adapter.run(
                 categories = args.categories,

@@ -1,0 +1,12 @@
+{
+  "longmemeval_data": "D:\\Downloads\\LTMs-in-SLMs\\Benchmarks\\longmemeval_cache\\longmemeval_s_cleaned.json",
+  "locomo_data": null,
+  "output_dir": "D:\\Downloads\\LTMs-in-SLMs\\results\\baseline",
+  "slm_model": "google/gemma-3-4b-it",
+  "quantization": "4bit",
+  "max_new_tokens": 256,
+  "temperature": 0.0,
+  "max_items": 1,
+  "run_id": "20260612_021929",
+  "eval_type": "baseline_no_memory"
+}

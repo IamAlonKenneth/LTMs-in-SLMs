@@ -127,7 +127,7 @@ class SparseEmbeddedMemory:
         embedding_model_id : str   = "google/embeddinggemma-300m",
         slm_model_id       : str   = "google/gemma-3-4b-it",
         quantization       : str   = "none",   # "4bit" | "8bit" | "none"
-        device             : str   = "auto",
+        device             : str   = "cuda",
         embedding_dim      : int   = EMBEDDING_DIM,
         verbose            : bool  = True,
         # ── Sparse-specific parameters (sane defaults; eval harness ignores) ─
@@ -531,6 +531,131 @@ class SparseEmbeddedMemory:
             "augmented_prompt": augmented_prompt,
         }
 
+    def retrieve_context(
+        self,
+        query               : str,
+        top_k               : int  = DEFAULT_TOP_K,
+        use_query_expansion : bool = False,
+        include_scores      : bool = False,
+    ) -> dict:
+        """
+        Retrieval-only phase: BM25 search + prompt construction, no SLM call.
+
+        Use this to separate retrieval (CPU-bound, fast) from generation
+        (GPU-bound) so that multiple prompts can be batched together via
+        generate_batch().
+
+        Returns the same keys as generate_response() minus response /
+        response_token_count / slm_generation_s.
+        """
+        latency: dict[str, float] = {}
+        t_ret = time.perf_counter()
+
+        t_exp = time.perf_counter()
+        expanded  = self._expand_query(query) if use_query_expansion else []
+        fts_query = self._build_fts5_query(query, expanded)
+        latency["query_expansion_s"] = time.perf_counter() - t_exp
+
+        t_bm25 = time.perf_counter()
+        retrieved_mems = self._fts_search_and_rerank(fts_query, top_k, query)
+        latency["bm25_rerank_s"] = time.perf_counter() - t_bm25
+        latency["sparse_retrieval_s"] = time.perf_counter() - t_ret
+
+        t_ctx = time.perf_counter()
+        augmented_prompt = self.build_augmented_prompt(
+            query, retrieved_mems, include_scores=include_scores
+        )
+        latency["context_injection_s"] = time.perf_counter() - t_ctx
+
+        prompt_token_count = len(self.slm_tokenizer.encode(augmented_prompt))
+
+        return {
+            "augmented_prompt"   : augmented_prompt,
+            "memory_ids_used"    : [m["memory_id"] for m in retrieved_mems],
+            "retrieved_mems"     : retrieved_mems,
+            "latency"            : latency,
+            "prompt_token_count" : prompt_token_count,
+        }
+
+    def generate_batch(
+        self,
+        prompts        : list[str],
+        max_new_tokens : int   = DEFAULT_MAX_NEW_TOKENS,
+        temperature    : float = 0.0,
+    ) -> list[dict]:
+        """
+        Generate responses for a list of prompts in one GPU call.
+
+        Processes `prompts` with left-padding so the entire batch fits in a
+        single model.generate() invocation.  Provides ~batch_size× throughput
+        vs calling generate_response() N times because model weights are read
+        from VRAM once per batch token rather than once per item.
+
+        For RTX 4050 6GB + Gemma 3 4B 4-bit (≈3.5 GB), safe batch sizes
+        are 4–8 items at 64 max_new_tokens.
+
+        Returns a list of dicts (same order as `prompts`) with keys:
+            response, response_token_count, slm_generation_s
+        """
+        import torch
+
+        if not prompts:
+            return []
+
+        # Ensure pad token is defined (Gemma tokenizer may leave it None)
+        if self.slm_tokenizer.pad_token_id is None:
+            self.slm_tokenizer.pad_token_id = self.slm_tokenizer.eos_token_id
+
+        # Left-pad: decoder-only models generate from the rightmost token,
+        # so padding must be on the left so all items end at the same position.
+        orig_side = self.slm_tokenizer.padding_side
+        self.slm_tokenizer.padding_side = "left"
+        inputs = self.slm_tokenizer(
+            prompts,
+            return_tensors = "pt",
+            padding        = True,
+            truncation     = True,
+            max_length     = 4096,
+        ).to(self._slm_device)
+        self.slm_tokenizer.padding_side = orig_side
+
+        input_len = inputs["input_ids"].shape[1]  # padded length, same for all items
+
+        eot_id  = self.slm_tokenizer.convert_tokens_to_ids("<end_of_turn>")
+        eos_ids = [self.slm_tokenizer.eos_token_id]
+        if eot_id != self.slm_tokenizer.unk_token_id:
+            eos_ids.append(eot_id)
+
+        use_sampling = temperature > 0
+        t_gen = time.perf_counter()
+
+        with torch.inference_mode():
+            output_ids = self.slm_model.generate(
+                **inputs,
+                max_new_tokens = max_new_tokens,
+                eos_token_id   = eos_ids,
+                do_sample      = use_sampling,
+                temperature    = temperature if use_sampling else 1.0,
+                top_p          = None if not use_sampling else 0.95,
+                top_k          = None if not use_sampling else 50,
+                pad_token_id   = self.slm_tokenizer.pad_token_id,
+            )
+
+        gen_time      = time.perf_counter() - t_gen
+        per_item_time = gen_time / len(prompts)
+
+        results = []
+        for i in range(len(prompts)):
+            new_ids  = output_ids[i, input_len:]   # slice off padded input
+            response = self.slm_tokenizer.decode(new_ids, skip_special_tokens=True).strip()
+            results.append({
+                "response"             : response,
+                "response_token_count" : int(new_ids.shape[0]),
+                "slm_generation_s"     : per_item_time,
+            })
+
+        return results
+
     # ─────────────────────────────────────────────────────────────────────
     # Persistence  —  Save & Load
     # ─────────────────────────────────────────────────────────────────────
@@ -757,6 +882,30 @@ class SparseEmbeddedMemory:
 
     def __exit__(self, *_) -> None:
         self.unload_model()
+
+    # ─────────────────────────────────────────────────────────────────────
+    # Public  —  Index Management
+    # ─────────────────────────────────────────────────────────────────────
+
+    def reset_index(self) -> None:
+        """
+        Drop and recreate the FTS5 table plus reset the sidecar store.
+
+        O(1) — SQLite drops all FTS5 shadow tables in one page-level
+        operation.  This is ~50-100× faster than `DELETE FROM docs` which
+        must walk and update every posting list in the inverted index.
+        Use this between evaluation items instead of DELETE FROM docs.
+        """
+        self._db_conn.executescript("""
+            DROP TABLE IF EXISTS docs;
+            CREATE VIRTUAL TABLE docs USING fts5(
+                content,
+                timestamp UNINDEXED,
+                metadata  UNINDEXED
+            );
+        """)
+        self.ltm_store      = {}
+        self._next_faiss_id = 0
 
     # ─────────────────────────────────────────────────────────────────────
     # Private  —  DB Schema

@@ -1,0 +1,19 @@
+[
+  {
+    "question_id": "e47becba",
+    "framework": "longmemeval",
+    "category": "single_hop",
+    "query": "What degree did I graduate with?",
+    "ground_truth": "Business Administration",
+    "predicted_answer": "I do not have access to your personal information, including your educational history. I am an AI and do not retain any data about you unless you explicitly provide it to me. \n\nTo find out what degree you graduated with, you'll need to:\n\n*   **Check your transcripts:** These documents list all of your coursework and degrees earned.\n*   **Contact your school's registrar:** They can verify your degree information.\n*   **Look at your diploma or degree certificate:** These documents officially state your degree.\n\nCould you tell me if you'd like me to help you find a resource to locate this information?",
+    "retrieved_memory_ids": [],
+    "ground_truth_memory_ids": [],
+    "retrieved_memories": [],
+    "latency": {
+      "baseline_generation_s": 287.38990780000313
+    },
+    "augmented_prompt": "<start_of_turn>user\nWhat degree did I graduate with?\n<end_of_turn>\n<start_of_turn>model\n",
+    "prompt_token_count": 17,
+    "response_token_count": 131
+  }
+]
