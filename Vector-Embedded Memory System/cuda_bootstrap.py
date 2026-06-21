@@ -20,15 +20,11 @@ import os
 import sys
 import platform
 
-# ---------------------------------------------------------------------------
 # Platform detection
-# ---------------------------------------------------------------------------
 _IS_WINDOWS = platform.system() == "Windows"
 
-# ---------------------------------------------------------------------------
-# WSL2 / Linux:  pre-initialise CUDA driver via ctypes to avoid torch hang
-# Windows:       CUDA works natively, no bootstrap needed
-# ---------------------------------------------------------------------------
+# WSL2 / Linux: pre-initialise the CUDA driver via ctypes to prevent torch import hang
+# Windows: CUDA loads natively through the NVIDIA driver — no bootstrap needed
 
 if _IS_WINDOWS:
     # Windows NVIDIA driver loads automatically with torch import.

@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LTM in SLM</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* Design tokens — shared with dashboard.html */
+:root {
+  --darkest: #2f184b;
+  --dark:    #532b88;
+  --mid:     #9b72cf;
+  --light:   #c8b1e4;
+  --bg:      #f4effa;
+  --white:   #ffffff;
+  --text:    #1a1025;
+  --muted:   #6b5a80;
+  --border:  #ddd6f0;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-size: 13px;
+}
+
+/* Header */
+.header {
+  background: var(--darkest);
+  color: var(--white);
+  padding: 11px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.header h1 { font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+.header p  { font-size: 11px; color: var(--light); margin-top: 1px; }
+
+/* Status pill with animated dot for the loading state */
+.status-pill {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  color: var(--light);
+}
+.status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #5ddb5d;
+  flex-shrink: 0;
+}
+.status-dot.loading { background: #f0c040; animation: blink 1s infinite; }
+.status-dot.offline { background: #e55; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+/* Controls bar */
+.controls {
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  padding: 9px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+.ctrl-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.ctrl-group { display: flex; align-items: center; gap: 8px; }
+
+/* Pill-style toggle for switching between Vector and BM25 modes */
+.mode-toggle {
+  display: flex;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.mode-btn {
+  padding: 5px 16px;
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--muted);
+  font-family: inherit;
+  transition: background .15s, color .15s;
+}
+.mode-btn.active { background: var(--dark); color: var(--white); }
+
+/* Query expansion toggle — greyed out and non-interactive in Vector mode
+   because query expansion only helps keyword (BM25) search, not vector similarity */
+.qe-group { display: flex; align-items: center; gap: 8px; }
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 38px; height: 21px;
+  flex-shrink: 0;
+}
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider {
+  position: absolute; inset: 0;
+  background: var(--border);
+  border-radius: 21px;
+  cursor: pointer;
+  transition: background .2s;
+}
+.slider::before {
+  content: '';
+  position: absolute;
+  width: 15px; height: 15px;
+  left: 3px; top: 3px;
+  background: white;
+  border-radius: 50%;
+  transition: transform .2s;
+}
+.switch input:checked + .slider { background: var(--dark); }
+.switch input:checked + .slider::before { transform: translateX(17px); }
+.switch.off { opacity: .38; pointer-events: none; }
+
+.qe-label { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.qe-label strong { color: var(--text); }
+
+/* Top-K dropdown */
+.topk-select {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 4px 8px;
+  font-family: inherit;
+  font-size: 12px;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+}
+.topk-select:focus { border-color: var(--mid); }
+
+/* Main layout */
+.main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* Chat panel */
+.chat-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  min-width: 0;
+}
+
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 0;
+}
+
+/* Placeholder shown before the first message */
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--muted);
+  padding-bottom: 40px;
+}
+.empty-state svg { opacity: .18; }
+.empty-state p { font-size: 12.5px; line-height: 1.6; text-align: center; max-width: 260px; }
+
+/* Message bubbles — user on the right, assistant on the left */
+.msg { display: flex; flex-direction: column; max-width: 82%; }
+.msg.user      { align-self: flex-end; align-items: flex-end; }
+.msg.assistant { align-self: flex-start; align-items: flex-start; }
+
+.bubble {
+  padding: 10px 14px;
+  border-radius: 12px;
+  line-height: 1.58;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.msg.user      .bubble { background: var(--dark); color: white; border-bottom-right-radius: 3px; }
+.msg.assistant .bubble { background: var(--white); border: 1px solid var(--border); border-bottom-left-radius: 3px; }
+
+/* Latency chips shown below each assistant reply */
+.msg-meta { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; align-items: center; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.chip.mode-v   { background: var(--darkest); color: white; font-weight: 600; }
+.chip.mode-b   { background: var(--mid);     color: white; font-weight: 600; }
+.chip.time     { background: var(--bg); border: 1px solid var(--border); color: var(--muted); }
+.chip.time.exp { border-color: var(--light); color: var(--dark); font-weight: 500; }
+
+/* Expanded query terms — only shown in BM25 mode when query expansion is on */
+.expanded-terms {
+  margin-top: 4px;
+  font-size: 10.5px;
+  color: var(--muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: center;
+}
+.expanded-terms .prefix { margin-right: 2px; }
+.term-tag {
+  background: var(--bg);
+  border: 1px solid var(--light);
+  color: var(--dark);
+  font-weight: 500;
+  font-size: 10.5px;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+/* Animated "..." while waiting for the server response */
+.thinking .bubble { color: var(--muted); font-style: italic; }
+.dots::after {
+  content: '...';
+  animation: dots 1.2s steps(4,end) infinite;
+}
+@keyframes dots {
+  0%,100% { content:''; }
+  33%      { content:'.'; }
+  66%      { content:'..'; }
+  99%      { content:'...'; }
+}
+
+/* Input area */
+.input-area {
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+  background: var(--white);
+  display: flex;
+  gap: 9px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+.input-area textarea {
+  flex: 1;
+  resize: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  min-height: 42px;
+  max-height: 120px;
+  line-height: 1.5;
+  background: var(--bg);
+  transition: border-color .15s;
+}
+.input-area textarea:focus { border-color: var(--mid); background: white; }
+.input-area textarea:disabled { opacity: .5; }
+
+.send-btn {
+  padding: 0 18px;
+  height: 42px;
+  background: var(--dark);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background .15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.send-btn:hover:not(:disabled) { background: var(--darkest); }
+.send-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* Right panel — shows retrieved memories and the store footer */
+.right-panel {
+  width: 340px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 12px 16px 8px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.panel-title {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.retrieved-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-height: 0;
+}
+
+.no-ret {
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 28px 16px;
+  line-height: 1.65;
+}
+
+/* Memory card — one card per retrieved memory */
+.mem-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.mem-card-top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 6px;
+}
+.rank-badge {
+  width: 19px; height: 19px;
+  background: var(--dark);
+  color: white;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.mem-id { font-size: 10px; color: var(--muted); }
+.mem-text {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+/* Score badges differ by mode: L2 distance for Vector, BM25+recency+final for BM25 */
+.score-row { display: flex; gap: 5px; flex-wrap: wrap; }
+.sc {
+  font-size: 10px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: 3px;
+}
+.sc.l2      { background: #ede8f5; color: var(--dark); }
+.sc.bm25    { background: #ede8f5; color: var(--dark); }
+.sc.recency { background: #e6f4ed; color: #2a6040; }
+.sc.final   { background: var(--darkest); color: white; }
+
+/* Store footer — shows total memory count and quick list of all stored memories */
+.store-footer {
+  border-top: 1px solid var(--border);
+  padding: 10px 14px;
+  background: var(--bg);
+  flex-shrink: 0;
+}
+.store-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
+.store-count { font-size: 12px; font-weight: 500; }
+.store-count em { font-style: normal; color: var(--dark); font-weight: 700; }
+.store-actions { display: flex; gap: 5px; }
+.s-btn {
+  padding: 4px 10px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--white);
+  color: var(--text);
+  cursor: pointer;
+  transition: .15s;
+}
+.s-btn:hover           { border-color: var(--mid); color: var(--dark); }
+.s-btn.danger:hover    { border-color: #d03; color: #d03; }
+
+.store-list {
+  max-height: 100px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.store-item {
+  font-size: 10.5px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 1px 0;
+}
+.store-item b { color: var(--text); }
+
+/* Add memory modal */
+.overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(47,24,75,.45);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+.overlay.show { display: flex; }
+.modal {
+  background: var(--white);
+  border-radius: 12px;
+  padding: 24px;
+  width: 440px;
+  max-width: 92vw;
+  box-shadow: 0 8px 32px rgba(47,24,75,.22);
+}
+.modal h2 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+.modal .sub { font-size: 12px; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
+.modal textarea {
+  width: 100%; height: 88px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 13px;
+  resize: none; outline: none;
+  margin-bottom: 10px;
+  background: var(--bg);
+}
+.modal textarea:focus { border-color: var(--mid); background: white; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.m-btn {
+  padding: 7px 16px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--white);
+  color: var(--text);
+  transition: .15s;
+}
+.m-btn.primary { background: var(--dark); color: white; border-color: var(--dark); }
+.m-btn.primary:hover { background: var(--darkest); }
+
+/* Boot/loading screen — covers the whole page until the models finish loading (~30-60s) */
+#boot-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--darkest);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  z-index: 300;
+  color: white;
+}
+#boot-screen h2 { font-size: 17px; font-weight: 600; }
+#boot-screen p  { font-size: 12.5px; color: var(--light); }
+.spinner {
+  width: 36px; height: 36px;
+  border: 3px solid rgba(200,177,228,.3);
+  border-top-color: var(--light);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- Boot screen: hidden once /status reports ready -->
+<div id="boot-screen">
+  <div class="spinner"></div>
+  <h2>Loading Models…</h2>
+  <p>Gemma 3 4B · EmbeddingGemma 300M · FAISS · SQLite FTS5</p>
+  <p id="boot-sub" style="color:var(--light);font-size:11px;">This takes ~30–60 s on first launch</p>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div>
+    <h1>LTM in SLM — Live Demo</h1>
+    <p>Gemma 3 4B · EmbeddingGemma 300M · FAISS + SQLite FTS5</p>
+  </div>
+  <div class="status-pill">
+    <div class="status-dot loading" id="status-dot"></div>
+    <span id="status-text">Loading…</span>
+  </div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <!-- Retrieval mode: Vector uses FAISS dense search; BM25 uses SQLite FTS5 keyword search -->
+  <div class="ctrl-group">
+    <span class="ctrl-label">Retrieval Mode</span>
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="btn-vector" onclick="setMode('vector')">Vector</button>
+      <button class="mode-btn"        id="btn-bm25"   onclick="setMode('bm25')">BM25</button>
+    </div>
+  </div>
+
+  <!-- Query expansion: only available in BM25 mode; uses the SLM to generate synonym terms -->
+  <div class="ctrl-group qe-group" id="qe-group">
+    <span class="ctrl-label">Query Expansion</span>
+    <label class="switch off" id="qe-switch">
+      <input type="checkbox" id="qe-toggle" checked>
+      <span class="slider"></span>
+    </label>
+    <span class="qe-label" id="qe-label">Off in Vector mode</span>
+  </div>
+
+  <!-- Top-K: how many memories to retrieve and inject into the prompt -->
+  <div class="ctrl-group" style="margin-left:auto;">
+    <span class="ctrl-label">Top-K</span>
+    <select class="topk-select" id="top-k">
+      <option value="3">3</option>
+      <option value="5" selected>5</option>
+      <option value="10">10</option>
+    </select>
+  </div>
+</div>
+
+<!-- Main layout -->
+<div class="main">
+
+  <!-- Chat panel -->
+  <div class="chat-panel">
+    <div class="messages" id="messages">
+      <div class="empty-state" id="empty-state">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="1.3">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+        </svg>
+        <p>Ask anything about Alex.<br>The LTM will retrieve the right memories.</p>
+      </div>
+    </div>
+    <div class="input-area">
+      <textarea id="query-input" placeholder="Type your question…" rows="1"
+        onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="send-btn" id="send-btn" onclick="send()" disabled>Send</button>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="right-panel">
+    <div class="panel-header">
+      <div class="panel-title">Retrieved Memories</div>
+    </div>
+    <div class="retrieved-list" id="ret-list">
+      <div class="no-ret">Send a message to see which memories are retrieved and injected into the prompt.</div>
+    </div>
+
+    <!-- Store footer: count + scrollable list of every memory in the LTM store -->
+    <div class="store-footer">
+      <div class="store-top">
+        <div class="store-count">LTM Store: <em id="mem-count">—</em> memories</div>
+        <div class="store-actions">
+          <button class="s-btn" onclick="showAdd()">+ Add</button>
+          <button class="s-btn danger" onclick="resetMem()">Reset</button>
+        </div>
+      </div>
+      <div class="store-list" id="store-list">
+        <div style="font-size:11px;color:var(--muted);">Loading…</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Memory Modal -->
+<div class="overlay" id="add-modal">
+  <div class="modal">
+    <h2>Add Memory</h2>
+    <p class="sub">
+      Ingest a new memory into the LTM store in real time.<br>
+      It becomes immediately retrievable in the next query.
+    </p>
+    <textarea id="new-mem" placeholder="e.g. Alex mentioned he dislikes spicy food…"></textarea>
+    <div class="modal-actions">
+      <button class="m-btn" onclick="hideAdd()">Cancel</button>
+      <button class="m-btn primary" onclick="addMemory()">Ingest Memory</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// State
+let mode        = 'vector';
+let busy        = false;
+let serverReady = false;
+
+// Poll /status every 2-3s until the server reports the models are loaded.
+// Model loading (Gemma 3 4B quantized) takes ~30-60s, so the send button
+// stays disabled until this resolves.
+(function pollReady() {
+  fetch('/status')
+    .then(r => r.json())
+    .then(d => {
+      if (d.ready) {
+        document.getElementById('boot-screen').style.display = 'none';
+        setStatus('Ready', false);
+        document.getElementById('send-btn').disabled = false;
+        serverReady = true;
+        refreshStore();
+      } else {
+        setTimeout(pollReady, 2000);
+      }
+    })
+    .catch(() => setTimeout(pollReady, 3000));
+})();
+
+// Switch between Vector (FAISS dense) and BM25 (keyword sparse) retrieval modes.
+// Query expansion is only meaningful for BM25 — it expands keywords via the SLM —
+// so it gets greyed out and locked off when Vector is selected.
+function setMode(m) {
+  mode = m;
+  document.getElementById('btn-vector').classList.toggle('active', m === 'vector');
+  document.getElementById('btn-bm25').classList.toggle('active', m === 'bm25');
+
+  const sw    = document.getElementById('qe-switch');
+  const label = document.getElementById('qe-label');
+  const tog   = document.getElementById('qe-toggle');
+
+  if (m === 'vector') {
+    sw.classList.add('off');
+    label.innerHTML = '<span style="color:var(--muted)">N/A in Vector mode</span>';
+  } else {
+    sw.classList.remove('off');
+    updateQeLabel(tog.checked);
+  }
+}
+
+document.getElementById('qe-toggle').addEventListener('change', function() {
+  updateQeLabel(this.checked);
+});
+
+function updateQeLabel(on) {
+  const label = document.getElementById('qe-label');
+  label.innerHTML = on
+    ? '<strong>On</strong> — SLM expands query terms'
+    : 'Off — raw keyword search only';
+}
+
+// Submit on Enter; Shift+Enter inserts a newline instead
+function handleKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+}
+
+// Grow the textarea up to 120px as the user types, then scroll inside it
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// Main send handler. Locks the input while the request is in flight so the
+// user can't queue duplicate requests to the single-threaded GPU inference.
+async function send() {
+  if (busy || !serverReady) return;
+  const inp   = document.getElementById('query-input');
+  const query = inp.value.trim();
+  if (!query) return;
+
+  inp.value = '';
+  inp.style.height = '';
+  document.getElementById('empty-state').style.display = 'none';
+
+  appendUser(query);
+  const thinkEl = appendThinking();
+  setBusy(true);
+
+  const topK  = parseInt(document.getElementById('top-k').value);
+  const useQE = mode === 'bm25' && document.getElementById('qe-toggle').checked;
+
+  try {
+    const res  = await fetch('/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, mode, use_query_expansion: useQE, top_k: topK }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    thinkEl.remove();
+    appendAssistant(data);
+    renderRetrieved(data.retrieved_memories, data.mode);
+  } catch (err) {
+    thinkEl.remove();
+    appendAssistant({ response: `Error: ${err.message}`, latency: {}, mode, retrieved_memories: [] });
+  } finally {
+    setBusy(false);
+    refreshStore();
+  }
+}
+
+// Message builders
+
+function appendUser(text) {
+  const msgs = document.getElementById('messages');
+  const div  = document.createElement('div');
+  div.className = 'msg user';
+  div.innerHTML = `<div class="bubble">${esc(text)}</div>`;
+  msgs.appendChild(div);
+  scrollBottom();
+}
+
+// Insert a temporary "..." bubble while waiting; the caller removes it on response
+function appendThinking() {
+  const msgs = document.getElementById('messages');
+  const div  = document.createElement('div');
+  div.className = 'msg assistant thinking';
+  div.innerHTML = `<div class="bubble"><span class="dots"></span></div>`;
+  msgs.appendChild(div);
+  scrollBottom();
+  return div;
+}
+
+// Build the assistant reply bubble with mode badge, per-stage latency chips,
+// and (in BM25 mode) the list of expanded query terms below the bubble.
+function appendAssistant(data) {
+  const msgs = document.getElementById('messages');
+  const div  = document.createElement('div');
+  div.className = 'msg assistant';
+
+  const lat = data.latency || {};
+  const m   = data.mode;
+
+  // Mode badge
+  let meta = `<span class="chip ${m === 'vector' ? 'mode-v' : 'mode-b'}">${m === 'vector' ? 'Vector' : 'BM25'}</span>`;
+
+  // Latency chips differ per mode: Vector shows retrieval time only;
+  // BM25 breaks it down into expansion, keyword search, and generation separately
+  if (m === 'vector') {
+    if (lat.dense_retrieval_s !== undefined) {
+      meta += chip(`Retrieval: ${ms(lat.dense_retrieval_s)}`);
+    }
+  } else {
+    if (lat.query_expansion_s !== undefined && lat.query_expansion_s > 0) {
+      meta += `<span class="chip time exp">Expansion: ${ms(lat.query_expansion_s)}</span>`;
+    }
+    if (lat.bm25_retrieval_s !== undefined) {
+      meta += chip(`BM25: ${ms(lat.bm25_retrieval_s)}`);
+    }
+  }
+  if (lat.slm_generation_s !== undefined) {
+    meta += chip(`Gen: ${lat.slm_generation_s.toFixed(2)} s`);
+  }
+  if (lat.total_pipeline_s !== undefined) {
+    meta += chip(`Total: ${lat.total_pipeline_s.toFixed(2)} s`);
+  }
+
+  // Show expanded terms only when the SLM produced them
+  let expandedHtml = '';
+  if (data.expanded_terms && data.expanded_terms.length) {
+    const tags = data.expanded_terms.map(t => `<span class="term-tag">${esc(t)}</span>`).join('');
+    expandedHtml = `<div class="expanded-terms"><span class="prefix">Expanded:</span>${tags}</div>`;
+  }
+
+  div.innerHTML = `
+    <div class="bubble">${esc(data.response || '')}</div>
+    <div class="msg-meta">${meta}</div>
+    ${expandedHtml}
+  `;
+  msgs.appendChild(div);
+  scrollBottom();
+}
+
+function chip(txt) {
+  return `<span class="chip time">${esc(txt)}</span>`;
+}
+
+// Format seconds as milliseconds when under 1s, otherwise keep as seconds
+function ms(sec) {
+  const v = sec * 1000;
+  return v < 1000 ? `${v.toFixed(0)} ms` : `${sec.toFixed(2)} s`;
+}
+
+// Render the retrieved memories panel.
+// Scores displayed depend on mode: Vector shows L2 distance (lower = closer);
+// BM25 shows the raw keyword score, a time-decay recency factor, and their combined final score.
+function renderRetrieved(mems, m) {
+  const list = document.getElementById('ret-list');
+  if (!mems || !mems.length) {
+    list.innerHTML = '<div class="no-ret">No memories retrieved for this query.</div>';
+    return;
+  }
+  list.innerHTML = mems.map(mem => {
+    let scores = '';
+    if (m === 'vector') {
+      scores = `<span class="sc l2">L2: ${(mem.l2_distance ?? 0).toFixed(4)}</span>`;
+    } else {
+      scores = `
+        <span class="sc bm25">BM25: ${(mem.bm25_score ?? 0).toFixed(3)}</span>
+        <span class="sc recency">Recency: ${(mem.recency_score ?? 0).toFixed(3)}</span>
+        <span class="sc final">Score: ${(mem.final_score ?? 0).toFixed(3)}</span>
+      `;
+    }
+    return `
+      <div class="mem-card">
+        <div class="mem-card-top">
+          <div class="rank-badge">${mem.rank}</div>
+          <div class="mem-id">Memory #${mem.memory_id}</div>
+        </div>
+        <div class="mem-text">${esc(mem.text)}</div>
+        <div class="score-row">${scores}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// Fetch the full memory list from /memories and update the store footer.
+// Called after each send and after add/reset so the count and list stay in sync.
+async function refreshStore() {
+  try {
+    const res  = await fetch('/memories');
+    const data = await res.json();
+    document.getElementById('mem-count').textContent = data.count;
+    const list = document.getElementById('store-list');
+    list.innerHTML = data.memories.length
+      ? data.memories.map(m =>
+          `<div class="store-item"><b>#${m.id}</b> ${esc(m.text)}</div>`
+        ).join('')
+      : '<div style="font-size:11px;color:var(--muted)">No memories stored.</div>';
+  } catch (e) { /* ignore fetch errors during reset */ }
+}
+
+// Add memory modal
+
+function showAdd() {
+  document.getElementById('add-modal').classList.add('show');
+  setTimeout(() => document.getElementById('new-mem').focus(), 50);
+}
+
+function hideAdd() {
+  document.getElementById('add-modal').classList.remove('show');
+  document.getElementById('new-mem').value = '';
+}
+
+// POST to /ingest, which embeds the text and adds it to both the FAISS index
+// and the FTS5 table so it's immediately retrievable in the next query.
+async function addMemory() {
+  const text = document.getElementById('new-mem').value.trim();
+  if (!text) return;
+  try {
+    await fetch('/ingest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, metadata: { source: 'manual_demo' } }),
+    });
+    hideAdd();
+    refreshStore();
+  } catch (e) {
+    alert('Failed to add memory: ' + e.message);
+  }
+}
+
+// Close the modal when clicking outside it
+document.getElementById('add-modal').addEventListener('click', function(e) {
+  if (e.target === this) hideAdd();
+});
+
+// Reset clears the in-memory store on the server side. Warn first because
+// this can't be undone without re-running seed_data.py.
+async function resetMem() {
+  if (!confirm('Clear ALL memories from the LTM store?\nThis cannot be undone during this session.')) return;
+  try {
+    await fetch('/reset', { method: 'POST' });
+    refreshStore();
+    document.getElementById('ret-list').innerHTML =
+      '<div class="no-ret">Memory store cleared. Add new memories or re-run seed_data.py.</div>';
+  } catch (e) {
+    alert('Reset failed: ' + e.message);
+  }
+}
+
+// Status and busy helpers
+
+function setStatus(text, loading) {
+  document.getElementById('status-text').textContent = text;
+  const dot = document.getElementById('status-dot');
+  dot.className = 'status-dot' + (loading ? ' loading' : '');
+}
+
+// Disable the input and send button while a request is in flight.
+// This prevents queuing multiple concurrent inference jobs on the GPU.
+function setBusy(b) {
+  busy = b;
+  document.getElementById('send-btn').disabled = b;
+  document.getElementById('query-input').disabled = b;
+  setStatus(b ? 'Processing…' : 'Ready', b);
+}
+
+function scrollBottom() {
+  const msgs = document.getElementById('messages');
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+// Sanitize text before inserting into innerHTML to prevent XSS —
+// memory text is user-supplied and could contain HTML characters.
+function esc(s) {
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/\n/g,'<br>');
+}
+</script>
+</body>
+</html>

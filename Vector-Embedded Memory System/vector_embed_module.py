@@ -33,9 +33,7 @@ from transformers import (              # pip install transformers
 )
 
 
-# ---------------------------------------------------------------------------
-# Constants — keep aligned with thesis terminology
-# ---------------------------------------------------------------------------
+# Constants
 EMBEDDING_DIM          = 768           # google/embeddinggemma-300m output dim
 DEFAULT_TOP_K          = 5             # default number of memories to retrieve
 DEFAULT_MAX_NEW_TOKENS = 512           # max generation tokens for Gemma 3 4B
@@ -51,9 +49,7 @@ GEMMA_SYSTEM_PROMPT = (
 )
 
 
-# ---------------------------------------------------------------------------
 # VectorEmbeddedMemory
-# ---------------------------------------------------------------------------
 class VectorEmbeddedMemory:
     """
     Dense-Retrieval Long-Term Memory (LTM) Module.
@@ -74,9 +70,7 @@ class VectorEmbeddedMemory:
     load_ltm(directory)                -> None
     """
 
-    # ------------------------------------------------------------------
     # Initialisation
-    # ------------------------------------------------------------------
     def __init__(
         self,
         embedding_model_id : str  = "google/embeddinggemma-300m",
@@ -140,15 +134,13 @@ class VectorEmbeddedMemory:
             slm_model_id,
             quantization_config  = bnb_config,          # None if quantization="none"
             device_map           = "cuda",
-            torch_dtype          = torch.float16,
+            torch_dtype          = torch.bfloat16,   # Gemma 3 overflows in fp16 → NaN logits → all <pad>
             low_cpu_mem_usage    = True,
             attn_implementation  = "eager",             # compatible with all HW
         )
         self._log("LTM Module initialised ✓")
 
-    # ------------------------------------------------------------------
     # A. Memory Ingestion
-    # ------------------------------------------------------------------
     def ingest_memory(
         self,
         text    : str,
@@ -195,9 +187,7 @@ class VectorEmbeddedMemory:
                   f"tokens≈{len(text.split())} | total_memories={self._next_faiss_id}")
         return faiss_id
 
-    # ------------------------------------------------------------------
     # B. Dense Retrieval
-    # ------------------------------------------------------------------
     def dense_retrieve(
         self,
         query : str,
@@ -257,9 +247,7 @@ class VectorEmbeddedMemory:
                   f"for query: '{query[:60]}…'")
         return retrieved
 
-    # ------------------------------------------------------------------
     # C. Context Injection — Prompt Construction
-    # ------------------------------------------------------------------
     def build_augmented_prompt(
         self,
         query          : str,
@@ -320,9 +308,7 @@ class VectorEmbeddedMemory:
         )
         return augmented_prompt
 
-    # ------------------------------------------------------------------
     # D. Inference Pipeline (Retrieve → Inject → Generate)
-    # ------------------------------------------------------------------
     def generate_response(
         self,
         query          : str,
@@ -360,19 +346,19 @@ class VectorEmbeddedMemory:
         """
         latency: dict[str, float] = {}
 
-        # ── Step 1 : Dense Retrieval ────────────────────────────────
+        # Step 1 — Dense Retrieval
         t0 = time.perf_counter()
         retrieved_mems = self.dense_retrieve(query, top_k=top_k)
         latency["dense_retrieval_s"] = time.perf_counter() - t0
 
-        # ── Step 2 : Context Injection ──────────────────────────────
+        # Step 2 — Context Injection
         t1 = time.perf_counter()
         augmented_prompt = self.build_augmented_prompt(
             query, retrieved_mems, include_scores=include_scores
         )
         latency["context_injection_s"] = time.perf_counter() - t1
 
-        # ── Step 3 : SLM Generation ─────────────────────────────────
+        # Step 3 — SLM Generation
         t2 = time.perf_counter()
         inputs = self.slm_tokenizer(
             augmented_prompt,
@@ -421,9 +407,7 @@ class VectorEmbeddedMemory:
             "augmented_prompt": augmented_prompt,
         }
 
-    # ------------------------------------------------------------------
-    # Persistence — Save & Load LTM to Disk
-    # ------------------------------------------------------------------
+    # Persistence — Save & Load
     def save_ltm(self, directory: str = "./ltm_store") -> None:
         """
         Persist both the FAISS index and the sidecar JSON map to disk.
@@ -488,9 +472,7 @@ class VectorEmbeddedMemory:
         self._log(f"[Persistence] LTM loaded ← {save_dir} "
                   f"({self.faiss_index.ntotal} vectors)")
 
-    # ------------------------------------------------------------------
     # Utility / Introspection
-    # ------------------------------------------------------------------
     def memory_count(self) -> int:
         """Return the total number of memories stored in the FAISS index."""
         return self.faiss_index.ntotal
@@ -549,9 +531,7 @@ class VectorEmbeddedMemory:
         self.ltm_store = new_store
         self._log(f"[LTM] Rebuild complete — {self.faiss_index.ntotal} active vectors.")
 
-    # ------------------------------------------------------------------
     # Private Helpers
-    # ------------------------------------------------------------------
     def _embed_text(self, text: str) -> np.ndarray:
         """
         Convert a text string to a normalised 768-d dense vector using
@@ -708,9 +688,7 @@ class VectorEmbeddedMemory:
             print(f"[LTM {ts}] {message}")
 
 
-# ---------------------------------------------------------------------------
-# Quick-start demo (run this file directly: python ltm_module.py)
-# ---------------------------------------------------------------------------
+# Quick-start demo — run this file directly: python ltm_module.py
 if __name__ == "__main__":
     print("=" * 70)
     print("  Dense-Retrieval LTM Module — Quick-Start Demo")
@@ -725,7 +703,7 @@ if __name__ == "__main__":
         verbose            = True,
     )
 
-    # ── Ingest sample memories ──────────────────────────────────────
+    # Ingest sample memories
     print("\n--- Ingesting Memories ---")
     ltm.ingest_memory(
         "The user prefers concise, bullet-point style answers.",
@@ -743,7 +721,7 @@ if __name__ == "__main__":
     )
     print(f"\nTotal memories in LTM: {ltm.memory_count()}")
 
-    # ── Dense Retrieval ─────────────────────────────────────────────
+    # Dense retrieval
     print("\n--- Dense Retrieval ---")
     query = "What is the user's research topic?"
     results = ltm.dense_retrieve(query, top_k=2)
@@ -751,7 +729,7 @@ if __name__ == "__main__":
         print(f"  Rank {r['rank']} | ID={r['memory_id']} | L2={r['l2_distance']:.4f}")
         print(f"    → {r['text'][:80]}…")
 
-    # ── Full Inference Pipeline ─────────────────────────────────────
+    # Full inference pipeline
     print("\n--- LTM-Augmented Inference ---")
     output = ltm.generate_response(
         query          = "Summarise my research project in one paragraph.",
@@ -763,6 +741,6 @@ if __name__ == "__main__":
     print(f"Generation Time : {output['latency']['slm_generation_s']:.3f} s")
     print(f"\nResponse:\n{output['response']}")
 
-    # ── Save LTM to disk ────────────────────────────────────────────
+    # Save LTM to disk
     ltm.save_ltm("./ltm_store")
     print("\nLTM saved to ./ltm_store/ ✓")

@@ -65,13 +65,13 @@ from transformers import (
     BitsAndBytesConfig,
 )
 
-# ── Stage 2 judge lives in Structured Text Memory System/eval/ ──────────────
+# Stage 2 judge lives in Structured Text Memory System/eval/
 _EVAL_DIR    = Path(__file__).resolve().parent / "Structured Text Memory System" / "eval"
 _STM_DIR     = Path(__file__).resolve().parent / "Structured Text Memory System"
 sys.path.insert(0, str(_EVAL_DIR))
 sys.path.insert(0, str(_STM_DIR))
 
-# ── Constants ────────────────────────────────────────────────────────────────
+# Constants
 
 DEFAULT_MAX_NEW_TOKENS = 64
 DEFAULT_BATCH_SIZE     = 4
@@ -87,7 +87,7 @@ BASELINE_PROMPT_TEMPLATE = (
     "<start_of_turn>model\n"
 )
 
-# ── LongMemEval keys ─────────────────────────────────────────────────────────
+# LongMemEval dataset field keys and question-type mapping
 
 LME_QID      = "question_id"
 LME_QTYPE    = "question_type"
@@ -103,7 +103,7 @@ QTYPE_MAP = {
     "temporal-reasoning"        : "temporal_reasoning",
 }
 
-# ── LoCoMo keys ──────────────────────────────────────────────────────────────
+# LoCoMo dataset field keys and question-type mapping
 
 LOCOMO_SAMPLE_ID = "sample_id"
 LOCOMO_CONV      = "conversation"
@@ -131,9 +131,7 @@ LOCOMO_STR_TYPE_MAP = {
 }
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
 # Helpers
-# ═══════════════════════════════════════════════════════════════════════════════
 
 
 def log(msg: str) -> None:
@@ -196,9 +194,7 @@ def _load_checkpoint(path: Path) -> tuple[list[dict], set[str]]:
         return [], set()
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
 # SLM Wrapper
-# ═══════════════════════════════════════════════════════════════════════════════
 
 
 class BaselineSLM:
@@ -294,9 +290,7 @@ class BaselineSLM:
         return results
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# Dataset Processors (batch-aware, checkpoint-aware)
-# ═══════════════════════════════════════════════════════════════════════════════
+# Dataset Processors — batch-aware and checkpoint-aware
 
 
 def _process_items(
@@ -445,9 +439,7 @@ def process_locomo(
     return results
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
 # Stage 2 — LLM Judge
-# ═══════════════════════════════════════════════════════════════════════════════
 
 
 def _to_eval_result(r: dict) -> Any:
@@ -521,9 +513,7 @@ def run_stage2(
     print(f"    Answer Relevance : {ov.get('mean_answer_relevance', 0):.3f} ± {ov.get('std_answer_relevance', 0):.3f}")
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
 # CLI
-# ═══════════════════════════════════════════════════════════════════════════════
 
 
 def build_arg_parser() -> argparse.ArgumentParser:
@@ -565,9 +555,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     return p
 
 
-# ═══════════════════════════════════════════════════════════════════════════════
 # Entry Point
-# ═══════════════════════════════════════════════════════════════════════════════
 
 
 def main() -> None:
@@ -577,7 +565,6 @@ def main() -> None:
     if not args.load_results and not args.longmemeval_data and not args.locomo_data:
         parser.error("Provide at least one of: --longmemeval-data, --locomo-data, --load-results")
 
-    # ── Output directory ─────────────────────────────────────────────────────
     out_base = Path(args.output_dir)
     # If --output-dir already looks like a run dir (contains run_config.json),
     # use it directly so the user can resume by pointing at the existing dir.
@@ -603,7 +590,7 @@ def main() -> None:
     print(f"  Judge     : {'SKIP' if args.skip_judge else args.judge_model}")
     print("=" * 80)
 
-    # ── Stage 2 only (--load-results) ────────────────────────────────────────
+    # Stage 2 only — skip generation and run the judge on pre-existing results
     if args.load_results:
         log(f"Loading pre-existing results from: {args.load_results}")
         with open(args.load_results, encoding="utf-8") as f:
@@ -613,7 +600,7 @@ def main() -> None:
             run_stage2(all_results, out_dir, args.judge_model, args.judge_workers, args.checkpoint_interval)
         return
 
-    # ── Generation ───────────────────────────────────────────────────────────
+    # Generation — load models and run inference over each dataset
     slm = BaselineSLM(
         model_id       = args.slm_model,
         quantization   = args.quantization,
@@ -650,11 +637,9 @@ def main() -> None:
     _save_json(all_results, combined_path)
     log(f"Saved combined_eval_results.json ({len(all_results)} items)")
 
-    # ── Stage 2 ──────────────────────────────────────────────────────────────
     if not args.skip_judge:
         run_stage2(all_results, out_dir, args.judge_model, args.judge_workers, args.checkpoint_interval)
 
-    # ── Summary ───────────────────────────────────────────────────────────────
     print("\n" + "=" * 80)
     print("  BASELINE EVALUATION COMPLETE")
     print(f"  Run ID  : {run_id}")

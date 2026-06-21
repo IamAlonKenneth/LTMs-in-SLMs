@@ -126,3 +126,9 @@ model_audit/
 run_with_tracker.py
 "_Pro__LTM_in_SLM (3).pdf"
 THESIS_DATA_EXTRACTION.txt
+
+results/
+.venv-1/
+Vector-Embedded Memory System/__pycache__/
+Vector-Embedded Memory System/__pycache__/vector_embed_module.cpython-314.pyc
+Benchmarks/locomo/

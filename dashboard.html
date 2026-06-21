@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LTMs in SLMs — Thesis Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* Reset */
+*{margin:0;padding:0;box-sizing:border-box}
+
+/* Palette
+   #2f184b  darkest  — headings, hero bg, primary text
+   #532b88  dark     — Vector condition, active states, primary accent
+   #9b72cf  mid      — BM25 condition, secondary accent
+   #c8b1e4  light    — Baseline condition, borders, subtle fills
+   #f4effa  lightest — page background, table headers, inactive fills
+*/
+:root{
+  --darkest:#2f184b;
+  --dark:#532b88;
+  --mid:#9b72cf;
+  --light:#c8b1e4;
+  --bg:#f4effa;
+  --white:#ffffff;
+  --border:#ddd5ef;
+  --text:#2f184b;
+  --muted:#7a6594;
+  --r:10px;--r-sm:6px;
+  /* condition colors */
+  --c-baseline:#c8b1e4;
+  --c-bm25:#9b72cf;
+  --c-vector:#532b88;
+}
+
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;font-size:15px;-webkit-font-smoothing:antialiased}
+
+/* Hero */
+.hero{background:var(--darkest);color:var(--white);padding:44px 48px 36px}
+.hero-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--light);margin-bottom:14px}
+.hero h1{font-size:1.95rem;font-weight:800;line-height:1.22;max-width:740px;margin-bottom:10px;letter-spacing:-.025em}
+.hero .sub{font-size:14px;color:rgba(255,255,255,.65);max-width:680px;margin-bottom:20px;line-height:1.6}
+.hero-meta{display:flex;gap:28px;flex-wrap:wrap;font-size:12.5px;color:rgba(255,255,255,.5)}
+
+/* Nav */
+.nav{background:var(--white);border-bottom:1px solid var(--border);padding:0 48px;position:sticky;top:0;z-index:100}
+.nav-tabs{display:flex}
+.nav-tab{padding:14px 20px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;white-space:nowrap;user-select:none}
+.nav-tab:hover{color:var(--text)}
+.nav-tab.active{color:var(--dark);border-bottom-color:var(--dark)}
+
+/* Layout */
+.content{max-width:1160px;margin:0 auto;padding:36px 48px}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.mb-4{margin-bottom:16px}.mb-6{margin-bottom:24px}.mb-8{margin-bottom:32px}.mt-4{margin-top:16px}
+
+/* Section header */
+.sec-head{margin-bottom:22px}
+.sec-head h2{font-size:1.4rem;font-weight:800;letter-spacing:-.02em;color:var(--darkest)}
+.sec-head p{color:var(--muted);margin-top:4px;font-size:13.5px}
+.ch-tag{display:inline-block;background:var(--dark);color:var(--white);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 10px;border-radius:3px;margin-bottom:8px}
+
+/* Card */
+.card{background:var(--white);border-radius:var(--r);padding:20px;border:1px solid var(--border)}
+.card-title{font-size:13.5px;font-weight:700;color:var(--darkest)}
+.card-sub{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* Research question */
+.rq-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:22px;margin-bottom:28px}
+.rq-label{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--dark);margin-bottom:8px}
+.rq-card h2{font-size:1.05rem;font-weight:700;color:var(--darkest);line-height:1.55}
+
+/* KPI cards */
+.kpi{background:var(--white);border-radius:var(--r);padding:18px 20px;border:1px solid var(--border)}
+.kpi .kpi-label{font-size:10.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.kpi .kpi-value{font-size:1.8rem;font-weight:800;line-height:1;color:var(--dark);letter-spacing:-.04em}
+.kpi .kpi-sub{font-size:11.5px;color:var(--muted);margin-top:4px}
+.kpi .kpi-rule{height:2px;border-radius:1px;margin-top:14px}
+
+/* System cards */
+.sys-card{background:var(--white);border-radius:var(--r);padding:20px;border:1px solid var(--border);border-top:3px solid}
+.sys-card.s-baseline{border-top-color:var(--c-baseline)}
+.sys-card.s-bm25{border-top-color:var(--c-bm25)}
+.sys-card.s-vector{border-top-color:var(--c-vector)}
+.sys-label{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 8px;border-radius:3px;display:inline-block;margin-bottom:10px}
+.s-baseline .sys-label{background:var(--c-baseline);color:var(--darkest)}
+.s-bm25 .sys-label{background:var(--c-bm25);color:var(--white)}
+.s-vector .sys-label{background:var(--c-vector);color:var(--white)}
+.sys-card h3{font-size:14px;font-weight:700;color:var(--darkest);margin-bottom:6px}
+.sys-card p{font-size:12.5px;color:var(--muted);line-height:1.55}
+.sys-list{list-style:none;margin-top:12px;border-top:1px solid var(--border);padding-top:10px}
+.sys-list li{font-size:12px;color:var(--muted);padding:2px 0 2px 14px;position:relative}
+.sys-list li::before{content:'·';position:absolute;left:2px;color:var(--light)}
+
+/* Condition legend pills */
+.legend{display:flex;gap:12px;align-items:center}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--text)}
+.legend-dot{width:10px;height:10px;border-radius:2px}
+
+/* Toggle */
+.toggle-group{display:flex;background:var(--bg);border:1px solid var(--border);border-radius:var(--r-sm);padding:2px;width:fit-content}
+.toggle-btn{padding:6px 16px;border-radius:4px;font-size:12.5px;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all .15s}
+.toggle-btn.active{background:var(--dark);color:var(--white)}
+
+/* Metric summary row */
+.metric-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px}
+.metric-mini{background:var(--white);border-radius:var(--r-sm);padding:12px 14px;border:1px solid var(--border)}
+.metric-mini .m-label{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.metric-mini .m-vals{display:flex;gap:4px}
+.metric-mini .m-val{flex:1;text-align:center;padding:4px 2px;border-radius:4px}
+.metric-mini .m-val .n{font-size:12.5px;font-weight:800;line-height:1}
+.metric-mini .m-val .c{font-size:9px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.04em}
+.m-val.cv-baseline{background:rgba(200,177,228,.12)}
+.m-val.cv-baseline .n{color:var(--darkest)}
+.m-val.cv-bm25{background:rgba(155,114,207,.12)}
+.m-val.cv-bm25 .n{color:var(--mid)}
+.m-val.cv-vector{background:rgba(83,43,136,.1)}
+.m-val.cv-vector .n{color:var(--dark)}
+
+/* Charts */
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.chart-box{position:relative;width:100%}
+
+/* Finding cards */
+.finding{background:var(--white);border-radius:var(--r-sm);padding:14px 16px;border:1px solid var(--border);margin-bottom:10px}
+.finding h4{font-size:13px;font-weight:700;color:var(--darkest);margin-bottom:3px}
+.finding p{font-size:12px;color:var(--muted);line-height:1.55}
+
+/* Eval flow */
+.eval-flow{display:flex;align-items:stretch;gap:0;overflow-x:auto}
+.eval-box{flex:1;min-width:110px;background:var(--white);border:1px solid var(--border);border-right:none;padding:14px 12px;text-align:center;position:relative}
+.eval-box:first-child{border-radius:var(--r-sm) 0 0 var(--r-sm)}
+.eval-box:last-child{border-right:1px solid var(--border);border-radius:0 var(--r-sm) var(--r-sm) 0}
+.eval-box.ev-active{background:var(--bg);border-color:var(--light)}
+.eval-box.ev-judge{background:var(--bg);border-color:var(--light)}
+.eval-arrow-sep{width:0;border-right:1px dashed var(--border);flex-shrink:0}
+.eval-box .e-num{font-size:10px;font-weight:700;color:var(--dark);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.eval-box .e-name{font-size:12px;font-weight:700;color:var(--darkest)}
+.eval-box .e-desc{font-size:10.5px;color:var(--muted);margin-top:4px;line-height:1.35}
+
+/* Arch pipeline */
+.arch-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.arch-col{background:var(--white);border-radius:var(--r);padding:18px;border:1px solid var(--border)}
+.arch-col-head{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.arch-col-head .cond-chip{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:2px 8px;border-radius:3px}
+.chip-baseline{background:var(--c-baseline);color:var(--darkest)}
+.chip-bm25{background:var(--c-bm25);color:var(--white)}
+.chip-vector{background:var(--c-vector);color:var(--white)}
+.arch-col-head h4{font-size:13px;font-weight:700;color:var(--darkest)}
+.arch-step{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px;padding:8px 10px;border-radius:var(--r-sm);background:var(--bg)}
+.arch-num{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;flex-shrink:0;color:var(--white)}
+.num-baseline{background:var(--c-baseline)}
+.num-bm25{background:var(--c-bm25)}
+.num-vector{background:var(--c-vector)}
+.arch-text{font-size:11.5px;line-height:1.45;color:var(--muted)}
+.arch-text strong{font-weight:700;color:var(--darkest);display:block;margin-bottom:1px}
+
+/* Benchmark cards */
+.bench-card{background:var(--white);border-radius:var(--r);padding:20px;border:1px solid var(--border)}
+.bench-card h3{font-size:14px;font-weight:700;color:var(--darkest);margin-bottom:6px}
+.b-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:2px 8px;border-radius:3px;margin-bottom:8px}
+.b-lme{background:var(--dark);color:var(--white)}
+.b-loc{background:var(--mid);color:var(--white)}
+.data-pill{display:inline-flex;align-items:center;background:var(--bg);border:1px solid var(--border);border-radius:100px;padding:3px 10px;font-size:11px;margin:3px 2px;color:var(--text)}
+
+/* Stats table */
+.stats-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.stats-tbl th{background:var(--bg);padding:9px 12px;text-align:left;font-weight:700;font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)}
+.stats-tbl td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text)}
+.stats-tbl tr:last-child td{border-bottom:none}
+.stats-tbl tr:hover td{background:var(--bg)}
+.eta-bar{height:6px;border-radius:3px;background:var(--dark);display:inline-block;vertical-align:middle;margin-right:6px}
+
+/* Cohen's d cells */
+.d-cell{padding:4px 9px;border-radius:3px;font-weight:700;font-size:11.5px;text-align:center;display:inline-block;min-width:68px;letter-spacing:-.01em}
+.d-xl{background:var(--dark);color:var(--white)}
+.d-lg{background:rgba(83,43,136,.18);color:var(--dark)}
+.d-sm{background:rgba(200,177,228,.3);color:var(--darkest)}
+.d-ns{background:transparent;color:var(--muted);font-weight:400;border:1px dashed var(--border)}
+
+/* Note box */
+.note-box{padding:10px 14px;background:rgba(155,114,207,.07);border:1px solid var(--border);border-radius:var(--r-sm);font-size:12px;margin-bottom:14px;line-height:1.5;color:var(--muted)}
+.note-box strong{color:var(--darkest)}
+
+/* Info box (methodology) */
+.info-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+.info-pill{padding:13px 15px;background:var(--bg);border-radius:var(--r-sm);border:1px solid var(--border)}
+.info-pill .ip-label{font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--dark);margin-bottom:4px}
+.info-pill .ip-body{font-size:12px;color:var(--muted);line-height:1.45}
+
+/* Model grid */
+.model-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.model-item{padding:14px;background:var(--bg);border-radius:var(--r-sm);border:1px solid var(--border);text-align:center}
+.model-item .m-icon{font-size:18px;margin-bottom:6px}
+.model-item .m-name{font-size:12.5px;font-weight:700;color:var(--darkest)}
+.model-item .m-desc{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* Divider */
+.div-rule{height:1px;background:var(--border);margin:24px 0}
+
+/* Footer */
+footer{background:var(--darkest);color:rgba(255,255,255,.4);text-align:center;padding:18px;font-size:11px;margin-top:60px;letter-spacing:.02em}
+
+/* Responsive */
+@media(max-width:880px){
+  .grid-3,.arch-grid,.model-grid{grid-template-columns:1fr}
+  .grid-4,.metric-row{grid-template-columns:repeat(2,1fr)}
+  .chart-row{grid-template-columns:1fr}
+  .content{padding:24px 20px}
+  .hero{padding:28px 20px}
+  .hero h1{font-size:1.5rem}
+  .nav{padding:0 20px}
+  .eval-flow{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-label">Thesis Research Dashboard · Mapúa Institute of Technology</div>
+  <h1>Long-Term Memory Access in Small Language Models</h1>
+  <p class="sub">A comparative study of memory-augmented architectures for multi-session dialogue: BM25 sparse retrieval vs. dense vector retrieval, evaluated on Gemma 3 4B across two large-scale benchmarks.</p>
+  <div class="hero-meta">
+    <span>John Kenneth P. Alon · Rexter V. Gonzales · Erika B. Mariano</span>
+    <span>Adviser: Dr. Lysa V. Comia</span>
+    <span>February 2026</span>
+  </div>
+</div>
+
+<!-- Nav -->
+<nav class="nav">
+  <div class="nav-tabs">
+    <div class="nav-tab active"  onclick="showTab('overview',this)">Overview</div>
+    <div class="nav-tab" onclick="showTab('methodology',this)">Methodology</div>
+    <div class="nav-tab" onclick="showTab('results',this)">Results</div>
+    <div class="nav-tab" onclick="showTab('statistics',this)">Statistical Analysis</div>
+  </div>
+</nav>
+
+<!-- Overview -->
+<div id="tab-overview" class="tab-content active">
+<div class="content">
+
+  <div class="rq-card">
+    <div class="rq-label">Research Question</div>
+    <h2>Does augmenting a 4-bit quantized Gemma 3 4B SLM with long-term memory — either BM25 sparse retrieval or dense vector retrieval — significantly improve multi-session question-answering performance compared to a memoryless baseline?</h2>
+  </div>
+
+  <!-- Condition color legend -->
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap">
+    <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Condition key:</span>
+    <div class="legend">
+      <div class="legend-item"><div class="legend-dot" style="background:var(--c-baseline)"></div>Baseline (No Memory)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--c-bm25)"></div>BM25 (Sparse)</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--c-vector)"></div>Vector (Dense)</div>
+    </div>
+  </div>
+
+  <div class="grid-3 mb-8">
+    <div class="sys-card s-baseline">
+      <div class="sys-label">Baseline · No Memory</div>
+      <h3>Stateless Condition</h3>
+      <p>The model answers each query with only the current-turn context — no access to prior conversation history. Serves as the control.</p>
+      <ul class="sys-list">
+        <li>No memory store; no retrieval step</li>
+        <li>Zero retrieval latency</li>
+        <li>Minimal token overhead (~0.02%)</li>
+        <li>Cannot answer cross-session queries</li>
+      </ul>
+    </div>
+    <div class="sys-card s-bm25">
+      <div class="sys-label">BM25 · Sparse Retrieval</div>
+      <h3>Keyword-Based Memory</h3>
+      <p>SQLite FTS5 inverted index with BM25 scoring, Gemma 3 4B query expansion, and recency-weighted hybrid re-ranking.</p>
+      <ul class="sys-list">
+        <li>SQLite FTS5 inverted index</li>
+        <li>Query expansion: exactly 4 keyword variants</li>
+        <li>Recency decay: λ = 0.1 day⁻¹ (t½ ≈ 7 days)</li>
+        <li>Hybrid reranking: α = 0.3 (BM25 + cosine)</li>
+      </ul>
+    </div>
+    <div class="sys-card s-vector">
+      <div class="sys-label">Vector · Dense Retrieval</div>
+      <h3>Semantic Memory</h3>
+      <p>EmbeddingGemma 300M generates 768-dimensional embeddings stored in FAISS IndexFlatL2, retrieved by L2 proximity.</p>
+      <ul class="sys-list">
+        <li>EmbeddingGemma 300M — 768-d vectors</li>
+        <li>Mean-pooling + L2 normalization</li>
+        <li>FAISS IndexFlatL2 nearest-neighbor search</li>
+        <li>Top-K = 5 memories retrieved per query</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- KPI strip -->
+  <div class="sec-head">
+    <div class="ch-tag">Key Results</div>
+    <h2>Headline Findings</h2>
+    <p>Vector retrieval consistently outperforms both conditions on every quality metric across both benchmarks.</p>
+  </div>
+  <div class="grid-4 mb-8">
+    <div class="kpi">
+      <div class="kpi-label">Answer Relevance · Vector · LME</div>
+      <div class="kpi-value">4.39<span style="font-size:1rem;font-weight:600;color:var(--muted)"> / 5</span></div>
+      <div class="kpi-sub">Baseline 3.49 · BM25 1.00</div>
+      <div class="kpi-rule" style="background:var(--c-vector);width:87.8%"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Memory Error · Vector · LoCoMo</div>
+      <div class="kpi-value">4.2<span style="font-size:1rem;font-weight:600;color:var(--muted)">%</span></div>
+      <div class="kpi-sub">vs Baseline 75.0% · BM25 61.4%</div>
+      <div class="kpi-rule" style="background:var(--c-vector);width:95.8%"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Recall@5 · Vector · LoCoMo</div>
+      <div class="kpi-value">58.6<span style="font-size:1rem;font-weight:600;color:var(--muted)">%</span></div>
+      <div class="kpi-sub">Baseline 0% · BM25 57.1%</div>
+      <div class="kpi-rule" style="background:var(--c-vector);width:58.6%"></div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Retrieval Latency · Vector · LoCoMo</div>
+      <div class="kpi-value">66.6<span style="font-size:1rem;font-weight:600;color:var(--muted)"> ms</span></div>
+      <div class="kpi-sub">vs BM25 120.7 ms — 1.81× faster</div>
+      <div class="kpi-rule" style="background:var(--c-vector);width:45%"></div>
+    </div>
+  </div>
+
+  <!-- Radar + findings -->
+  <div class="grid-2 mb-8">
+    <div class="card">
+      <div class="card-title">Performance Profile — LoCoMo</div>
+      <div class="card-sub" style="margin-bottom:14px">Normalized to 0–1 across four dimensions (higher is better on all axes)</div>
+      <div class="chart-box" style="height:268px"><canvas id="radarChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title mb-4">Summary of Findings</div>
+      <div class="finding">
+        <h4>Vector achieves best overall performance</h4>
+        <p>Highest answer relevance, highest Recall@5, and lowest memory error rate on both benchmarks. All effect sizes are very large (η² = 0.31–0.70).</p>
+      </div>
+      <div class="finding f-warn">
+        <h4>BM25 retrieves well but disrupts generation quality</h4>
+        <p>BM25 Recall@5 is statistically equivalent to vector — yet answer relevance falls well below the no-memory baseline (LME: 1.0 vs 3.49; LoCoMo: 1.81 vs 3.82).</p>
+      </div>
+      <div class="finding f-neutral">
+        <h4>Baseline outperforms BM25 on answer quality</h4>
+        <p>Paradoxically, the memoryless condition produces better-quality answers than BM25, suggesting keyword-injected context can be harmful if not semantically matched.</p>
+      </div>
+      <div class="finding">
+        <h4>All differences are statistically significant</h4>
+        <p>Repeated-measures ANOVA (GG corrected) confirms p &lt; 0.001 for all five metrics on both benchmarks. The only non-significant comparison is BM25 vs Vector on Recall@5.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Models -->
+  <div class="card">
+    <div class="card-title mb-4">Models &amp; Infrastructure</div>
+    <div class="model-grid">
+      <div class="model-item"><div class="m-icon">🤖</div><div class="m-name">Gemma 3 4B</div><div class="m-desc">Main SLM · 4-bit quantized · Temperature 0</div></div>
+      <div class="model-item"><div class="m-icon">🔢</div><div class="m-name">EmbeddingGemma 300M</div><div class="m-desc">Dense embeddings · 768-d · mean-pool + L2</div></div>
+      <div class="model-item"><div class="m-icon">⚡</div><div class="m-name">Gemini 2.5 Flash</div><div class="m-desc">LLM-as-Judge · Stage 2 · All responses scored</div></div>
+      <div class="model-item"><div class="m-icon">🗄️</div><div class="m-name">FAISS + SQLite FTS5</div><div class="m-desc">Vector index · Inverted keyword index</div></div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- METHODOLOGY -->
+<div id="tab-methodology" class="tab-content">
+<div class="content">
+
+  <div class="sec-head">
+    <div class="ch-tag">Chapter 3</div>
+    <h2>Methodology &amp; Experimental Design</h2>
+    <p>Within-subjects repeated-measures design. Each question answered under all three conditions using the same underlying LLM.</p>
+  </div>
+
+  <!-- Pipeline -->
+  <div class="card mb-6">
+    <div class="card-title mb-4">End-to-End Evaluation Pipeline</div>
+    <div class="eval-flow">
+      <div class="eval-box"><div class="e-num">Step 1</div><div class="e-name">Dataset Ingestion</div><div class="e-desc">Conversation turns stored in memory backend per condition</div></div>
+      <div class="eval-box ev-active"><div class="e-num">Step 2</div><div class="e-name">Memory Retrieval</div><div class="e-desc">Top-K=5 memories retrieved per query (BM25 or Vector)</div></div>
+      <div class="eval-box ev-active"><div class="e-num">Step 3</div><div class="e-name">LLM Generation</div><div class="e-desc">Gemma 3 4B generates answer from augmented prompt</div></div>
+      <div class="eval-box ev-judge"><div class="e-num">Stage 1</div><div class="e-name">Retrieval Metrics</div><div class="e-desc">Recall@K · NDCG@K · MAP@K computed automatically</div></div>
+      <div class="eval-box ev-judge"><div class="e-num">Stage 2</div><div class="e-name">LLM-as-Judge</div><div class="e-desc">Gemini 2.5 Flash scores faithfulness + answer relevance</div></div>
+      <div class="eval-box"><div class="e-num">Final</div><div class="e-name">Statistical Analysis</div><div class="e-desc">ANOVA + Bonferroni post-hoc across 3 conditions</div></div>
+    </div>
+  </div>
+
+  <!-- Architectures -->
+  <div class="sec-head mt-4">
+    <h2>Memory Architecture Pipelines</h2>
+    <p>How each condition processes a user query at inference time.</p>
+  </div>
+  <div class="arch-grid mb-6">
+    <div class="arch-col">
+      <div class="arch-col-head"><span class="cond-chip chip-baseline">Baseline</span><h4>No Memory</h4></div>
+      <div class="arch-step"><div class="arch-num num-baseline">1</div><div class="arch-text"><strong>User Query Received</strong>Raw query string, current turn only</div></div>
+      <div class="arch-step"><div class="arch-num num-baseline">2</div><div class="arch-text"><strong>Direct Prompt Construction</strong>System prompt + current query; no memory context injected</div></div>
+      <div class="arch-step"><div class="arch-num num-baseline">3</div><div class="arch-text"><strong>Gemma 3 4B Generation</strong>Answers solely from parametric knowledge</div></div>
+      <div class="arch-step"><div class="arch-num num-baseline">4</div><div class="arch-text"><strong>Response</strong>Zero retrieval latency · ~0.02% token utilization</div></div>
+    </div>
+    <div class="arch-col">
+      <div class="arch-col-head"><span class="cond-chip chip-bm25">BM25</span><h4>Sparse Retrieval</h4></div>
+      <div class="arch-step"><div class="arch-num num-bm25">1</div><div class="arch-text"><strong>Query Expansion</strong>Gemma 3 4B generates exactly 4 keyword variants (1–3 words, different vocabulary from query)</div></div>
+      <div class="arch-step"><div class="arch-num num-bm25">2</div><div class="arch-text"><strong>FTS5 BM25 Search</strong>SQLite MATCH with OR-joined expanded terms; bm25() auxiliary function</div></div>
+      <div class="arch-step"><div class="arch-num num-bm25">3</div><div class="arch-text"><strong>Hybrid Re-ranking</strong>score = (0.3 × BM25<sub>norm</sub> + 0.7 × cosine) × e<sup>−0.1Δt</sup></div></div>
+      <div class="arch-step"><div class="arch-num num-bm25">4</div><div class="arch-text"><strong>Top-5 Context Injection</strong>Retrieved memories prepended to Gemma 3 4B prompt</div></div>
+    </div>
+    <div class="arch-col">
+      <div class="arch-col-head"><span class="cond-chip chip-vector">Vector</span><h4>Dense Retrieval</h4></div>
+      <div class="arch-step"><div class="arch-num num-vector">1</div><div class="arch-text"><strong>Query Embedding</strong>EmbeddingGemma 300M → 768-d vector via mean-pooling + L2 normalization</div></div>
+      <div class="arch-step"><div class="arch-num num-vector">2</div><div class="arch-text"><strong>FAISS Nearest-Neighbor Search</strong>IndexFlatL2 over stored 768-d embeddings</div></div>
+      <div class="arch-step"><div class="arch-num num-vector">3</div><div class="arch-text"><strong>Recency Re-ranking</strong>cosine_sim × e<sup>−λΔt</sup> — same decay as BM25 condition</div></div>
+      <div class="arch-step"><div class="arch-num num-vector">4</div><div class="arch-text"><strong>Top-5 Context Injection</strong>Retrieved semantic memories prepended to Gemma 3 4B prompt</div></div>
+    </div>
+  </div>
+
+  <!-- Benchmarks -->
+  <div class="sec-head"><h2>Evaluation Benchmarks</h2></div>
+  <div class="grid-2 mb-6">
+    <div class="bench-card">
+      <span class="b-tag b-lme">LongMemEval</span>
+      <h3>LongMemEval (LME)</h3>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.55">Evaluates long-term memory in assistant-style single-session conversations. Each question requires cross-turn recall. LTM is reset per question_id.</p>
+      <span class="data-pill"><strong>500</strong> questions</span>
+      <span class="data-pill">Single long-session format</span>
+      <span class="data-pill">5 question categories</span>
+      <div style="margin-top:10px;font-size:12px;color:var(--muted)">Categories: Single-Hop · Multi-Hop · Temporal Reasoning · Knowledge Update · Abstention</div>
+    </div>
+    <div class="bench-card">
+      <span class="b-tag b-loc">LoCoMo</span>
+      <h3>LoCoMo v1.0</h3>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:10px;line-height:1.55">Long-context multi-session conversations modeled on personal assistant dialogues. LTM is shared across all QA pairs in one conversation block; reset per conversation sample.</p>
+      <span class="data-pill"><strong>1,861</strong> questions</span>
+      <span class="data-pill">Multi-session format</span>
+      <span class="data-pill">3 question categories</span>
+      <div style="margin-top:10px;font-size:12px;color:var(--muted)">Categories: Single-Hop · Multi-Hop · Temporal Reasoning</div>
+    </div>
+  </div>
+
+  <!-- Stage 2 judge -->
+  <div class="card">
+    <div class="card-title mb-4">Stage 2 — LLM-as-Judge (Gemini 2.5 Flash)</div>
+    <div class="info-row">
+      <div class="info-pill">
+        <div class="ip-label">Faithfulness (1–5) · All items</div>
+        <div class="ip-body">Is the response fully grounded in retrieved context with no hallucinated claims? Score 5 = every claim supported, 1 = contradicts context.</div>
+      </div>
+      <div class="info-pill">
+        <div class="ip-label">Answer Relevance (1–5) · All items</div>
+        <div class="ip-body">Does the response directly and completely answer the question? Score 5 = fully answers, 1 = off-topic or unjustified refusal.</div>
+      </div>
+      <div class="info-pill">
+        <div class="ip-label">Abstention Accuracy (1–5) · Abstention items only</div>
+        <div class="ip-body">Does the model correctly express uncertainty when the answer is absent from memory? Score 5 = clearly states it doesn't know.</div>
+      </div>
+    </div>
+    <div style="margin-top:12px;font-size:12px;color:var(--muted);padding:10px 12px;background:var(--bg);border-radius:var(--r-sm);border:1px solid var(--border)">
+      <strong style="color:var(--darkest)">Scoring scope:</strong> All collected responses submitted to Gemini 2.5 Flash. Evaluation runs in parallel across up to 8 concurrent API workers with checkpoint saves every 50 items.
+    </div>
+  </div>
+
+</div>
+</div>
+
+<!-- Results -->
+<div id="tab-results" class="tab-content">
+<div class="content">
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:14px">
+    <div class="sec-head" style="margin-bottom:0">
+      <div class="ch-tag">Chapter 4</div>
+      <h2>Results</h2>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+      <div class="toggle-group">
+        <button class="toggle-btn active" onclick="switchDataset('lme',this)">LongMemEval (n = 500)</button>
+        <button class="toggle-btn" onclick="switchDataset('locomo',this)">LoCoMo (n = 1,861)</button>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--c-baseline)"></div>Baseline</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--c-bm25)"></div>BM25</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--c-vector)"></div>Vector</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="metric-row" id="metricRow"></div>
+
+  <div class="chart-row">
+    <div class="card">
+      <div class="card-title">Answer Relevance (LLM-Judged, 1–5)</div>
+      <div class="card-sub">Higher is better · scored by Gemini 2.5 Flash</div>
+      <div class="chart-box" style="height:220px;margin-top:14px"><canvas id="arChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Recall@5</div>
+      <div class="card-sub">Higher is better · % of ground-truth memories in top-5 retrieved</div>
+      <div class="chart-box" style="height:220px;margin-top:14px"><canvas id="recChart"></canvas></div>
+    </div>
+  </div>
+  <div class="chart-row">
+    <div class="card">
+      <div class="card-title">Memory Error Rate</div>
+      <div class="card-sub">Lower is better · % of queries where retrieval failed to surface the relevant memory</div>
+      <div class="chart-box" style="height:220px;margin-top:14px"><canvas id="memChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Retrieval Latency (ms)</div>
+      <div class="card-sub">Lower is better · end-to-end retrieval wall-clock time per query</div>
+      <div class="chart-box" style="height:220px;margin-top:14px"><canvas id="latChart"></canvas></div>
+    </div>
+  </div>
+  <div class="card mb-6">
+    <div class="card-title">Token Utilization (% of model context window)</div>
+    <div class="card-sub">Memory-augmented conditions consume more tokens due to retrieved context prepended to the prompt</div>
+    <div class="chart-box" style="height:180px;margin-top:14px"><canvas id="tokChart"></canvas></div>
+  </div>
+
+  <div class="sec-head"><h2>Interpreting the Results</h2></div>
+  <div id="findingsBlock"></div>
+
+</div>
+</div>
+
+<!-- Statistics -->
+<div id="tab-statistics" class="tab-content">
+<div class="content">
+
+  <div class="sec-head">
+    <div class="ch-tag">Chapter 5</div>
+    <h2>Statistical Analysis</h2>
+    <p>Repeated-measures ANOVA with Greenhouse–Geisser sphericity correction, followed by Bonferroni-corrected paired t-tests across all five metrics and both benchmarks.</p>
+  </div>
+
+  <!-- ANOVA table -->
+  <div class="card mb-6">
+    <div class="card-title mb-4">ANOVA Results — All Metrics, Both Benchmarks</div>
+    <div style="overflow-x:auto">
+      <table class="stats-tbl">
+        <thead><tr>
+          <th>Metric</th><th>Dataset</th><th>n</th>
+          <th>F-statistic</th><th>p (GG corrected)</th><th>ε (GG)</th>
+          <th>Partial η²</th>
+        </tr></thead>
+        <tbody>
+          <tr><td><strong>Answer Relevance</strong></td><td><span class="b-tag b-lme">LME</span></td><td>500</td><td>1848.9</td><td>&lt; 0.001</td><td>0.808</td><td><span class="eta-bar" style="width:70px"></span>0.701</td></tr>
+          <tr><td><strong>Recall@5</strong></td><td><span class="b-tag b-lme">LME</span></td><td>500</td><td>846.2</td><td>&lt; 0.001</td><td>0.626</td><td><span class="eta-bar" style="width:38px"></span>0.380</td></tr>
+          <tr><td><strong>Memory Error</strong></td><td><span class="b-tag b-lme">LME</span></td><td>469</td><td>303.5</td><td>&lt; 0.001</td><td>0.848</td><td><span class="eta-bar" style="width:31px"></span>0.307</td></tr>
+          <tr><td><strong>Retrieval Latency</strong></td><td><span class="b-tag b-lme">LME</span></td><td>500</td><td>233,422</td><td>&lt; 0.001</td><td>0.503</td><td><span class="eta-bar" style="width:99px"></span>0.997</td></tr>
+          <tr><td><strong>Token Utilization</strong></td><td><span class="b-tag b-lme">LME</span></td><td>500</td><td>2150.1</td><td>&lt; 0.001</td><td>0.980</td><td><span class="eta-bar" style="width:69px"></span>0.692</td></tr>
+          <tr style="border-top:2px solid var(--border)"><td><strong>Answer Relevance</strong></td><td><span class="b-tag b-loc">LoCoMo</span></td><td>1803</td><td>1359.6</td><td>&lt; 0.001</td><td>0.977</td><td><span class="eta-bar" style="width:35px"></span>0.346</td></tr>
+          <tr><td><strong>Recall@5</strong></td><td><span class="b-tag b-loc">LoCoMo</span></td><td>1861</td><td>1838.8</td><td>&lt; 0.001</td><td>0.997</td><td><span class="eta-bar" style="width:34px"></span>0.336</td></tr>
+          <tr><td><strong>Memory Error</strong></td><td><span class="b-tag b-loc">LoCoMo</span></td><td>1397</td><td>1273.3</td><td>&lt; 0.001</td><td>0.885</td><td><span class="eta-bar" style="width:38px"></span>0.378</td></tr>
+          <tr><td><strong>Retrieval Latency</strong></td><td><span class="b-tag b-loc">LoCoMo</span></td><td>1861</td><td>4285.5</td><td>&lt; 0.001</td><td>0.526</td><td><span class="eta-bar" style="width:60px"></span>0.604</td></tr>
+          <tr><td><strong>Token Utilization</strong></td><td><span class="b-tag b-loc">LoCoMo</span></td><td>1861</td><td>112,954</td><td>&lt; 0.001</td><td>0.991</td><td><span class="eta-bar" style="width:97px"></span>0.968</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:10px;font-size:11.5px;color:var(--muted)">GG correction applied in all cases (Mauchly's test violated except LoCoMo Recall@5). Threshold for a "large" effect: η² ≥ 0.14. Every result exceeds this by a substantial margin.</div>
+  </div>
+
+  <!-- Effect size charts -->
+  <div class="chart-row mb-6">
+    <div class="card">
+      <div class="card-title">Effect Sizes (Partial η²) — LongMemEval</div>
+      <div class="card-sub">Darker bars = larger share of variance explained by condition</div>
+      <div class="chart-box" style="height:220px;margin-top:14px"><canvas id="etaLme"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Effect Sizes (Partial η²) — LoCoMo</div>
+      <div class="card-sub">Darker bars = larger share of variance explained by condition</div>
+      <div class="chart-box" style="height:220px;margin-top:14px"><canvas id="etaLoc"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Post-hoc -->
+  <div class="sec-head">
+    <h2>Post-Hoc Comparisons — Cohen's d</h2>
+    <p>Bonferroni-corrected paired t-tests. Positive d = first condition has higher mean. |d| ≥ 0.8 large · |d| ≥ 0.5 medium · |d| ≥ 0.2 small.</p>
+  </div>
+  <div class="grid-2 mb-6">
+    <div class="card">
+      <div class="card-title mb-4">LongMemEval — Cohen's d</div>
+      <div style="overflow-x:auto">
+        <table class="stats-tbl">
+          <thead><tr><th>Metric</th><th>Baseline vs BM25</th><th>Baseline vs Vector</th><th>BM25 vs Vector</th></tr></thead>
+          <tbody>
+            <tr><td>Answer Relevance</td><td><span class="d-cell d-xl">+2.73 *</span></td><td><span class="d-cell d-lg">−0.78 *</span></td><td><span class="d-cell d-xl">−4.88 *</span></td></tr>
+            <tr><td>Recall@5</td><td><span class="d-cell d-xl">−1.89 *</span></td><td><span class="d-cell d-xl">−1.93 *</span></td><td><span class="d-cell d-ns">−0.04 ns</span></td></tr>
+            <tr><td>Memory Error</td><td><span class="d-cell d-lg">−1.04 *</span></td><td><span class="d-cell d-sm">+0.41 *</span></td><td><span class="d-cell d-xl">+1.53 *</span></td></tr>
+            <tr><td>Retrieval Latency</td><td><span class="d-cell d-xl">−30.6 *</span></td><td><span class="d-cell d-xl">−4.66 *</span></td><td><span class="d-cell d-xl">+30.3 *</span></td></tr>
+            <tr><td>Token Utilization</td><td><span class="d-cell d-xl">−3.92 *</span></td><td><span class="d-cell d-xl">−3.09 *</span></td><td><span class="d-cell d-lg">+0.83 *</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title mb-4">LoCoMo — Cohen's d</div>
+      <div style="overflow-x:auto">
+        <table class="stats-tbl">
+          <thead><tr><th>Metric</th><th>Baseline vs BM25</th><th>Baseline vs Vector</th><th>BM25 vs Vector</th></tr></thead>
+          <tbody>
+            <tr><td>Answer Relevance</td><td><span class="d-cell d-xl">+1.37 *</span></td><td><span class="d-cell d-sm">−0.23 *</span></td><td><span class="d-cell d-xl">−1.61 *</span></td></tr>
+            <tr><td>Recall@5</td><td><span class="d-cell d-xl">−1.70 *</span></td><td><span class="d-cell d-xl">−1.78 *</span></td><td><span class="d-cell d-ns">−0.03 ns</span></td></tr>
+            <tr><td>Memory Error</td><td><span class="d-cell d-sm">+0.30 *</span></td><td><span class="d-cell d-xl">+2.10 *</span></td><td><span class="d-cell d-xl">+1.53 *</span></td></tr>
+            <tr><td>Retrieval Latency</td><td><span class="d-cell d-xl">−2.51 *</span></td><td><span class="d-cell d-xl">−7.37 *</span></td><td><span class="d-cell d-xl">+1.10 *</span></td></tr>
+            <tr><td>Token Utilization</td><td><span class="d-cell d-xl">−13.1 *</span></td><td><span class="d-cell d-xl">−13.9 *</span></td><td><span class="d-cell d-sm">+0.07 *</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div style="font-size:11.5px;color:var(--muted);margin-bottom:28px">
+    * p &lt; 0.001 (Bonferroni-corrected). ns = not significant. Positive d = first condition has higher mean. For answer relevance (higher = better): positive d favors first condition. For memory error and latency (lower = better): negative d favors first condition.
+  </div>
+
+  <!-- Conclusions -->
+  <div class="card">
+    <div class="card-title mb-4">Statistical Conclusions</div>
+    <div class="grid-2">
+      <div>
+        <div class="finding">
+          <h4>H1 Supported: Vector memory significantly improves answer quality</h4>
+          <p>Vector significantly outperforms baseline on answer relevance (LME: d = −0.78; LoCoMo: d = −0.23) and reduces memory error rate to ~4% from 15–75% baseline. All p &lt; 0.001.</p>
+        </div>
+        <div class="finding f-warn">
+          <h4>H2 Partially Rejected: BM25 retrieves but degrades generation quality</h4>
+          <p>BM25 Recall@5 ≈ vector Recall@5 (difference not significant), yet BM25 answer relevance is dramatically lower than both baseline and vector. Retrieval quantity does not guarantee generation quality.</p>
+        </div>
+      </div>
+      <div>
+        <div class="finding">
+          <h4>Very Large Effect Sizes Across All 10 Metric × Dataset Combinations</h4>
+          <p>Partial η² ranges from 0.307 to 0.997. Every result far exceeds the conventional "large" threshold (η² = 0.14), confirming both statistical and strong practical significance.</p>
+        </div>
+        <div class="finding f-neutral">
+          <h4>Only Non-Significant Comparison: BM25 vs Vector on Recall@5</h4>
+          <p>LME: p = 0.083, d = −0.040 (ns). LoCoMo: p = 0.613, d = −0.031 (ns). Both memory systems retrieve at statistically equivalent rates; performance separation is driven by generation quality, not retrieval quantity.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<footer>Long-Term Memory Access and Its Impact on Multi-Session Performance in Small Language Models · Mapúa Institute of Technology · February 2026</footer>
+
+<!-- JS -->
+<script>
+// Condition colors — matched to the CSS palette variables
+const C = {
+  baseline: { bg: '#c8b1e4', border: '#b99fd8' },
+  bm25:     { bg: '#9b72cf', border: '#8a61be' },
+  vector:   { bg: '#532b88', border: '#421f72' },
+};
+const LBLS = ['Baseline', 'BM25', 'Vector'];
+
+// Dataset results — sourced from results/statistical/*.json
+const DATA = {
+  lme: {
+    n: 500,
+    answer_relevance: { baseline: 3.494, bm25: 1.0,    vector: 4.39  },
+    recall_at_5:      { baseline: 0.0,   bm25: 0.231,  vector: 0.238 },
+    memory_error:     { baseline: 15.14, bm25: 59.91,  vector: 3.41  },
+    latency_ms:       { baseline: 0,     bm25: 8633.5, vector: 77.0  },
+    token_util:       { baseline: 0.022, bm25: 1.088,  vector: 0.783 },
+  },
+  locomo: {
+    n: 1861,
+    answer_relevance: { baseline: 3.824, bm25: 1.814,  vector: 4.130 },
+    recall_at_5:      { baseline: 0.0,   bm25: 0.571,  vector: 0.586 },
+    memory_error:     { baseline: 75.02, bm25: 61.42,  vector: 4.22  },
+    latency_ms:       { baseline: 0,     bm25: 120.7,  vector: 66.6  },
+    token_util:       { baseline: 0.017, bm25: 0.371,  vector: 0.368 },
+  }
+};
+
+let currentDs = 'lme';
+const charts = {};
+
+// Tab switching
+function showTab(id, el) {
+  document.querySelectorAll('.tab-content').forEach(e => e.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(e => e.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  el.classList.add('active');
+  if (id === 'overview')   setTimeout(initRadar, 60);
+  if (id === 'results')    setTimeout(renderAll, 60);
+  if (id === 'statistics') setTimeout(initStatCharts, 60);
+}
+
+// Dataset toggle
+function switchDataset(ds, btn) {
+  currentDs = ds;
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderAll();
+}
+
+// Bar chart factory
+function mkBar(id, values, yLabel, yMax, suffix, dec) {
+  if (charts[id]) charts[id].destroy();
+  const ctx = document.getElementById(id);
+  if (!ctx) return;
+  charts[id] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: LBLS,
+      datasets: [{
+        data: values,
+        backgroundColor: [C.baseline.bg, C.bm25.bg, C.vector.bg],
+        borderColor:     [C.baseline.border, C.bm25.border, C.vector.border],
+        borderWidth: 1.5, borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: c => ` ${Number(c.parsed.y).toFixed(dec ?? 2)}${suffix ?? ''}` } }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { weight: '600', size: 12 }, color: '#2f184b' } },
+        y: {
+          min: 0, max: yMax ?? undefined,
+          grid: { color: 'rgba(47,24,75,.06)' },
+          ticks: { callback: v => v + (suffix ?? ''), font: { size: 11 }, color: '#7a6594' },
+          title: { display: true, text: yLabel, font: { size: 11 }, color: '#7a6594' }
+        }
+      }
+    }
+  });
+}
+
+// Render results tab
+function renderAll() {
+  const d = DATA[currentDs];
+  mkBar('arChart',  [d.answer_relevance.baseline, d.answer_relevance.bm25, d.answer_relevance.vector], 'Score (1–5)', 5, '', 2);
+  mkBar('recChart', [d.recall_at_5.baseline*100, d.recall_at_5.bm25*100, d.recall_at_5.vector*100], 'Recall@5 (%)', 100, '%', 1);
+  mkBar('memChart', [d.memory_error.baseline, d.memory_error.bm25, d.memory_error.vector], 'Error Rate (%)', 100, '%', 1);
+  mkBar('latChart', [d.latency_ms.baseline, d.latency_ms.bm25, d.latency_ms.vector], 'Latency (ms)', null, ' ms', 1);
+  mkBar('tokChart', [d.token_util.baseline, d.token_util.bm25, d.token_util.vector], 'Token Util. (%)', null, '%', 3);
+  renderMetricRow();
+  renderFindings();
+}
+
+// Metric summary row
+function renderMetricRow() {
+  const d = DATA[currentDs];
+  const el = document.getElementById('metricRow');
+  if (!el) return;
+  const m = (label, b, bm, v) => `
+    <div class="metric-mini">
+      <div class="m-label">${label}</div>
+      <div class="m-vals">
+        <div class="m-val cv-baseline"><div class="n">${b}</div><div class="c">Baseline</div></div>
+        <div class="m-val cv-bm25"><div class="n">${bm}</div><div class="c">BM25</div></div>
+        <div class="m-val cv-vector"><div class="n">${v}</div><div class="c">Vector</div></div>
+      </div>
+    </div>`;
+  el.innerHTML =
+    m('Answer Relevance', d.answer_relevance.baseline.toFixed(2), d.answer_relevance.bm25.toFixed(2), d.answer_relevance.vector.toFixed(2)) +
+    m('Recall@5', (d.recall_at_5.baseline*100).toFixed(1)+'%', (d.recall_at_5.bm25*100).toFixed(1)+'%', (d.recall_at_5.vector*100).toFixed(1)+'%') +
+    m('Memory Error', d.memory_error.baseline.toFixed(1)+'%', d.memory_error.bm25.toFixed(1)+'%', d.memory_error.vector.toFixed(1)+'%') +
+    m('Latency', d.latency_ms.baseline+'ms', d.latency_ms.bm25.toFixed(1)+'ms', d.latency_ms.vector.toFixed(1)+'ms') +
+    m('Token Util.', d.token_util.baseline.toFixed(3)+'%', d.token_util.bm25.toFixed(3)+'%', d.token_util.vector.toFixed(3)+'%');
+}
+
+// Findings block
+function renderFindings() {
+  const el = document.getElementById('findingsBlock');
+  if (!el) return;
+  const d = DATA[currentDs];
+  const isLme = currentDs === 'lme';
+  const lmeNote = isLme
+    ? `<div class="note-box"><strong>Note — BM25 Answer Relevance on LME (mean = 1.00, σ = 0):</strong> Every BM25-augmented response on LongMemEval received the minimum judge score. BM25 keyword-retrieved context from LME's long single-session histories appears to severely disrupt generation coherence — an effect less pronounced on LoCoMo's shorter multi-session format.</div>` : '';
+  const speedLine = isLme
+    ? `${Math.round(d.latency_ms.bm25/d.latency_ms.vector)}× faster than BM25 (${d.latency_ms.vector.toFixed(0)} ms vs ${d.latency_ms.bm25.toFixed(0)} ms). BM25's high latency on LME reflects the cost of scanning a large single-session FTS5 index.`
+    : `1.81× faster than BM25 (${d.latency_ms.vector.toFixed(1)} ms vs ${d.latency_ms.bm25.toFixed(1)} ms). FAISS sub-linear search consistently outperforms SQLite FTS5 at this scale.`;
+
+  el.innerHTML = lmeNote + `<div class="grid-2">
+    <div>
+      <div class="finding">
+        <h4>Vector achieves highest answer relevance: ${d.answer_relevance.vector.toFixed(2)} / 5</h4>
+        <p>Compared to Baseline ${d.answer_relevance.baseline.toFixed(2)} and BM25 ${d.answer_relevance.bm25.toFixed(2)}. Semantic retrieval surfaces contextually matched memories that improve generation quality.</p>
+      </div>
+      <div class="finding">
+        <h4>Vector reduces memory errors to ${d.memory_error.vector.toFixed(1)}%</h4>
+        <p>From Baseline ${d.memory_error.baseline.toFixed(1)}% and BM25 ${d.memory_error.bm25.toFixed(1)}%. Dense retrieval's semantic matching is far more reliable than keyword matching for identifying the correct memory entry.</p>
+      </div>
+    </div>
+    <div>
+      <div class="finding f-warn">
+        <h4>BM25 Recall@5 ≈ Vector Recall@5 — but generation diverges</h4>
+        <p>BM25 ${(d.recall_at_5.bm25*100).toFixed(1)}% vs Vector ${(d.recall_at_5.vector*100).toFixed(1)}% — statistically equivalent. Yet answer relevance diverges dramatically. Retrieving the right memory is necessary but not sufficient: context structure also matters.</p>
+      </div>
+      <div class="finding f-neutral">
+        <h4>Vector retrieval is ${speedLine}</h4>
+      </div>
+    </div>
+  </div>`;
+}
+
+// Radar chart for the overview performance profile
+function initRadar() {
+  if (charts['radarChart']) charts['radarChart'].destroy();
+  const ctx = document.getElementById('radarChart');
+  if (!ctx) return;
+  const d = DATA.locomo;
+  const speed = ms => ms === 0 ? 1 : 1 / (1 + ms / 80);
+  const norm = {
+    baseline: [d.answer_relevance.baseline/5, d.recall_at_5.baseline, 1-d.memory_error.baseline/100, speed(0)],
+    bm25:     [d.answer_relevance.bm25/5,     d.recall_at_5.bm25,     1-d.memory_error.bm25/100,     speed(d.latency_ms.bm25)],
+    vector:   [d.answer_relevance.vector/5,   d.recall_at_5.vector,   1-d.memory_error.vector/100,   speed(d.latency_ms.vector)],
+  };
+  charts['radarChart'] = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['Answer Quality', 'Recall@5', 'Memory Accuracy', 'Retrieval Speed'],
+      datasets: [
+        { label: 'Baseline', data: norm.baseline, borderColor: C.baseline.bg, backgroundColor: 'rgba(200,177,228,.12)', borderWidth: 1.5, pointRadius: 3, pointBackgroundColor: C.baseline.bg },
+        { label: 'BM25',     data: norm.bm25,     borderColor: C.bm25.bg,     backgroundColor: 'rgba(155,114,207,.12)', borderWidth: 1.5, pointRadius: 3, pointBackgroundColor: C.bm25.bg },
+        { label: 'Vector',   data: norm.vector,   borderColor: C.vector.bg,   backgroundColor: 'rgba(83,43,136,.15)',   borderWidth: 2,   pointRadius: 4, pointBackgroundColor: C.vector.bg },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: { font: { size: 12, weight: '600' }, color: '#2f184b', padding: 16, boxWidth: 10, boxHeight: 10 }
+        }
+      },
+      scales: {
+        r: {
+          min: 0, max: 1,
+          ticks: { stepSize: 0.25, callback: v => (v*100).toFixed(0)+'%', font: { size: 9.5 }, color: '#7a6594' },
+          grid: { color: 'rgba(47,24,75,.08)' },
+          angleLines: { color: 'rgba(47,24,75,.08)' },
+          pointLabels: { font: { size: 12, weight: '700' }, color: '#2f184b' }
+        }
+      }
+    }
+  });
+}
+
+// Effect size (partial η²) bar charts for the statistics tab
+function initStatCharts() {
+  const metricLabels = ['Answer Relevance','Recall@5','Memory Error','Retrieval Latency','Token Utilization'];
+  const lmeEta    = [0.701, 0.380, 0.307, 0.997, 0.692];
+  const locomoEta = [0.346, 0.336, 0.378, 0.604, 0.968];
+
+  function mkEta(id, data) {
+    if (charts[id]) charts[id].destroy();
+    const ctx = document.getElementById(id);
+    if (!ctx) return;
+    charts[id] = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: metricLabels,
+        datasets: [{
+          data,
+          backgroundColor: data.map(v => v >= 0.7 ? '#532b88' : v >= 0.4 ? '#9b72cf' : '#c8b1e4'),
+          borderColor:     data.map(v => v >= 0.7 ? '#421f72' : v >= 0.4 ? '#8a61be' : '#b99fd8'),
+          borderWidth: 1.5, borderRadius: 4,
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true, maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: c => ` η² = ${c.parsed.x.toFixed(3)}` } }
+        },
+        scales: {
+          x: {
+            min: 0, max: 1,
+            ticks: { callback: v => v.toFixed(2), font: { size: 11 }, color: '#7a6594' },
+            title: { display: true, text: 'Partial η²', font: { size: 11 }, color: '#7a6594' },
+            grid: { color: 'rgba(47,24,75,.06)' }
+          },
+          y: {
+            grid: { display: false },
+            ticks: { font: { size: 11.5, weight: '600' }, color: '#2f184b' }
+          }
+        }
+      }
+    });
+  }
+
+  mkEta('etaLme', lmeEta);
+  mkEta('etaLoc', locomoEta);
+}
+
+// Initialize the overview radar chart on page load
+document.addEventListener('DOMContentLoaded', initRadar);
+</script>
+</body>
+</html>

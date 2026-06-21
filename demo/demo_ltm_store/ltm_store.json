@@ -1,0 +1,165 @@
+{
+  "_next_faiss_id": 20,
+  "memories": {
+    "0": {
+      "text": "My name is Alex Santos. I am a second-year Master's student in Computer Science at the Polytechnic University of the Philippines.",
+      "timestamp": "2026-06-20T22:00:15.017377+00:00",
+      "metadata": {
+        "topic": "personal",
+        "session": "s01"
+      }
+    },
+    "1": {
+      "text": "Alex's supervisor is Professor Maria Reyes, who specialises in efficient deep learning and on-device AI systems.",
+      "timestamp": "2026-06-20T22:00:15.346412+00:00",
+      "metadata": {
+        "topic": "personal",
+        "session": "s01"
+      }
+    },
+    "2": {
+      "text": "Alex's younger sister is named Ria and is studying nursing at a different university. They talk every weekend.",
+      "timestamp": "2026-06-20T22:00:15.511920+00:00",
+      "metadata": {
+        "topic": "personal",
+        "session": "s02"
+      }
+    },
+    "3": {
+      "text": "Alex is fluent in English and Filipino (Tagalog), and is currently learning Japanese through language exchange apps.",
+      "timestamp": "2026-06-20T22:00:15.667317+00:00",
+      "metadata": {
+        "topic": "personal",
+        "session": "s03"
+      }
+    },
+    "4": {
+      "text": "Alex runs 30 minutes every morning around the university campus as his main form of exercise.",
+      "timestamp": "2026-06-20T22:00:15.806855+00:00",
+      "metadata": {
+        "topic": "personal",
+        "session": "s02"
+      }
+    },
+    "5": {
+      "text": "Alex plays acoustic guitar and is part of a small band that performs at campus events on weekends.",
+      "timestamp": "2026-06-20T22:00:15.886913+00:00",
+      "metadata": {
+        "topic": "hobbies",
+        "session": "s02"
+      }
+    },
+    "6": {
+      "text": "Alex's favourite movie genre is science fiction. He recently rewatched Interstellar and found it even better the second time.",
+      "timestamp": "2026-06-20T22:00:15.958636+00:00",
+      "metadata": {
+        "topic": "hobbies",
+        "session": "s03"
+      }
+    },
+    "7": {
+      "text": "Alex drinks an oat milk flat white with no sugar every morning before starting his research work.",
+      "timestamp": "2026-06-20T22:00:16.026526+00:00",
+      "metadata": {
+        "topic": "preference",
+        "session": "s01"
+      }
+    },
+    "8": {
+      "text": "Alex prefers concise, bullet-point style answers over long paragraph responses when asking questions.",
+      "timestamp": "2026-06-20T22:00:16.114113+00:00",
+      "metadata": {
+        "topic": "preference",
+        "session": "s01"
+      }
+    },
+    "9": {
+      "text": "Alex uses VS Code with the Python and Pylance extensions as his main development environment. He keeps dark mode enabled everywhere.",
+      "timestamp": "2026-06-20T22:00:16.208391+00:00",
+      "metadata": {
+        "topic": "preference",
+        "session": "s03"
+      }
+    },
+    "10": {
+      "text": "Alex's thesis is titled 'Long-Term Memory Systems for Small Language Models on Edge Devices'. It compares three retrieval strategies: Baseline (no retrieval), BM25 sparse retrieval, and dense vector retrieval using EmbeddingGemma 300M.",
+      "timestamp": "2026-06-20T22:00:16.295476+00:00",
+      "metadata": {
+        "topic": "research",
+        "session": "s01"
+      }
+    },
+    "11": {
+      "text": "Alex uses an NVIDIA RTX 4050 6 GB laptop for all experiments. He runs Gemma 3 4B with 4-bit NF4 quantisation to stay within the VRAM budget.",
+      "timestamp": "2026-06-20T22:00:16.374146+00:00",
+      "metadata": {
+        "topic": "hardware",
+        "session": "s03"
+      }
+    },
+    "12": {
+      "text": "Alex mentioned struggling with CUDA out-of-memory errors when loading Gemma 3 4B in full precision. Switching to 4-bit quantisation resolved the issue immediately.",
+      "timestamp": "2026-06-20T22:00:16.473680+00:00",
+      "metadata": {
+        "topic": "technical",
+        "session": "s03"
+      }
+    },
+    "13": {
+      "text": "Vector retrieval achieved the best answer relevance score of 4.39 out of 5.0 on LongMemEval, compared to 3.49 for the Baseline and 1.0 for BM25. BM25's score of 1.0 reflects that every response was scored at the minimum because the retrieved context misled the model.",
+      "timestamp": "2026-06-20T22:00:16.554724+00:00",
+      "metadata": {
+        "topic": "results",
+        "session": "s04"
+      }
+    },
+    "14": {
+      "text": "BM25 retrieval had the highest retrieval latency at approximately 8,634 ms on LongMemEval, driven by query expansion via the SLM. Vector retrieval was far faster at 77 ms average.",
+      "timestamp": "2026-06-20T22:00:16.632902+00:00",
+      "metadata": {
+        "topic": "results",
+        "session": "s04"
+      }
+    },
+    "15": {
+      "text": "Vector retrieval achieved a memory error rate of only 3.41 % on LongMemEval, versus 59.9 % for BM25 and 15.1 % for the Baseline.",
+      "timestamp": "2026-06-20T22:00:16.693501+00:00",
+      "metadata": {
+        "topic": "results",
+        "session": "s04"
+      }
+    },
+    "16": {
+      "text": "On the LoCoMo benchmark (1,861 samples), vector retrieval achieved Recall@5 of 0.586 versus 0.571 for BM25 — a difference that was statistically non-significant (p = 0.61).",
+      "timestamp": "2026-06-20T22:00:16.778417+00:00",
+      "metadata": {
+        "topic": "results",
+        "session": "s04"
+      }
+    },
+    "17": {
+      "text": "The statistical analysis used repeated-measures ANOVA with Greenhouse-Geisser correction for violations of sphericity, followed by Bonferroni-corrected post-hoc paired t-tests. All five metrics showed significant main effects (p < 0.001).",
+      "timestamp": "2026-06-20T22:00:16.860702+00:00",
+      "metadata": {
+        "topic": "methodology",
+        "session": "s05"
+      }
+    },
+    "18": {
+      "text": "Alex attended a local Python meetup last month. He found the technical talks useful but said the networking portion felt awkward.",
+      "timestamp": "2026-06-20T22:00:16.938143+00:00",
+      "metadata": {
+        "topic": "events",
+        "session": "s05"
+      }
+    },
+    "19": {
+      "text": "Alex wants to submit his thesis findings as a workshop paper at a major machine learning conference after the panel defence.",
+      "timestamp": "2026-06-20T22:00:17.018803+00:00",
+      "metadata": {
+        "topic": "research",
+        "session": "s05"
+      }
+    }
+  }
+}
