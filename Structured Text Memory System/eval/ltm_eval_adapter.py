@@ -38,16 +38,14 @@ from typing import Optional
 
 from progress_tracker import ProgressTracker
 
-# ── Resolve project root so ltm_module is always importable ──────────────────
+# Add project root to sys.path so sparse_rag_pipeline can be imported
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from sparse_rag_pipeline import SparseEmbeddedMemory  # noqa: E402
 
 
-# ---------------------------------------------------------------------------
 # Shared Data Structures
-# ---------------------------------------------------------------------------
 
 @dataclass
 class EvalResult:
@@ -55,41 +53,39 @@ class EvalResult:
     Normalised evaluation record produced by both adapters.
     Consumed by eval_metrics.py for Stage 1 (retrieval) and Stage 2 (generation).
     """
-    # ── Identifiers ──────────────────────────────────────────────────────────
+    # Identifiers
     question_id      : str
     framework        : str                  # "longmemeval" | "locomo"
     category         : str                  # single_hop | multi_hop | knowledge_update | abstention
 
-    # ── Query / Answer ───────────────────────────────────────────────────────
+    # Query / Answer
     query            : str
     ground_truth     : str                  # raw ground-truth string from dataset
 
-    # ── LTM Retrieval Output ─────────────────────────────────────────────────
+    # LTM Retrieval Output
     retrieved_memory_ids   : list[int]      # FAISS IDs returned by sparse_retrieve()
     ground_truth_memory_ids: list[int]      # IDs the dataset says are relevant
     retrieved_memories     : list[dict]     # full memory dicts (text, score, rank)
 
-    # ── SLM Generation Output ────────────────────────────────────────────────
+    # SLM Generation Output
     predicted_answer : str                  # Gemma 3 4B generated response
 
-    # ── Latency (seconds) ────────────────────────────────────────────────────
+    # Latency (seconds)
     latency          : dict[str, float] = field(default_factory=dict)
 
-    # ── Prompt (for debugging / ablation studies) ─────────────────────────────
+    # Prompt (for debugging / ablation studies)
     augmented_prompt : str = ""
 
-    # ── Knowledge Update bookkeeping ─────────────────────────────────────────
+    # Knowledge Update bookkeeping
     virtual_update_id: Optional[int] = None   # FAISS ID of injected Virtual Update
     virtual_update_text: str = ""
 
-    # ── Token counts (for efficiency metrics) ────────────────────────────────
+    # Token counts (for efficiency metrics)
     prompt_token_count   : int = 0
     response_token_count : int = 0
 
 
-# ---------------------------------------------------------------------------
-# Temporal Context Injection Handler (Knowledge Update Strategy)
-# ---------------------------------------------------------------------------
+# Temporal Context Injection Handler
 
 class TemporalContextInjector:
     """
@@ -155,9 +151,7 @@ class TemporalContextInjector:
         ltm.delete_memory(virtual_id)
 
 
-# ---------------------------------------------------------------------------
 # LongMemEval Adapter
-# ---------------------------------------------------------------------------
 
 class LongMemEvalAdapter:
     """
@@ -281,9 +275,7 @@ class LongMemEvalAdapter:
             f"[LongMemEval] Loaded {len(self._raw_data)} items from {self.data_path}"
         )
 
-    # ------------------------------------------------------------------
     # Public API
-    # ------------------------------------------------------------------
 
     def run(
         self,
@@ -308,7 +300,7 @@ class LongMemEvalAdapter:
         if max_items:
             items = items[:max_items]
 
-        # ── Resume from checkpoint ────────────────────────────────────────────
+        # Resume from checkpoint
         completed = self._load_checkpoint()
         if completed:
             self._log(
@@ -331,7 +323,7 @@ class LongMemEvalAdapter:
         new_results: list[EvalResult] = []
 
         if self.batch_size > 1:
-            # ── Two-pass: CPU retrieval then batched GPU generation ───────────
+            # Two-pass: CPU retrieval then batched GPU generation
             # Pass 1: ingest + BM25 retrieve for every item (CPU-only, fast)
             self._log(
                 f"[LongMemEval] Pass 1/2 — retrieving context for "
@@ -363,7 +355,7 @@ class LongMemEvalAdapter:
                     if len(new_results) % self.checkpoint_interval == 0:
                         self._save_checkpoint(done_results + new_results)
         else:
-            # ── Sequential (original behaviour) ──────────────────────────────
+            # Sequential (original behaviour)
             progress = ProgressTracker(len(pending), name="LongMemEval")
             for step, (idx, item) in enumerate(pending, 1):
                 cat     = self._detect_category(item)
@@ -380,9 +372,7 @@ class LongMemEvalAdapter:
         self._log(f"[LongMemEval] Completed — {len(all_results)} results collected.")
         return all_results
 
-    # ------------------------------------------------------------------
     # Private — Checkpoint
-    # ------------------------------------------------------------------
 
     def _load_checkpoint(self) -> dict[str, "EvalResult"]:
         if self.checkpoint_path and self.checkpoint_path.exists():
@@ -413,9 +403,7 @@ class LongMemEvalAdapter:
             return self.CATEGORY_ABSTENTION
         return self.QTYPE_MAP.get(qtype, "single_hop")
 
-    # ------------------------------------------------------------------
     # Private — Per-Item Processing
-    # ------------------------------------------------------------------
 
     def _process_item(self, item: dict) -> EvalResult:
         """Process a single LongMemEval test item."""
@@ -431,10 +419,10 @@ class LongMemEvalAdapter:
         dates        = item.get(self.KEY_DATES, [])          # parallel date strings
         evidence_ids = item.get(self.KEY_EVIDENCE, [])       # answer_session_ids
 
-        # ── Step 1: Reset LTM for this item (isolation) ──────────────────────
+        # Step 1 — Reset LTM for this item (isolation)
         self._reset_ltm()
 
-        # ── Step 2: Ingest sessions (already in chronological order) ─────────
+        # Step 2 — Ingest sessions (already in chronological order)
         # All sessions committed in one transaction — reduces 49 FTS5 b-tree
         # merges per LME item down to 1, giving a significant speedup.
         session_to_faiss_ids: dict[str, list[int]] = {}
@@ -445,7 +433,7 @@ class LongMemEvalAdapter:
             session_to_faiss_ids[sid] = faiss_ids
         self.ltm._db_conn.commit()  # single commit for all sessions in this item
 
-        # ── Step 3: Knowledge Update — Temporal Context Injection ─────────────
+        # Step 3 — Knowledge Update: Temporal Context Injection
         # For knowledge-update items, the update information is embedded in the
         # conversation itself (a turn with has_answer=True in a later session).
         # We detect this by finding turns marked has_answer in the last evidence
@@ -475,14 +463,14 @@ class LongMemEvalAdapter:
                         f"Text: '{update_text[:80]}'"
                     )
 
-        # ── Step 4: Map evidence session IDs → FAISS IDs (ground-truth) ───────
+        # Step 4 — Map evidence session IDs to FAISS IDs (ground-truth)
         gt_faiss_ids: list[int] = []
         for ev_sid in evidence_ids:
             gt_faiss_ids.extend(session_to_faiss_ids.get(ev_sid, []))
         if virtual_id is not None:
             gt_faiss_ids.append(virtual_id)
 
-        # ── Step 5: Dense Retrieval + Generation ─────────────────────────────
+        # Step 5 — Dense Retrieval + Generation
         output = self.ltm.generate_response(
             query               = query,
             top_k               = self.top_k,
@@ -498,11 +486,11 @@ class LongMemEvalAdapter:
             f"total={lat.get('total_pipeline_s',0):.1f}s"
         )
 
-        # ── Step 6: Purge Virtual Update to prevent contamination ─────────────
+        # Step 6 — Purge Virtual Update to prevent contamination
         if virtual_id is not None:
             self._injector.purge(self.ltm, virtual_id)
 
-        # ── Step 7: Build EvalResult ──────────────────────────────────────────
+        # Step 7 — Build EvalResult
         return EvalResult(
             question_id             = qid,
             framework               = "longmemeval",
@@ -690,9 +678,7 @@ class LongMemEvalAdapter:
             print(msg)
 
 
-# ---------------------------------------------------------------------------
 # LoCoMo Adapter
-# ---------------------------------------------------------------------------
 
 class LoCoMoAdapter:
     """
@@ -809,9 +795,7 @@ class LoCoMoAdapter:
             f"({total_qa} QA pairs) from {self.data_path}"
         )
 
-    # ------------------------------------------------------------------
     # Public API
-    # ------------------------------------------------------------------
 
     def run(
         self,
@@ -826,7 +810,7 @@ class LoCoMoAdapter:
         categories : Filter to normalised category names (None = all).
         max_items  : Cap total number of QA items processed.
         """
-        # ── Resume from checkpoint ────────────────────────────────────────────
+        # Resume from checkpoint
         completed = self._load_checkpoint()
         if completed:
             self._log(
@@ -868,7 +852,7 @@ class LoCoMoAdapter:
                 item_count += len(eligible_qids)
                 continue
 
-            # ── Reset LTM once per conversation ──────────────────────────────
+            # Reset LTM once per conversation
             self._reset_ltm()
             _, diaid_to_faiss_id = self._ingest_all_sessions(conv, conv_id)
 
@@ -901,7 +885,7 @@ class LoCoMoAdapter:
 
                 item_count += 1
 
-        # ── Two-pass: batch generate after all retrievals complete ────────────
+        # Two-pass: batch generate after all retrievals complete
         if self.batch_size > 1 and pending_ctxs:
             self._log(
                 f"[LoCoMo] Pass 2/2 — generating {len(pending_ctxs)} responses "
@@ -927,9 +911,7 @@ class LoCoMoAdapter:
         self._log(f"[LoCoMo] Completed — {len(all_results)} results collected.")
         return all_results
 
-    # ------------------------------------------------------------------
     # Private — Checkpoint
-    # ------------------------------------------------------------------
 
     def _load_checkpoint(self) -> dict[str, "EvalResult"]:
         if self.checkpoint_path and self.checkpoint_path.exists():
@@ -947,9 +929,7 @@ class LoCoMoAdapter:
                 f"[LoCoMo] Checkpoint → {self.checkpoint_path} ({len(results)} items)"
             )
 
-    # ------------------------------------------------------------------
     # Private — Processing
-    # ------------------------------------------------------------------
 
     def _process_qa(
         self,
@@ -964,7 +944,7 @@ class LoCoMoAdapter:
         gt       = qa.get(self.KEY_ANSWER, "")
         evidence = qa.get(self.KEY_EVIDENCE, [])    # list of dia_id integers
 
-        # ── Ground-truth FAISS IDs: map evidence dia_ids → FAISS IDs ─────────
+        # Ground-truth FAISS IDs: map evidence dia_ids → FAISS IDs
         # LoCoMo evidence is a list of dia_id integers pointing to specific turns.
         gt_faiss_ids: list[int] = []
         for dia_id in evidence:
@@ -972,7 +952,7 @@ class LoCoMoAdapter:
             if faiss_id is not None:
                 gt_faiss_ids.append(faiss_id)
 
-        # ── Abstention: append explicit instruction to the query ──────────────
+        # Abstention: append explicit instruction to the query
         effective_query = query
         if category == "abstention":
             effective_query = (
@@ -981,7 +961,7 @@ class LoCoMoAdapter:
                 f"respond with 'I don't know.')"
             )
 
-        # ── Dense Retrieval + Generation ──────────────────────────────────────
+        # Dense Retrieval + Generation
         output = self.ltm.generate_response(
             query               = effective_query,
             top_k               = self.top_k,
@@ -1168,9 +1148,7 @@ class LoCoMoAdapter:
             print(msg)
 
 
-# ---------------------------------------------------------------------------
 # Utility — Save Results to JSON
-# ---------------------------------------------------------------------------
 
 def save_eval_results(results: list[EvalResult], output_path: str | Path, verbose: bool = True) -> None:
     """

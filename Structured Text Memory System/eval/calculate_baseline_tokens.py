@@ -46,7 +46,7 @@ def get_longmemeval_baseline(filepath):
         
     return total_tokens / len(data) if len(data) > 0 else 0
 
-# --- RUN THE CALCULATION ---
+# Run the calculation
 print("Calculating exact Gemma 3 baselines...")
 
 locomo_avg = get_locomo_baseline("../../../locomo10.json")

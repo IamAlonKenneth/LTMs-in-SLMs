@@ -39,7 +39,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
 
-# ── Conditional imports (allow the module to load even if Gemini absent) ─
+# Conditional imports — allow the module to load even if Gemini is not installed
 try:
     import google.generativeai as genai
     _GEMINI_AVAILABLE = True
@@ -54,9 +54,7 @@ except ImportError:
     from ltm_eval_adapter import EvalResult
 
 
-# ---------------------------------------------------------------------------
 # Stage 1 — Retrieval Metrics
-# ---------------------------------------------------------------------------
 
 def recall_at_k(
     retrieved_ids   : list[int],
@@ -165,9 +163,7 @@ def average_precision_at_k(
     return precision_sum / len(relevant_set)
 
 
-# ---------------------------------------------------------------------------
 # Stage 1 — Aggregate Retrieval Report
-# ---------------------------------------------------------------------------
 
 @dataclass
 class RetrievalMetricReport:
@@ -224,11 +220,11 @@ def compute_stage1_metrics(
         per_item_records.append(record)
         category_buckets[r.category].append(item_metrics)
 
-    # ── Aggregate overall ──────────────────────────────────────────────────
+    # Aggregate overall
     all_metrics = [rec for rec in per_item_records]
     overall = _aggregate_metrics(all_metrics, k_values)
 
-    # ── Aggregate per category ─────────────────────────────────────────────
+    # Aggregate per category
     by_category: dict[str, dict[str, float]] = {}
     for cat, item_list in category_buckets.items():
         by_category[cat] = _aggregate_metrics(item_list, k_values)
@@ -258,9 +254,7 @@ def _aggregate_metrics(
     return agg
 
 
-# ---------------------------------------------------------------------------
 # Stage 2 — Generation Quality (LLM-as-a-Judge)
-# ---------------------------------------------------------------------------
 
 # Evaluation prompt templates — strictly follow both frameworks' evaluation intent
 FAITHFULNESS_PROMPT = """\
@@ -441,7 +435,7 @@ class LLMJudge:
             "abstention_score"  : None,
         }
 
-        # ── Build retrieved context string ─────────────────────────────────
+        # Build the retrieved context block to include in the judge prompt
         retrieved_context = "\n".join(
             f"  [{m['rank']}] {m['text']}"
             for m in result.retrieved_memories
@@ -532,7 +526,7 @@ def compute_stage2_metrics(
     -------
     GenerationMetricReport with mean scores per category and overall.
     """
-    # ── Load existing checkpoint ───────────────────────────────────────────
+    # Load existing checkpoint so interrupted runs can resume without re-scoring
     per_item_scores: list[dict[str, Any]] = []
     done_ids: set[str] = set()
     if checkpoint_path and Path(checkpoint_path).exists():
@@ -576,7 +570,7 @@ def compute_stage2_metrics(
                         json.dump(per_item_scores, fh, ensure_ascii=False, indent=2)
                 print(f"  [Stage 2] Checkpoint saved ({completed} items).")
 
-    # ── Aggregate ──────────────────────────────────────────────────────────
+    # Aggregate scores by category
     def _mean_std(vals: list[float]) -> tuple[float, float]:
         clean = [v for v in vals if v is not None]
         if not clean:
@@ -620,9 +614,7 @@ def compute_stage2_metrics(
     )
 
 
-# ---------------------------------------------------------------------------
-# Efficiency Metrics (Section C in thesis methodology)
-# ---------------------------------------------------------------------------
+# Efficiency Metrics
 
 @dataclass
 class EfficiencyReport:
@@ -704,9 +696,7 @@ def compute_efficiency_metrics(
     )
 
 
-# ---------------------------------------------------------------------------
 # Pretty Printing / Console Report
-# ---------------------------------------------------------------------------
 
 def print_stage1_report(report: RetrievalMetricReport) -> None:
     """Print a formatted Stage 1 Retrieval Metrics table to console."""

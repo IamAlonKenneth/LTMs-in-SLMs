@@ -39,7 +39,7 @@ Thesis : Sparse-Retrieval LTM for Edge-Deployed SLMs
 
 from __future__ import annotations
 
-# ── stdlib ────────────────────────────────────────────────────────────────────
+# stdlib
 import gc
 import json
 import math
@@ -56,9 +56,7 @@ from typing import Any, Optional
 # on machines with no GPU or without torch installed.
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Module-level constants  ── names identical to vector_embed_module.py
-# ══════════════════════════════════════════════════════════════════════════════
+# Module-level constants — names identical to vector_embed_module.py
 
 # Kept for __init__ signature compatibility; unused internally (no dense vectors).
 EMBEDDING_DIM = 768
@@ -86,9 +84,7 @@ GEMMA_SYSTEM_PROMPT = (
 )
 
 
-# ══════════════════════════════════════════════════════════════════════════════
 # SparseEmbeddedMemory
-# ══════════════════════════════════════════════════════════════════════════════
 
 class SparseEmbeddedMemory:
     """
@@ -117,20 +113,18 @@ class SparseEmbeddedMemory:
     rebuild_index()                     -> None
     """
 
-    # ─────────────────────────────────────────────────────────────────────
     # Initialisation
-    # ─────────────────────────────────────────────────────────────────────
 
     def __init__(
         self,
-        # ── Kept verbatim for drop-in compatibility ───────────────────────
+        # Kept verbatim for drop-in compatibility
         embedding_model_id : str   = "google/embeddinggemma-300m",
         slm_model_id       : str   = "google/gemma-3-4b-it",
         quantization       : str   = "none",   # "4bit" | "8bit" | "none"
         device             : str   = "cuda",
         embedding_dim      : int   = EMBEDDING_DIM,
         verbose            : bool  = True,
-        # ── Sparse-specific parameters (sane defaults; eval harness ignores) ─
+        # Sparse-specific parameters (sane defaults; eval harness ignores)
         db_path            : str   = ":memory:",
         decay_lambda       : float = DEFAULT_DECAY_LAMBDA,
         candidate_k        : int   = DEFAULT_CANDIDATE_K,
@@ -165,33 +159,31 @@ class SparseEmbeddedMemory:
         self.hybrid_alpha       = hybrid_alpha
         self._device_pref       = device
 
-        # ── Sidecar dict  (identical role to ltm_store in dense module) ──
+        # Sidecar dict  (identical role to ltm_store in dense module)
         # Keys   : str(SQLite rowid)
         # Values : {"text": str, "timestamp": str, "metadata": dict}
         self.ltm_store: dict[str, dict[str, Any]] = {}
 
-        # ── Auto-increment counter  (named _next_faiss_id for eval compat) ─
+        # Auto-increment counter  (named _next_faiss_id for eval compat)
         self._next_faiss_id: int = 0
 
-        # ── SQLite FTS5 index ─────────────────────────────────────────────
+        # SQLite FTS5 index
         self._log("Initialising SQLite FTS5 inverted index …")
         self._db_conn = sqlite3.connect(db_path, check_same_thread=False)
         self._db_conn.row_factory = sqlite3.Row
         self._init_db_schema()
 
-        # ── SLM: Gemma 3 4B (in-process, owns full model lifecycle) ──────
+        # SLM: Gemma 3 4B (in-process, owns full model lifecycle)
         self._log(f"Loading SLM: {slm_model_id} [quantization={quantization}] …")
         self._load_slm()
 
-        # ── Embedding model: google/embedding-gemma-300m (~600 MB bfloat16) ─
+        # Embedding model: google/embedding-gemma-300m (~600 MB bfloat16)
         self._log(f"Loading embedding model: {embedding_model_id} …")
         self._load_embedding_model()
 
         self._log("Sparse LTM Module initialised ✓")
 
-    # ─────────────────────────────────────────────────────────────────────
     # A.  Memory Ingestion
-    # ─────────────────────────────────────────────────────────────────────
 
     def ingest_memory(
         self,
@@ -256,9 +248,7 @@ class SparseEmbeddedMemory:
             )
         return doc_id
 
-    # ─────────────────────────────────────────────────────────────────────
     # B.  Sparse Retrieval  (method name preserved as dense_retrieve)
-    # ─────────────────────────────────────────────────────────────────────
 
     def dense_retrieve(
         self,
@@ -313,9 +303,7 @@ class SparseEmbeddedMemory:
         # Steps 2 + 3 — FTS5 search + hybrid re-ranking
         return self._fts_search_and_rerank(fts_query, top_k, query)
 
-    # ─────────────────────────────────────────────────────────────────────
     # C.  Context Injection — Prompt Construction
-    # ─────────────────────────────────────────────────────────────────────
 
     def build_augmented_prompt(
         self,
@@ -379,9 +367,7 @@ class SparseEmbeddedMemory:
             f"<start_of_turn>model\n"
         )
 
-    # ─────────────────────────────────────────────────────────────────────
     # D.  Inference Pipeline  (Expand → Retrieve → Inject → Generate)
-    # ─────────────────────────────────────────────────────────────────────
 
     def generate_response(
         self,
@@ -436,7 +422,7 @@ class SparseEmbeddedMemory:
         """
         latency: dict[str, float] = {}
 
-        # ── Step 1 + 2 + 3 : Retrieval phase ─────────────────────────────
+        # Step 1 + 2 + 3 : Retrieval phase
         t_ret = time.perf_counter()
 
         t_exp = time.perf_counter()
@@ -451,14 +437,14 @@ class SparseEmbeddedMemory:
         # sparse_retrieval_s is the compatibility key the eval harness expects.
         latency["sparse_retrieval_s"] = time.perf_counter() - t_ret
 
-        # ── Step 4 : Context Injection ────────────────────────────────────
+        # Step 4 : Context Injection
         t_ctx = time.perf_counter()
         augmented_prompt = self.build_augmented_prompt(
             query, retrieved_mems, include_scores=include_scores
         )
         latency["context_injection_s"] = time.perf_counter() - t_ctx
 
-        # ── Step 5 : SLM Generation ───────────────────────────────────────
+        # Step 5 : SLM Generation
         #
         # The prompt is already formatted in Gemma 3 chat format by
         # build_augmented_prompt, so we tokenise it directly without
@@ -656,9 +642,7 @@ class SparseEmbeddedMemory:
 
         return results
 
-    # ─────────────────────────────────────────────────────────────────────
     # Persistence  —  Save & Load
-    # ─────────────────────────────────────────────────────────────────────
 
     def save_ltm(self, directory: str = "./ltm_store") -> None:
         """
@@ -742,9 +726,7 @@ class SparseEmbeddedMemory:
             f"({self._active_count()} active memories)"
         )
 
-    # ─────────────────────────────────────────────────────────────────────
     # Utility / Introspection  (same signatures as vector_embed_module.py)
-    # ─────────────────────────────────────────────────────────────────────
 
     def memory_count(self) -> int:
         """Return the number of non-deleted memories in the LTM."""
@@ -830,9 +812,7 @@ class SparseEmbeddedMemory:
             f"[LTM] Rebuild complete — {self._active_count()} active memories."
         )
 
-    # ─────────────────────────────────────────────────────────────────────
     # Model Lifecycle  —  explicit teardown
-    # ─────────────────────────────────────────────────────────────────────
 
     def unload_model(self) -> None:
         """
@@ -883,9 +863,7 @@ class SparseEmbeddedMemory:
     def __exit__(self, *_) -> None:
         self.unload_model()
 
-    # ─────────────────────────────────────────────────────────────────────
     # Public  —  Index Management
-    # ─────────────────────────────────────────────────────────────────────
 
     def reset_index(self) -> None:
         """
@@ -907,9 +885,7 @@ class SparseEmbeddedMemory:
         self.ltm_store      = {}
         self._next_faiss_id = 0
 
-    # ─────────────────────────────────────────────────────────────────────
     # Private  —  DB Schema
-    # ─────────────────────────────────────────────────────────────────────
 
     def _init_db_schema(self) -> None:
         """
@@ -949,9 +925,7 @@ class SparseEmbeddedMemory:
         """)
         self._db_conn.commit()
 
-    # ─────────────────────────────────────────────────────────────────────
     # Private  —  SLM Loading
-    # ─────────────────────────────────────────────────────────────────────
 
     def _load_slm(self) -> None:
         """
@@ -1028,9 +1002,7 @@ class SparseEmbeddedMemory:
             f"device={self._slm_device}"
         )
 
-    # ─────────────────────────────────────────────────────────────────────
     # Private  —  Embedding Model Loading
-    # ─────────────────────────────────────────────────────────────────────
 
     def _load_embedding_model(self) -> None:
         """Load google/embedding-gemma-300m in bfloat16 onto the same device as the SLM."""
@@ -1045,9 +1017,7 @@ class SparseEmbeddedMemory:
         self._embed_loaded = True
         self._log(f"Embedding model ready on {self._slm_device}")
 
-    # ─────────────────────────────────────────────────────────────────────
     # Private  —  Core Retrieval (shared by dense_retrieve + generate_response)
-    # ─────────────────────────────────────────────────────────────────────
 
     def _fts_search_and_rerank(
         self,
@@ -1140,7 +1110,7 @@ class SparseEmbeddedMemory:
             self._log("[FTS5] No candidates returned.")
             return []
 
-        # ── BM25 × time-decay scoring ─────────────────────────────────────
+        # BM25 × time-decay scoring
         scored: list[dict[str, Any]] = []
         for row in rows:
             bm25_pos  = -float(row["bm25_raw"])           # flip sign
@@ -1156,13 +1126,13 @@ class SparseEmbeddedMemory:
                 pass
 
             scored.append({
-                # ── Keys required by evaluation harness ───────────────────
+                # Keys required by evaluation harness
                 "memory_id"    : int(row["id"]),
                 "text"         : row["content"],
                 "timestamp"    : row["timestamp"],
                 "metadata"     : meta,
                 "l2_distance"  : l2_compat,
-                # ── Sparse-specific transparency keys ─────────────────────
+                # Sparse-specific transparency keys
                 "bm25_score"   : bm25_pos,
                 "recency_score": recency,
                 "final_score"  : final,
@@ -1184,9 +1154,7 @@ class SparseEmbeddedMemory:
         )
         return result
 
-    # ─────────────────────────────────────────────────────────────────────
     # Private  —  Hybrid Reranking (Gemma Embedding)
-    # ─────────────────────────────────────────────────────────────────────
 
     def _embed_texts_batch(self, texts: list[str]):
         """Batch-embed texts with Gemma Embedding; returns L2-normalised numpy (n, 768)."""
@@ -1253,9 +1221,7 @@ class SparseEmbeddedMemory:
 
         return candidates
 
-    # ─────────────────────────────────────────────────────────────────────
     # Private  —  Query Expansion
-    # ─────────────────────────────────────────────────────────────────────
 
     def _expand_query(self, query: str) -> list[str]:
         """
@@ -1350,9 +1316,7 @@ class SparseEmbeddedMemory:
             self._log("[Query Expansion] JSON parse failed; skipping expansion.")
         return []
 
-    # ─────────────────────────────────────────────────────────────────────
     # Private  —  FTS5 Query Builder
-    # ─────────────────────────────────────────────────────────────────────
 
     _FTS5_STOPWORDS = frozenset({
         "what","when","where","who","why","how","which","did","do","does",
@@ -1396,9 +1360,7 @@ class SparseEmbeddedMemory:
         rest = " OR ".join(_fts5_term(t) for t in expanded_terms if t.strip())
         return f"{base} OR {rest}" if rest else base
 
-    # ─────────────────────────────────────────────────────────────────────
     # Private  —  Time-Decay Helper
-    # ─────────────────────────────────────────────────────────────────────
 
     def _delta_days(self, timestamp: str) -> float:
         """
@@ -1415,9 +1377,7 @@ class SparseEmbeddedMemory:
         elapsed_s = (datetime.now(timezone.utc) - doc_dt).total_seconds()
         return max(0.0, elapsed_s / 86_400.0)   # 86 400 s per day
 
-    # ─────────────────────────────────────────────────────────────────────
     # Private  —  Shared Helpers  (identical signatures to dense module)
-    # ─────────────────────────────────────────────────────────────────────
 
     @staticmethod
     def _build_bnb_config(quantization: str):
@@ -1456,9 +1416,7 @@ class SparseEmbeddedMemory:
         if self.verbose:
             print(f"[LTM {datetime.now().strftime('%H:%M:%S')}] {message}")
 
-    # ─────────────────────────────────────────────────────────────────────
     # Private  —  Internal helpers
-    # ─────────────────────────────────────────────────────────────────────
 
     def _active_count(self) -> int:
         """Count non-deleted entries in the sidecar dict."""
@@ -1469,19 +1427,12 @@ class SparseEmbeddedMemory:
         )
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# Drop-in alias
-# Evaluation harness may instantiate VectorEmbeddedMemory by name; this alias
-# makes SparseEmbeddedMemory a transparent replacement.
-# ══════════════════════════════════════════════════════════════════════════════
+# Drop-in alias — evaluation harness may instantiate VectorEmbeddedMemory by name
 
 VectorEmbeddedMemory = SparseEmbeddedMemory
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# __main__  —  quick-start demo
-# Layout mirrors vector_embed_module.py so both scripts are runnable identically.
-# ══════════════════════════════════════════════════════════════════════════════
+# __main__  —  quick-start demo (mirrors vector_embed_module.py for identical usage)
 
 if __name__ == "__main__":
     print("=" * 70)
@@ -1501,7 +1452,7 @@ if __name__ == "__main__":
         decay_lambda       = 0.1,
     )
 
-    # ── Ingest sample memories with varied timestamps ─────────────────────
+    # Ingest sample memories with varied timestamps
     print("\n--- Ingesting Memories ---")
 
     ltm.ingest_memory(
@@ -1530,7 +1481,7 @@ if __name__ == "__main__":
     )
     print(f"\nTotal memories in LTM: {ltm.memory_count()}")
 
-    # ── Sparse Retrieval via the sparse_retrieve compatibility name ────────
+    # Sparse Retrieval via the sparse_retrieve compatibility name
     print("\n--- Sparse Retrieval (sparse_retrieve API) ---")
     query   = "What is the user's research topic?"
     results = ltm.dense_retrieve(query, top_k=2)
@@ -1544,18 +1495,18 @@ if __name__ == "__main__":
         )
         print(f"    → {r['text'][:80]}…")
 
-    # ── delete_memory + memory_count ──────────────────────────────────────
+    # delete_memory + memory_count
     print("\n--- delete_memory ---")
     removed = ltm.delete_memory(memory_id=1)
     print(f"delete_memory(1) returned: {removed}")
     print(f"Active memory count after deletion: {ltm.memory_count()}")
 
-    # ── rebuild_index ─────────────────────────────────────────────────────
+    # rebuild_index
     print("\n--- rebuild_index ---")
     ltm.rebuild_index()
     print(f"Active memory count after rebuild: {ltm.memory_count()}")
 
-    # ── Persistence ───────────────────────────────────────────────────────
+    # Persistence
     print("\n--- Persistence (save_ltm / load_ltm) ---")
     ltm.save_ltm("./ltm_store_sparse")
     print("LTM saved to ./ltm_store_sparse/ ✓")
@@ -1569,7 +1520,7 @@ if __name__ == "__main__":
     print(f"Restored memory count: {ltm2.memory_count()}")
     ltm2.unload_model()
 
-    # ── Full Inference Pipeline ───────────────────────────────────────────
+    # Full Inference Pipeline
     print("\n--- LTM-Augmented Inference (generate_response) ---")
     output = ltm.generate_response(
         query          = "Summarise my research project in one paragraph.",

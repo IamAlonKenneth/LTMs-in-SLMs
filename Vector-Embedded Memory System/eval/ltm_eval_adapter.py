@@ -40,7 +40,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any, Optional
 
-# ── Resolve project root so ltm_module is always importable ──────────────────
+# Add project root to sys.path so vector_embed_module can be imported
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -49,9 +49,7 @@ from vector_embed_module import VectorEmbeddedMemory          # noqa: E402
 from progress_tracker import ProgressTracker                 # noqa: E402
 
 
-# ---------------------------------------------------------------------------
 # Shared Data Structures
-# ---------------------------------------------------------------------------
 
 @dataclass
 class EvalResult:
@@ -59,41 +57,39 @@ class EvalResult:
     Normalised evaluation record produced by both adapters.
     Consumed by eval_metrics.py for Stage 1 (retrieval) and Stage 2 (generation).
     """
-    # ── Identifiers ──────────────────────────────────────────────────────────
+    # Identifiers
     question_id      : str
     framework        : str                  # "longmemeval" | "locomo"
     category         : str                  # single_hop | multi_hop | knowledge_update | abstention
 
-    # ── Query / Answer ───────────────────────────────────────────────────────
+    # Query / Answer
     query            : str
     ground_truth     : str                  # raw ground-truth string from dataset
 
-    # ── LTM Retrieval Output ─────────────────────────────────────────────────
+    # LTM Retrieval Output
     retrieved_memory_ids   : list[int]      # FAISS IDs returned by dense_retrieve()
     ground_truth_memory_ids: list[int]      # IDs the dataset says are relevant
     retrieved_memories     : list[dict]     # full memory dicts (text, score, rank)
 
-    # ── SLM Generation Output ────────────────────────────────────────────────
+    # SLM Generation Output
     predicted_answer : str                  # Gemma 3 4B generated response
 
-    # ── Latency (seconds) ────────────────────────────────────────────────────
+    # Latency (seconds)
     latency          : dict[str, float] = field(default_factory=dict)
 
-    # ── Prompt (for debugging / ablation studies) ─────────────────────────────
+    # Prompt (for debugging / ablation studies)
     augmented_prompt : str = ""
 
-    # ── Knowledge Update bookkeeping ─────────────────────────────────────────
+    # Knowledge Update bookkeeping
     virtual_update_id: Optional[int] = None   # FAISS ID of injected Virtual Update
     virtual_update_text: str = ""
 
-    # ── Token counts (for efficiency metrics) ────────────────────────────────
+    # Token counts (for efficiency metrics)
     prompt_token_count   : int = 0
     response_token_count : int = 0
 
 
-# ---------------------------------------------------------------------------
-# Temporal Context Injection Handler (Knowledge Update Strategy)
-# ---------------------------------------------------------------------------
+# Temporal Context Injection Handler
 
 class TemporalContextInjector:
     """
@@ -159,9 +155,7 @@ class TemporalContextInjector:
         ltm.delete_memory(virtual_id)
 
 
-# ---------------------------------------------------------------------------
 # LongMemEval Adapter
-# ---------------------------------------------------------------------------
 
 class LongMemEvalAdapter:
     """
@@ -271,9 +265,7 @@ class LongMemEvalAdapter:
             f"[LongMemEval] Loaded {len(self._raw_data)} items from {self.data_path}"
         )
 
-    # ------------------------------------------------------------------
     # Public API
-    # ------------------------------------------------------------------
 
     def run(
         self,
@@ -330,9 +322,7 @@ class LongMemEvalAdapter:
             return self.CATEGORY_ABSTENTION
         return self.QTYPE_MAP.get(qtype, "single_hop")
 
-    # ------------------------------------------------------------------
     # Private — Per-Item Processing
-    # ------------------------------------------------------------------
 
     def _process_item(self, item: dict) -> EvalResult:
         """Process a single LongMemEval test item."""
@@ -348,10 +338,10 @@ class LongMemEvalAdapter:
         dates        = item.get(self.KEY_DATES, [])          # parallel date strings
         evidence_ids = item.get(self.KEY_EVIDENCE, [])       # answer_session_ids
 
-        # ── Step 1: Reset LTM for this item (isolation) ──────────────────────
+        # Step 1 — Reset LTM for this item (isolation)
         self._reset_ltm()
 
-        # ── Step 2: Ingest sessions (already in chronological order) ─────────
+        # Step 2 — Ingest sessions (already in chronological order)
         session_to_faiss_ids: dict[str, list[int]] = {}
         for sess_idx, session_turns in enumerate(sessions):
             sid  = session_ids[sess_idx] if sess_idx < len(session_ids) else f"sess_{sess_idx}"
@@ -359,7 +349,7 @@ class LongMemEvalAdapter:
             faiss_ids = self._ingest_session(session_turns, sid, date)
             session_to_faiss_ids[sid] = faiss_ids
 
-        # ── Step 3: Knowledge Update — Temporal Context Injection ─────────────
+        # Step 3 — Knowledge Update: Temporal Context Injection
         # For knowledge-update items, the update information is embedded in the
         # conversation itself (a turn with has_answer=True in a later session).
         # We detect this by finding turns marked has_answer in the last evidence
@@ -389,14 +379,14 @@ class LongMemEvalAdapter:
                         f"Text: '{update_text[:80]}'"
                     )
 
-        # ── Step 4: Map evidence session IDs → FAISS IDs (ground-truth) ───────
+        # Step 4 — Map evidence session IDs to FAISS IDs (ground-truth)
         gt_faiss_ids: list[int] = []
         for ev_sid in evidence_ids:
             gt_faiss_ids.extend(session_to_faiss_ids.get(ev_sid, []))
         if virtual_id is not None:
             gt_faiss_ids.append(virtual_id)
 
-        # ── Step 5: Dense Retrieval + Generation ─────────────────────────────
+        # Step 5 — Dense Retrieval + Generation
         output = self.ltm.generate_response(
             query           = query,
             top_k           = self.top_k,
@@ -404,11 +394,11 @@ class LongMemEvalAdapter:
             temperature     = self.temperature,
         )
 
-        # ── Step 6: Purge Virtual Update to prevent contamination ─────────────
+        # Step 6 — Purge Virtual Update to prevent contamination
         if virtual_id is not None:
             self._injector.purge(self.ltm, virtual_id)
 
-        # ── Step 7: Build EvalResult ──────────────────────────────────────────
+        # Step 7 — Build EvalResult
         prompt_tokens   = self._count_tokens(output["augmented_prompt"])
         response_tokens = self._count_tokens(output["response"])
 
@@ -496,9 +486,7 @@ class LongMemEvalAdapter:
             print(msg)
 
 
-# ---------------------------------------------------------------------------
 # LoCoMo Adapter
-# ---------------------------------------------------------------------------
 
 class LoCoMoAdapter:
     """
@@ -607,9 +595,7 @@ class LoCoMoAdapter:
             f"({total_qa} QA pairs) from {self.data_path}"
         )
 
-    # ------------------------------------------------------------------
     # Public API
-    # ------------------------------------------------------------------
 
     def run(
         self,
@@ -637,7 +623,7 @@ class LoCoMoAdapter:
             conv     = sample.get(self.KEY_CONV, {})      # the dict with session_N keys
             qa_list  = sample.get(self.KEY_QA, [])
 
-            # ── Reset LTM once per conversation ──────────────────────────────
+            # Reset LTM once per conversation
             self._reset_ltm()
             # Returns both session→faiss_ids and dia_id→faiss_id maps
             session_to_faiss_ids, diaid_to_faiss_id = self._ingest_all_sessions(conv, conv_id)
@@ -666,9 +652,7 @@ class LoCoMoAdapter:
         self._log(f"[LoCoMo] Completed - {len(results)} results collected.")
         return results
 
-    # ------------------------------------------------------------------
     # Private — Processing
-    # ------------------------------------------------------------------
 
     def _process_qa(
         self,
@@ -684,7 +668,7 @@ class LoCoMoAdapter:
         gt       = qa.get(self.KEY_ANSWER, "")
         evidence = qa.get(self.KEY_EVIDENCE, [])    # list of dia_id integers
 
-        # ── Ground-truth FAISS IDs: map evidence dia_ids → FAISS IDs ─────────
+        # Map evidence dia_ids to ground-truth FAISS IDs
         # LoCoMo evidence is a list of dia_id integers pointing to specific turns.
         gt_faiss_ids: list[int] = []
         for dia_id in evidence:
@@ -692,7 +676,7 @@ class LoCoMoAdapter:
             if faiss_id is not None:
                 gt_faiss_ids.append(faiss_id)
 
-        # ── Abstention: append explicit instruction to the query ──────────────
+        # Abstention: append an instruction so the model knows to say "I don't know"
         effective_query = query
         if category == "abstention":
             effective_query = (
@@ -701,7 +685,7 @@ class LoCoMoAdapter:
                 f"respond with 'I don't know.')"
             )
 
-        # ── Dense Retrieval + Generation ──────────────────────────────────────
+        # Dense Retrieval + Generation
         output = self.ltm.generate_response(
             query          = effective_query,
             top_k          = self.top_k,
@@ -816,9 +800,7 @@ class LoCoMoAdapter:
             print(msg)
 
 
-# ---------------------------------------------------------------------------
 # Utility — Save Results to JSON
-# ---------------------------------------------------------------------------
 
 def save_eval_results(results: list[EvalResult], output_path: str | Path) -> None:
     """

@@ -56,13 +56,13 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-# ── Path resolution — allow running from project root or eval/ subdirectory ──
+# Path resolution — allow running from project root or eval/ subdirectory
 _FILE_DIR    = Path(__file__).resolve().parent
 _PROJECT_ROOT = _FILE_DIR.parent
 sys.path.insert(0, str(_PROJECT_ROOT))
 sys.path.insert(0, str(_FILE_DIR))
 
-# ── Load API keys from .env.YE / .env at the repo root ───────────────────────
+# Load API keys from .env.YE or .env at the repo root
 try:
     from dotenv import load_dotenv as _load_dotenv
     _repo_root = _FILE_DIR.parents[1]   # …/LTMs-in-SLMs/
@@ -94,9 +94,7 @@ from eval_metrics import (
 )
 
 
-# ---------------------------------------------------------------------------
 # CLI Argument Parser
-# ---------------------------------------------------------------------------
 
 def build_arg_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
@@ -105,7 +103,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         epilog=__doc__,
     )
 
-    # ── Data inputs ──────────────────────────────────────────────────────────
+    # Data inputs
     data_group = p.add_argument_group("Dataset Paths")
     data_group.add_argument(
         "--longmemeval-data", type=str, default=None,
@@ -124,7 +122,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
              "Useful for re-running Stage 2 without re-running Stage 1.",
     )
 
-    # ── LTM configuration ────────────────────────────────────────────────────
+    # LTM configuration
     ltm_group = p.add_argument_group("LTM Module Configuration")
     ltm_group.add_argument(
         "--embedding-model", type=str,
@@ -155,7 +153,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
              "1 = sequential. 4–8 recommended for RTX 4050 6 GB + 4-bit Gemma 3 4B.",
     )
 
-    # ── Evaluation control ───────────────────────────────────────────────────
+    # Evaluation control
     eval_group = p.add_argument_group("Evaluation Control")
     eval_group.add_argument(
         "--categories", nargs="+", default=None,
@@ -193,7 +191,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
         help="Baseline token count (full history, no RAG) for token economy calculation.",
     )
 
-    # ── Output ───────────────────────────────────────────────────────────────
+    # Output
     out_group = p.add_argument_group("Output")
     out_group.add_argument(
         "--output-dir", type=str, default="./results",
@@ -214,9 +212,7 @@ def build_arg_parser() -> argparse.ArgumentParser:
     return p
 
 
-# ---------------------------------------------------------------------------
 # Main Evaluation Pipeline
-# ---------------------------------------------------------------------------
 
 def run_evaluation(args: argparse.Namespace) -> None:
 
@@ -230,7 +226,7 @@ def run_evaluation(args: argparse.Namespace) -> None:
     print(f"  Output  : {out_dir}")
     print(f"{'═'*80}\n")
 
-    # ── Save run configuration for reproducibility ────────────────────────────
+    # Save run configuration for reproducibility
     config = vars(args)
     config["run_id"] = run_id
     with open(out_dir / "run_config.json", "w") as fh:
@@ -243,13 +239,13 @@ def run_evaluation(args: argparse.Namespace) -> None:
     all_results: list[EvalResult] = []
 
     if args.load_results:
-        # ── Load pre-existing results (skip adapter runs) ─────────────────────
+        # Load pre-existing results — skip adapter runs
         print(f"\n[Runner] Loading pre-existing results from: {args.load_results}")
         all_results = load_eval_results(args.load_results)
         print(f"[Runner] Loaded {len(all_results)} results.")
 
     else:
-        # ── Initialise the shared LTM module ─────────────────────────────────
+        # Initialise the shared LTM module
         print("\n[Runner] Initialising SparseEmbeddedMemory LTM module …")
         ltm = SparseEmbeddedMemory(
             embedding_model_id = args.embedding_model,
@@ -271,7 +267,7 @@ def run_evaluation(args: argparse.Namespace) -> None:
                 print(f"[Runner] *** WARNING: {cpu_layers} layers on CPU — this is the speed bottleneck!")
         print(f"[Runner] Backend     : SQLite FTS5 (sparse keyword retrieval)\n")
 
-        # ── LongMemEval ───────────────────────────────────────────────────────
+        # LongMemEval
         if args.longmemeval_data:
             print(f"{'─'*60}")
             print(f"  Running LongMemEval Adapter")
@@ -306,7 +302,7 @@ def run_evaluation(args: argparse.Namespace) -> None:
         else:
             print("[Runner] --longmemeval-data not provided — skipping LongMemEval.\n")
 
-        # ── LoCoMo ────────────────────────────────────────────────────────────
+        # LoCoMo
         if args.locomo_data:
             print(f"\n{'─'*60}")
             print(f"  Running LoCoMo Adapter")
@@ -340,7 +336,7 @@ def run_evaluation(args: argparse.Namespace) -> None:
         else:
             print("[Runner] --locomo-data not provided — skipping LoCoMo.\n")
 
-        # ── Save combined results checkpoint ──────────────────────────────────
+        # Save combined results checkpoint
         if all_results:
             combined_path = out_dir / "combined_eval_results.json"
             save_eval_results(all_results, combined_path)
@@ -490,7 +486,7 @@ def run_evaluation(args: argparse.Namespace) -> None:
         output_path = report_path,
     )
 
-    # ── Final Summary ─────────────────────────────────────────────────────────
+    # Final Summary
     print(f"\n{'═'*80}")
     print(f"  EVALUATION COMPLETE")
     print(f"{'═'*80}")
@@ -506,9 +502,7 @@ def run_evaluation(args: argparse.Namespace) -> None:
     print(f"\n{'═'*80}\n")
 
 
-# ---------------------------------------------------------------------------
 # Helper
-# ---------------------------------------------------------------------------
 
 def _print_compact_metrics(metrics: dict, k_values: list[int]) -> None:
     for k in k_values:
@@ -517,15 +511,13 @@ def _print_compact_metrics(metrics: dict, k_values: list[int]) -> None:
         print(f"    K={k:<4}  Recall@K={recall:.4f}  NDCG@K={ndcg:.4f}")
 
 
-# ---------------------------------------------------------------------------
 # Entry Point
-# ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
     parser = build_arg_parser()
     args   = parser.parse_args()
 
-    # ── Validate: at least one data source or pre-loaded results ─────────────
+    # Validate: at least one data source or pre-loaded results must be given
     if not args.load_results and not args.longmemeval_data and not args.locomo_data:
         parser.error(
             "Provide at least one data source:\n"
